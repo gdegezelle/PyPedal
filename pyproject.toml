@@ -54,7 +54,7 @@ graphics = ["matplotlib", "pydot", "graphviz", "pillow"]
 reports = ["reportlab"]
 gui = ["customtkinter"]
 graphviz-extra = ["pygraphviz"]
-test = ["pytest", "pypdf"]
+test = ["pytest", "pypdf", "setuptools>=64", "wheel"]
 # Every FEATURE, so a user can install the whole library. Deliberately not the
 # toolchain: development tools belong in `dev`.
 all = [
