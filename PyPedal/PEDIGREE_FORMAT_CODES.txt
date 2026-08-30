@@ -1,36 +1,64 @@
 ###############################################################################
-# NAME: PEDIGREE_FORMAT_CODES
-# VERSION: 2.0.0a20 (09NOVEMBER2005)
-# AUTHOR: John B. Cole, PhD (jcole@aipl.arsusda.gov)
-# LICENSE: LGPL
-###############################################################################
-# This file lists the codes that can be included in pedigree format strings. It
-# is important to remember that the codes are case-sensitive: 'a' is NOT the
-# same code as 'A'.
+# PyPedal 4.0 pedigree format codes
+#
+# This file follows the current NewPedigree loader
+# (pedformat_codes, new_animal_attr, preprocess, NewAnimal).
+# Codes are case-sensitive: 'a' is not 'A'.
+#
+# Original author: John B. Cole
+# License: LGPL
 ###############################################################################
 
-a = animal
-b = birthyear (YYYY)
-d = dam
-e = age
-f = inbreeding
-g = generation
-h = herd / management group ID (integer)
-l = alive (1) or dead (0)
-n = name
-p = Pattie's (1965) generation coefficient
-r = breed
-s = sire
-u = user-defined field (string)
+# Required identity (pick integer asd or string ASD; do not mix as a recipe)
+a = animal ID (integer)
+s = sire ID (integer)
+d = dam ID (integer)
+A = unique string animal identity (hashed to an integer; name holds the original identity). NOT a non-unique call name.
+S = unique string sire identity (hashed)
+D = unique string dam identity (hashed). This is DAM, not sire.
+
+# Optional animal fields
 x = sex
-y = birthdate in "MMDDYYYY" format
-A = animal as a string (any sequence containing a value other than numbers,
-        including blanks or spaces).
-S = sire as a string (any sequence containing a value other than numbers,
-        including blanks or spaces).
-D = sire as a string (any sequence containing a value other than numbers,
-        including blanks or spaces).
-H = herd / management group ID as a string (any sequence containing a value
-        other than numbers, including blanks or spaces).
-L = alleles (two alleles separated by a non-null character)
-Z = skip (ignore) this column (may be repeated)
+n = display / call name (if omitted, the animal ID is used as the name). Not a unique identity.
+r = breed
+u = user-defined field (string)
+l = alive (1) or dead (0)
+e = demographic year-offset (animal.age = by - BASE_DEMOGRAPHIC_YEAR; not biological age)
+g = generation (input generation, not a computed generation)
+f = inbreeding coefficient (input column; sets f_computed)
+L = alleles (two alleles split by alleles_sepchar, default /)
+Z = skip this column (repeatable)
+
+# Birth year and birth date (loader mapping)
+y = birth YEAR (NewAnimal.by; typical input YYYY or .). Unknown is None.
+b = birth DATE (NewAnimal.bd; typical input MMDDYYYY, a four-digit year, or .).
+    Exact dates become datetime.date. A four-digit year sets by and leaves bd None.
+    Seven-digit values are the historical unpadded-day form MMDYYYY (day 1-9).
+
+# Herd
+H = herd / management group as a string (loaded into herd / originalHerd)
+h = integer herd code listed in the parser table.
+    Does NOT currently populate herd on load: preprocess looks up h, then
+    overwrites the same location from H (missing H sets the location to
+    absent). Use H.
+
+# Genomic input columns (presence is not the same as running an estimator)
+G = genomic inbreeding (parsed into fg; sets g_computed)
+Y = genomic homozygosity (parsed into homozygosity)
+
+# Accepted on input but not a supported calculation
+p = Pattie's (1965) generation coefficient, stored as gencoeff.
+    The field can be read. Pattie / gen_coeff CALCULATION is not supported
+    in PyPedal 4.0. Do not treat p in the format string as "PyPedal will
+    compute generation coefficients".
+
+# Listed in the code table / attribute map but NOT assigned by preprocess()
+T = traits (not a documented load recipe)
+P = SNP genotype string (not a documented load recipe).
+    SNP genotypes are loaded from snpfile, not from a P column.
+
+A pedigree must include animal, sire, and dam identification:
+a or A, s or S, and d or D.
+
+sepchar separates pedigree columns (default space).
+The user-manual page is docs/manual/pedigree-format-codes.md.

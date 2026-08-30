@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_jbc.py
@@ -11,9 +11,14 @@ from PyPedal import pyp_graphics
 from PyPedal import pyp_jbc
 from PyPedal import pyp_newclasses
 
-if __name__=='__main__':
+if __name__ == "__main__":
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_jbc.ini')
+    example = pyp_newclasses.load_pedigree(options_file="new_jbc.ini")
 
-    pyp_jbc.color_pedigree(example,gfilename='BoichardPedigree_colored_dot', \
-        ghatch='dna', metric='sons', gtitle='Nodes are colored by number of sons.')
+    pyp_jbc.color_pedigree(
+        example,
+        gfilename="BoichardPedigree_colored_dot",
+        ghatch="dna",
+        metric="sons",
+        gtitle="Nodes are colored by number of sons.",
+    )

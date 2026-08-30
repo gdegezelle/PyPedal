@@ -1,0 +1,127 @@
+digraph MyPedigree {
+center=true;
+concentrate=true;
+label=MyPedigree;
+labeljust=c;
+labelloc=b;
+ordering=out;
+orientation=portrait;
+page="8.5,11";
+ratio=auto;
+size="7.5,10";
+subgraph "sg-999.0" {
+rank="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19";
+1 [fontname=Helvetica, fontsize=10, height="0.35"];
+2 [fontname=Helvetica, fontsize=10, height="0.35"];
+3 [fontname=Helvetica, fontsize=10, height="0.35"];
+4 [fontname=Helvetica, fontsize=10, height="0.35"];
+5 [fontname=Helvetica, fontsize=10, height="0.35"];
+6 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 [fontname=Helvetica, fontsize=10, height="0.35"];
+8 [fontname=Helvetica, fontsize=10, height="0.35"];
+9 [fontname=Helvetica, fontsize=10, height="0.35"];
+10 [fontname=Helvetica, fontsize=10, height="0.35"];
+11 [fontname=Helvetica, fontsize=10, height="0.35"];
+12 [fontname=Helvetica, fontsize=10, height="0.35"];
+13 [fontname=Helvetica, fontsize=10, height="0.35"];
+14 [fontname=Helvetica, fontsize=10, height="0.35"];
+15 [fontname=Helvetica, fontsize=10, height="0.35"];
+16 [fontname=Helvetica, fontsize=10, height="0.35"];
+17 [fontname=Helvetica, fontsize=10, height="0.35"];
+18 [fontname=Helvetica, fontsize=10, height="0.35"];
+19 [fontname=Helvetica, fontsize=10, height="0.35"];
+}
+
+subgraph sg2 {
+rank="20 21 24 25 27 29 31 33 35 36 41 42 43 44 45 46";
+20 [fontname=Helvetica, fontsize=10, height="0.35"];
+19 -> 20;
+10 -> 20;
+21 [fontname=Helvetica, fontsize=10, height="0.35"];
+18 -> 21;
+9 -> 21;
+24 [fontname=Helvetica, fontsize=10, height="0.35"];
+16 -> 24;
+7 -> 24;
+25 [fontname=Helvetica, fontsize=10, height="0.35"];
+24 -> 25;
+23 -> 25;
+27 [fontname=Helvetica, fontsize=10, height="0.35"];
+14 -> 27;
+5 -> 27;
+29 [fontname=Helvetica, fontsize=10, height="0.35"];
+27 -> 29;
+28 -> 29;
+31 [fontname=Helvetica, fontsize=10, height="0.35"];
+20 -> 31;
+30 -> 31;
+33 [fontname=Helvetica, fontsize=10, height="0.35"];
+25 -> 33;
+32 -> 33;
+35 [fontname=Helvetica, fontsize=10, height="0.35"];
+21 -> 35;
+34 -> 35;
+36 [fontname=Helvetica, fontsize=10, height="0.35"];
+29 -> 36;
+26 -> 36;
+41 [fontname=Helvetica, fontsize=10, height="0.35"];
+11 -> 41;
+1 -> 41;
+42 [fontname=Helvetica, fontsize=10, height="0.35"];
+41 -> 42;
+3 -> 42;
+43 [fontname=Helvetica, fontsize=10, height="0.35"];
+42 -> 43;
+40 -> 43;
+44 [fontname=Helvetica, fontsize=10, height="0.35"];
+43 -> 44;
+39 -> 44;
+45 [fontname=Helvetica, fontsize=10, height="0.35"];
+43 -> 45;
+39 -> 45;
+46 [fontname=Helvetica, fontsize=10, height="0.35"];
+43 -> 46;
+39 -> 46;
+}
+
+subgraph sg1 {
+rank="22 23 26 28 30 32 34 37 38 39 40 47";
+22 [fontname=Helvetica, fontsize=10, height="0.35"];
+17 -> 22;
+8 -> 22;
+23 [fontname=Helvetica, fontsize=10, height="0.35"];
+17 -> 23;
+8 -> 23;
+26 [fontname=Helvetica, fontsize=10, height="0.35"];
+15 -> 26;
+6 -> 26;
+28 [fontname=Helvetica, fontsize=10, height="0.35"];
+13 -> 28;
+4 -> 28;
+30 [fontname=Helvetica, fontsize=10, height="0.35"];
+29 -> 30;
+26 -> 30;
+32 [fontname=Helvetica, fontsize=10, height="0.35"];
+31 -> 32;
+22 -> 32;
+34 [fontname=Helvetica, fontsize=10, height="0.35"];
+29 -> 34;
+30 -> 34;
+37 [fontname=Helvetica, fontsize=10, height="0.35"];
+36 -> 37;
+34 -> 37;
+38 [fontname=Helvetica, fontsize=10, height="0.35"];
+35 -> 38;
+37 -> 38;
+39 [fontname=Helvetica, fontsize=10, height="0.35"];
+33 -> 39;
+38 -> 39;
+40 [fontname=Helvetica, fontsize=10, height="0.35"];
+12 -> 40;
+2 -> 40;
+47 [fontname=Helvetica, fontsize=10, height="0.35"];
+43 -> 47;
+39 -> 47;
+}
+
+}

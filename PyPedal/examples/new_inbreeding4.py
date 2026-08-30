@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_inbreeding.py
@@ -12,38 +12,50 @@
 from PyPedal import *
 
 options = {}
-options['simulate_pedigree'] = 1
-options['simulate_mp'] = 0
-options['pedigree_save'] = 1
-options['pedigree_summary'] = 2
-options['messages'] = 'quiet'
-options['renumber'] = 1
-options['pedformat'] = 'asdxg'
+options["simulate_pedigree"] = 1
+options["simulate_mp"] = 0
+options["pedigree_save"] = 1
+options["pedigree_summary"] = 2
+options["messages"] = "quiet"
+options["renumber"] = True
+options["pedformat"] = "asdxg"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-	sizes = [100, 1000, 10000]
-	for size in sizes:
+    sizes = [50]
+    for size in sizes:
 
-		options['simulate_n'] = size
-		options['pedname'] = 'Simulated Pedigree ' + str(size)
-		options['pedfile'] = 'simulated_pedigree_' +  str(size) + '.ped'
-		print '\nStarted pedigree simulation with %s animals at %s' % (size, pyp_utils.pyp_nice_time())
-	        test = pyp_newclasses.loadPedigree(options)
-		print 'Finished pedigree simulation with %s animals at %s' % (size, pyp_utils.pyp_nice_time())
+        options["simulate_n"] = size
+        options["pedname"] = "Simulated Pedigree " + str(size)
+        options["pedfile"] = "simulated_pedigree_" + str(size) + ".ped"
+        print(
+            "\nStarted pedigree simulation with %s animals at %s"
+            % (size, pyp_utils.pyp_nice_time())
+        )
+        test = pyp_newclasses.load_pedigree(options)
+        print(
+            "Finished pedigree simulation with %s animals at %s"
+            % (size, pyp_utils.pyp_nice_time())
+        )
 
-		print '\n\tStarted computing inbreeding using VanRaden\'s method  at %s' % (pyp_utils.pyp_nice_time())
-		test_inbreeding_vr = pyp_nrm.inbreeding(test, method='vanraden')
-		print '\tFinished computing inbreeding using VanRaden\'s method  at %s' % (pyp_utils.pyp_nice_time())
+        print(
+            "\n\tStarted computing inbreeding using VanRaden's method  at %s"
+            % (pyp_utils.pyp_nice_time())
+        )
+        test_inbreeding_vr = pyp_nrm.inbreeding(test, method="vanraden")
+        print(
+            "\tFinished computing inbreeding using VanRaden's method  at %s"
+            % (pyp_utils.pyp_nice_time())
+        )
 
-		#print '\n\tStarted computing inbreeding using Meuwissen and Luo\'s method  at %s' % (pyp_utils.pyp_nice_time())
-		#test_inbreeding_ml = pyp_nrm.inbreeding(test, method='meu_luo')
-		#print '\tFinished computing inbreeding using Meuwissen and Luo\'s method  at %s' % (pyp_utils.pyp_nice_time())
+        # print('\n\tStarted computing inbreeding using Meuwissen and Luo\'s method  at %s' % (pyp_utils.pyp_nice_time()))
+        # test_inbreeding_ml = pyp_nrm.inbreeding(test, method='meu_luo')
+        # print('\tFinished computing inbreeding using Meuwissen and Luo\'s method  at %s' % (pyp_utils.pyp_nice_time()))
 
-		#print '\n\tStarted computing inbreeding using Meuwissen and Luo\'s modified method  at %s' % (pyp_utils.pyp_nice_time())
-		#test_inbreeding_qu = pyp_nrm.inbreeding(test, method='mod_meu_luo')
-		#print '\tFinished computing inbreeding using Meuwissen and Luo\'s modified method  at %s' % (pyp_utils.pyp_nice_time())
+        # print('\n\tStarted computing inbreeding using Meuwissen and Luo\'s modified method  at %s' % (pyp_utils.pyp_nice_time()))
+        # test_inbreeding_qu = pyp_nrm.inbreeding(test, method='mod_meu_luo')
+        # print('\tFinished computing inbreeding using Meuwissen and Luo\'s modified method  at %s' % (pyp_utils.pyp_nice_time()))
 
-		print '\n\tVanRaden                  : ', test_inbreeding_vr['metadata']
-		#print '\n\tMeuwissen and Luo         : ', test_inbreeding_ml['metadata']
-		#print '\n\tModified Meuwissen and Luo: ', test_inbreeding_qu['metadata']
+        print("\n\tVanRaden                  : ", test_inbreeding_vr["metadata"])
+        # print('\n\tMeuwissen and Luo         : ', test_inbreeding_ml['metadata'])
+        # print('\n\tModified Meuwissen and Luo: ', test_inbreeding_qu['metadata'])

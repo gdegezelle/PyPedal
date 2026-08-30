@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_db.py
@@ -14,31 +14,36 @@ from PyPedal import pyp_reports
 from PyPedal import pyp_graphics
 
 options = {}
-options['messages'] = 'verbose'
-options['pedfile'] = 'hartlandclark.ped'
-options['pedname'] = 'Pedigree from van Noordwijck and Scharloo (1981)'
-options['pedformat'] = 'asdb'
-options['pedigree_is_renumbered'] = 1
-options['database_name'] = 'new_db_test'
-options['dbtable_name'] = 'test'
-options['database_type'] = 'sqlite'
+options["messages"] = "verbose"
+options["pedfile"] = "hartlandclark.ped"
+options["pedname"] = "Pedigree from van Noordwijck and Scharloo (1981)"
+options["pedformat"] = "asdb"
+options["pedigree_is_renumbered"] = True
+options["database_name"] = "new_db_test"
+options["dbtable_name"] = "test"
+options["database_type"] = "sqlite"
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    example = pyp_newclasses.loadPedigree(options)
+    example = pyp_newclasses.load_pedigree(options)
     pyp_nrm.inbreeding(example)
 
-    print 'Dropping existing table...'
+    print("Dropping existing table...")
     pyp_db.deleteTable(example)
-    print 'Checking to see if the table is gone...'
+    print("Checking to see if the table is gone...")
     pyp_db.doesTableExist(example)
-    print 'Creating the table...'
+    print("Creating the table...")
     pyp_db.createPedigreeTable(example)
-    print 'Populating the table...'
+    print("Populating the table...")
     pyp_db.populatePedigreeTable(example)
 
-    mean_inbreeding = pyp_reports.meanMetricBy(example,metric='fa',byvar='by')
-    print mean_inbreeding
+    mean_inbreeding = pyp_reports.meanMetricBy(example, metric="fa", byvar="by")
+    print(mean_inbreeding)
 
-    pyp_graphics.plot_line_xy(mean_inbreeding, gfilename='great_tit_coi_by_year', \
-        gtitle='', gxlabel='Birth year', gylabel='Coefficient of inbreeding')
+    pyp_graphics.plot_line_xy(
+        mean_inbreeding,
+        gfilename="great_tit_coi_by_year",
+        gtitle="",
+        gxlabel="Birth year",
+        gylabel="Coefficient of inbreeding",
+    )

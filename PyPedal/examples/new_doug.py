@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_doug.py
@@ -11,20 +11,47 @@ from PyPedal import pyp_graphics
 from PyPedal import pyp_newclasses
 from PyPedal.pyp_utils import pyp_nice_time
 
-if __name__ == '__main__':
+import os
+ini_file = os.path.join(
+    os.path.dirname(__file__), 'new_doug.ini')
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_doug.ini')
+if __name__ == "__main__":
 
-    if example.kw['messages'] == 'verbose':
-        print '[INFO]: Calling pyp_graphics.draw_pedigree() at %s' % (pyp_nice_time())
+    example = pyp_newclasses.load_pedigree(options_file=ini_file)
 
-    pyp_graphics.draw_pedigree(example, gfilename='doug_below',
-        gtitle='Doug the German Shepherd (B)', gorient='p', gname=1, gdirec='',
-        gfontsize=12, garrow=0, gtitloc='b')
+    if example.kw["messages"] == "verbose":
+        print(f"[INFO]: Calling pyp_graphics.draw_pedigree() at {pyp_nice_time()}")
 
-    pyp_graphics.draw_pedigree(example, gfilename='doug_above',
-        gtitle='Doug the German Shepherd (A)', gorient='p', gname=1, gdirec='',
-        gfontsize=12, garrow=0, gtitloc='t')
+    pyp_graphics.draw_pedigree(
+        example,
+        gfilename="doug_below",
+        gtitle="Doug the German Shepherd (B)",
+        gorient="p",
+        gname=1,
+        gdirec="",
+        gfontsize=12,
+        garrow=0,
+        gtitloc="b",
+    )
 
-    pyp_graphics.draw_pedigree(example, gfilename='doug_p_rl_notitle',
-        gtitle='', gorient='p', gname=1, gdirec='RL', gfontsize=12)
+    pyp_graphics.draw_pedigree(
+        example,
+        gfilename="doug_above",
+        gtitle="Doug the German Shepherd (A)",
+        gorient="p",
+        gname=1,
+        gdirec="",
+        gfontsize=12,
+        garrow=0,
+        gtitloc="t",
+    )
+
+    pyp_graphics.draw_pedigree(
+        example,
+        gfilename="doug_p_rl_notitle",
+        gtitle="",
+        gorient="p",
+        gname=1,
+        gdirec="RL",
+        gfontsize=12,
+    )

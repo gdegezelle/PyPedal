@@ -1,57 +1,37 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_reporting.py
-# VERSION: 2.0.0b7 (11APRIL2006)
+# VERSION: 4.0.0-rc4
 # AUTHOR: John B. Cole, PhD (jcole@aipl.arsusda.gov)
 # LICENSE: LGPL
 ###############################################################################
+# Supported 4.0 workflow: load a small pedigree and write headless PDF
+# reports with ReportLab (the reports extra). No GUI is required.
+###############################################################################
 
-from PyPedal import pyp_graphics
-from PyPedal import pyp_network
+import tempfile
+from pathlib import Path
+
 from PyPedal import pyp_newclasses
-from PyPedal import pyp_nrm
-#from PyPedal import pyp_reports
-from PyPedal import pyp_metrics
+from PyPedal import pyp_reports
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_reporting.ini')
-    #example.printoptions()
+    example = pyp_newclasses.load_pedigree(options_file="new_reporting.ini")
+    out_dir = Path(tempfile.mkdtemp(prefix="pypedal_pdf_reports_"))
 
-    #pyp_reports.pdfPedigreeMetadata(example, titlepage = 1, reporttitle = 'Metadada for My Pedigree', reportauthor = 'John B. Cole, PhD')
-
-    #pyp_reports.pdfPedigreeMetadata(example, titlepage = 1, reportauthor = 'John B. Cole, PhD', reportfile = 'metadata_report.pdf')
-
-    ib = pyp_nrm.inbreeding(example)
-    #coi_by_year = pyp_reports.meanMetricBy(example,metric='fa',byvar='by',createpdf=1)
-    #coi_by_year
-
-    #print ib
-    #for _e in example.pedigree:
-        #print _e.name, _e.fa
-
-    print example.kw['paper_size']
-
-    #print example.backmap
-    ## Use with new_renumbering.ped.
-    #pyp_reports.pdf3GenPed([56,72], example)
-    ## Use with horse.ped.
-    #pyp_reports.pdf3GenPed(["Pie's Joseph","Green's Dingo"], example)
-    #pyp_reports.pdf3GenPed("Green's Dingo", example,reportfile='greens_dingo_pedigree.pdf')
-    #pyp_reports.pdf3GenPed(example.namemap.keys(), example)
-
-    pyp_graphics.draw_pedigree(example, gfilename='greens_dingo_pedigree', \
-		gtitle="Green's Dingo pedigree", gname=1, gformat='ps', garrow=1)
-
-    #matings = {}
-    #for s in example.metadata.unique_sire_list:
-    #    for d in example.metadata.unique_dam_list:
-    #        matings[example.pedigree[s-1].name] = example.pedigree[d-1].name
-    #pyp_metrics.mating_coi_group(matings,example,names=1)
-
-    pg = pyp_network.ped_to_graph(example)
-    #print pg, pg.degree(), pg.nodes()
-    census = pyp_network.dyad_census(pg,debug=1)
-    print 'max dyads:\t', ( ( pg.order()*(pg.order()-1) ) / 2 )
-    print 'census:\t\t', census
+    metadata_path = pyp_reports.pdf_pedigree_metadata(
+        example,
+        titlepage=1,
+        reporttitle="Mrode pedigree metadata",
+        reportfile=str(out_dir / "mrode_metadata.pdf"),
+    )
+    three_path = pyp_reports.pdf_three_gen_ped(
+        5,
+        example,
+        reportfile=str(out_dir / "mrode_three_generation.pdf"),
+    )
+    print(f"metadata PDF: {metadata_path}")
+    print(f"three-generation PDF: {three_path}")
+    print(f"reports written under {out_dir}")

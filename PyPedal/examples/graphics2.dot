@@ -1,0 +1,72 @@
+digraph graphics2pedigree {
+labelloc=b;
+ratio=auto;
+orientation=portrait;
+ordering=out;
+center=true;
+label=graphics2pedigree;
+concentrate=true;
+labeljust=c;
+page="8.5,11";
+size="7.5,10";
+subgraph sg1 {
+rank="1 2 3 4 5 6";
+1 [fontname=Helvetica, fontsize=10, height="0.35"];
+2 [fontname=Helvetica, fontsize=10, height="0.35"];
+3 [fontname=Helvetica, fontsize=10, height="0.35"];
+4 [fontname=Helvetica, fontsize=10, height="0.35"];
+5 [fontname=Helvetica, fontsize=10, height="0.35"];
+6 [fontname=Helvetica, fontsize=10, height="0.35"];
+}
+
+subgraph sg3 {
+rank="9 10 11 12 13 14 15 16 19 20";
+9 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 -> 9;
+8 -> 9;
+10 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 -> 10;
+8 -> 10;
+11 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 -> 11;
+8 -> 11;
+12 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 -> 12;
+8 -> 12;
+13 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 -> 13;
+8 -> 13;
+14 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 -> 14;
+8 -> 14;
+15 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 -> 15;
+8 -> 15;
+16 [fontname=Helvetica, fontsize=10, height="0.35"];
+7 -> 16;
+8 -> 16;
+19 [fontname=Helvetica, fontsize=10, height="0.35"];
+17 -> 19;
+18 -> 19;
+20 [fontname=Helvetica, fontsize=10, height="0.35"];
+17 -> 20;
+18 -> 20;
+}
+
+subgraph sg2 {
+rank="7 8 17 18";
+7 [fontname=Helvetica, fontsize=10, height="0.35"];
+6 -> 7;
+5 -> 7;
+8 [fontname=Helvetica, fontsize=10, height="0.35"];
+4 -> 8;
+3 -> 8;
+17 [fontname=Helvetica, fontsize=10, height="0.35"];
+2 -> 17;
+1 -> 17;
+18 [fontname=Helvetica, fontsize=10, height="0.35"];
+2 -> 18;
+1 -> 18;
+}
+
+}

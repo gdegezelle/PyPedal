@@ -1,0 +1,69 @@
+# PyPedal 4.0 user manual
+#
+# Markdown sources live in docs/manual/.
+site_name: PyPedal
+site_description: PyPedal 4.0 user manual
+docs_dir: docs/manual
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+  features:
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Getting started:
+      - Introduction: index.md
+      - Installation: installation.md
+      - Your first pedigree: first-pedigree.md
+      - Your first analysis: first-analysis.md
+      - IDs and missing parents: ids-and-missing-parents.md
+  - Preparing data:
+      - Pedigree input: pedigree-input.md
+      - File formats: pedigree-formats.md
+      - Animal identities and names: animal-identities-and-names.md
+      - Birth dates and chronology: birth-dates-and-chronology.md
+      - Validation: validation.md
+      - Saving and exporting: saving-and-exporting.md
+  - Common analyses:
+      - Inbreeding: inbreeding.md
+      - Relationships: relationships.md
+      - Test mating: mating.md
+      - Effective founders: effective-founders.md
+      - Effective ancestors: effective-ancestors.md
+      - Founder genome equivalents: founder-genome-equivalents.md
+      - Lacy and Boichard: lacy-and-boichard.md
+      - Generation intervals: generation-intervals.md
+      - Gene dropping: gene-dropping.md
+  - Output and applications:
+      - PDF reports: pdf-reports.md
+      - Graphics: graphics.md
+      - SQLite: sqlite.md
+      - Desktop application: desktop-application.md
+      - Genomic methods: genomics.md
+      - Limitations: limitations.md
+  - Large pedigrees:
+      - Large pedigrees: large-pedigrees.md
+  - Recipes:
+      - Recipes: recipes.md
+  - Reference:
+      - Configuration: configuration.md
+      - Pedigree format codes: pedigree-format-codes.md
+      - Object model: object-model.md
+      - API overview: api-overview.md
+      - Glossary: glossary.md
+      - References: references.md
+      - Notices: notices.md
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - tables
+  - admonition
+
+# Local HTML only. Do not configure a remote site, analytics, or deploy hook.
+strict: true

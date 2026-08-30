@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_hartl.py
@@ -11,15 +11,20 @@ from PyPedal import pyp_graphics
 from PyPedal import pyp_newclasses
 from PyPedal import pyp_nrm
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_hartl.ini')
+    example = pyp_newclasses.load_pedigree(options_file="new_hartl.ini")
 
-    pyp_graphics.draw_pedigree(example, gfilename='hartlandclark',
-        gtitle='Pedigree from van Noordwijck and Scharloo (1981)',
-        gorient='p', gname=0, gdirec='', gfontsize=12, garrow=0)
+    pyp_graphics.draw_pedigree(
+        example,
+        gfilename="hartlandclark",
+        gtitle="Pedigree from van Noordwijck and Scharloo (1981)",
+        gorient="p",
+        gname=0,
+        gdirec="",
+        gfontsize=12,
+        garrow=0,
+    )
 
     example_inbreeding = pyp_nrm.inbreeding(example)
-    print example_inbreeding
-
-	
+    print(example_inbreeding)

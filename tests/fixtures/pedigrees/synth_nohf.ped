@@ -1,0 +1,13 @@
+% asdg
+# synth_nohf.ped -- control for synth_hf.ped. Identical except animal 5's
+# unknown dam is filled in with founder 2 (no half-founder).
+#
+# The `g` column matches synth_hf.ped so both files load on the same terms.
+# The pair differs in one parental field only.
+1 0 0 1
+2 0 0 1
+3 0 0 1
+4 1 2 2
+5 3 2 2
+6 4 5 3
+7 4 5 3

@@ -20,7 +20,7 @@ if __name__ == '__main__':
     options['renumber'] = 1
     options['pedfile'] = 'merge1.ped'
     options['pedformat'] = 'asd'
-    merge1 = pyp_newclasses.loadPedigree(options)
+    merge1 = pyp_newclasses.load_pedigree(options)
 
     options2 = {}
     options2['pedname'] = 'Fake Pedigree 2'
@@ -28,9 +28,9 @@ if __name__ == '__main__':
     options2['renumber'] = 1
     options2['pedfile'] = 'merge2.ped'
     options2['pedformat'] = 'asd'
-    merge2 = pyp_newclasses.loadPedigree(options2)
+    merge2 = pyp_newclasses.load_pedigree(options2)
 
-    print merge1.kw['pedname']
-    print merge2.kw['pedname']
+    print(merge1.kw['pedname'])
+    print(merge2.kw['pedname'])
 
     merge3 = merge1 + merge2

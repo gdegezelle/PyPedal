@@ -1,14 +1,20 @@
-CREDITS - PyPedal Version 2.0.0
--------------------------------
+CREDITS - PyPedal 4.0.0-rc8
+---------------------------
 
-This file lists the people known to be responsible for the
-PyPedal package for pedigree analysis.
+This file lists people known to be responsible for, or to have helped
+with, the PyPedal package for pedigree analysis. It is historical credit,
+not a statement of current legal copyright.
 
-CORE DEVELOPERS
+ORIGINAL AUTHOR
 
-The following people do the day-to-day development of PyPedal:
+John B. Cole (john.b.cole@gmail.com)
 
-John B. Cole (jcole@lsu.edu)
+Historical addresses recorded in older trees include jcole@lsu.edu and
+john.cole@ars.usda.gov.
+
+CURRENT MAINTAINER
+
+Geert Degezelle (geertdegezelle@telenet.be)
 
 OTHER CONTRIBUTORS
 

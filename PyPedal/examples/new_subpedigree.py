@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_subpedigree.py
@@ -13,17 +13,17 @@ from PyPedal import pyp_nrm
 from PyPedal import pyp_utils
 from PyPedal.pyp_utils import pyp_nice_time
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_subpedigree.ini')
-    print '='*70
+    example = pyp_newclasses.load_pedigree(options_file="new_subpedigree.ini")
+    print("=" * 70)
     keepid = []
-    for k in ['Clover','Dewey','Wicket']:
-        ped = pyp_nrm.recurse_pedigree(example,example.idmap[example.namemap[k]],[])
+    for k in ["Clover", "Dewey", "Wicket"]:
+        ped = pyp_nrm.recurse_pedigree(example, example.idmap[example.namemap[k]], [])
         for p in ped:
             if p.animalID not in keepid:
                 keepid.append(p.animalID)
         if example.idmap[example.namemap[k]] not in keepid:
             keepid.append(example.idmap[example.namemap[k]])
-    example2 = pyp_utils.subpedigree(example,keepid)
+    example2 = pyp_utils.subpedigree(example, keepid)
     example2.metadata.printme()

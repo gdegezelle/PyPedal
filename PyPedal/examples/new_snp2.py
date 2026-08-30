@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_graphics3.py
@@ -11,20 +11,19 @@ from PyPedal import pyp_newclasses
 from PyPedal import pyp_snp
 
 options = {
-	'pedname': 'Made-up data for testing new SNP code',
-	'pedformat': 'asdP',
-	'pedfile': 'fake_genotypes.ped',
-	'snpfile': 'fake_genotypes.txt',
-	'sepchar': "\t",
-	'snp_sepchar': "\t",
-	'messages': 'verbose',
-	'debug': True,
+    "pedname": "Made-up data for testing new SNP code",
+    "pedformat": "asd",
+    "pedfile": "fake_genotypes.ped",
+    "snpfile": "fake_genotypes.txt",
+    "sepchar": "\t",
+    "snp_sepchar": "\t",
+    "messages": "verbose",
+    "debug": True,
 }
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-	example = pyp_newclasses.loadPedigree(options=options)
+    example = pyp_newclasses.load_pedigree(options=options)
 
-	g_homo = pyp_snp.compute_genomic_homozygosity_from_snp(example, debug=True)
-
-	print g_homo['metadata']
+    g_homo = pyp_snp.compute_genomic_homozygosity_from_snp(example)
+    print(g_homo)

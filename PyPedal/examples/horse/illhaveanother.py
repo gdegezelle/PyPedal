@@ -8,4 +8,4 @@ options['renumber'] = 1
 
 if __name__ == '__main__':
 
-	iha = pyp_newclasses.loadPedigree(options)
+	iha = pyp_newclasses.load_pedigree(options)

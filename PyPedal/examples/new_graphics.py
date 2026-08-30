@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_graphics.py
@@ -14,27 +14,59 @@ from PyPedal import pyp_nrm
 from PyPedal import pyp_reports
 from PyPedal.pyp_utils import pyp_nice_time
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_graphics.ini')
-#     example_inbreeding = pyp_nrm.inbreeding(example)
+    example = pyp_newclasses.load_pedigree(options_file="new_graphics.ini")
+    #     example_inbreeding = pyp_nrm.inbreeding(example)
 
-    pyp_graphics.rmuller_spy_matrix_pil(example.nrm.nrm, fname='dog_sparsity.png', cutoff=0.01, do_outline=0, height=example.nrm.nrm.shape[0], width=example.nrm.nrm.shape[0])
+    pyp_graphics.rmuller_spy_matrix_pil(
+        example.nrm.nrm,
+        fname="dog_sparsity.png",
+        cutoff=0.01,
+        do_outline=0,
+        height=example.nrm.nrm.shape[0],
+        width=example.nrm.nrm.shape[0],
+    )
 
-    pyp_graphics.rmuller_pcolor_matrix_pil(example.nrm.nrm, fname='dog_long_pcolored.png', do_outline=0, height=example.nrm.nrm.shape[0], width=example.nrm.nrm.shape[0])
+    pyp_graphics.rmuller_pcolor_matrix_pil(
+        example.nrm.nrm,
+        fname="dog_long_pcolored.png",
+        do_outline=0,
+        height=example.nrm.nrm.shape[0],
+        width=example.nrm.nrm.shape[0],
+    )
 
-    #pyp_db.loadPedigreeTable(example)
+    # pyp_db.loadPedigreeTable(example)
     pyp_db.deleteTable(example)
     pyp_db.populatePedigreeTable(example)
-    coi_by_year = pyp_reports.meanMetricBy(example, metric='fa', byvar='by')
-    print 'coi_by_year: ', coi_by_year
-    cby = coi_by_year
-    del(cby[1900])
-    pyp_graphics.plot_line_xy(coi_by_year, gfilename='dog_coi_by_year',
-        gtitle='', gxlabel='Birth year', gylabel='Coefficient of inbreeding')
+    coi_by_year = pyp_reports.meanMetricBy(example, metric="fa", byvar="by")
+    print("coi_by_year: ", coi_by_year)
+    cby = dict(coi_by_year)
+    cby.pop(None, None)
+    pyp_graphics.plot_line_xy(
+        cby,
+        gfilename="dog_coi_by_year",
+        gtitle="",
+        gxlabel="Birth year",
+        gylabel="Coefficient of inbreeding",
+    )
 
-    pyp_graphics.draw_pedigree(example, gfilename='dog_pedigree', gtitle='Dog pedigree',gformat='jpg',gsize='f')
+    pyp_graphics.draw_pedigree(
+        example,
+        gfilename="dog_pedigree",
+        gtitle="Dog pedigree",
+        gformat="jpg",
+        gsize="f",
+    )
 
-    pyp_graphics.plot_founders_by_year(example, gfilename='dog_founders_by_year', gtitle='Number of founders within each birthyear')
+    pyp_graphics.plot_founders_by_year(
+        example,
+        gfilename="dog_founders_by_year",
+        gtitle="Number of founders within each birthyear",
+    )
 
-    pyp_graphics.plot_founders_pct_by_year(example, gfilename='dog_founder_pct', gtitle='Percentage of founders within each birthyear')
+    pyp_graphics.plot_founders_pct_by_year(
+        example,
+        gfilename="dog_founder_pct",
+        gtitle="Percentage of founders within each birthyear",
+    )

@@ -1,0 +1,11 @@
+--------------------------------------------------------------------------------
+Created by pyp_metrics.effective_founders_lacy at Thu Jan 23 18:37:40 2025
+--------------------------------------------------------------------------------
+7 animals in pedigree
+3 founders: {1, 2, 3}
+Founder contributions: {1: 1.0, 2: 1.0, 3: 1.0}
+Proportional founder contributions: {1: 0.3333333333333333, 2: 0.3333333333333333, 3: 0.3333333333333333}
+Sum of founder contributions: 3.0
+Sum of squared proportional contributions: 0.3333333333333333
+Effective founder number: 3.0
+--------------------------------------------------------------------------------

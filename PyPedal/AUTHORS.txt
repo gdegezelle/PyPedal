@@ -1,16 +1,23 @@
 ###############################################################################
 # NAME: AUTHORS
-# VERSION: 2.0.0rc9 (01SEPTEMBER2010)
-# AUTHOR: John B. Cole, PhD (john.cole@ars.usda.gov)
-# LICENSE: LGPL
+# VERSION: 4.0.0-rc8
+# LICENSE: LGPL-2.1-or-later
 ###############################################################################
-# This file lists the people who have contributed either code or files and
-# testing help to PyPedal.
+# People who contributed code, files, or testing help to PyPedal.
+# Original authorship is not rewritten. This file is product metadata, not a
+# legal copyright assignment.
 ###############################################################################
 
-AUTHORS
--------
-John B. Cole (john.cole@ars.usda.gov)
+ORIGINAL AUTHOR
+---------------
+John B. Cole (john.b.cole@gmail.com)
+
+Historical addresses recorded in older trees:
+john.cole@ars.usda.gov
+
+CURRENT MAINTAINER
+------------------
+Geert Degezelle (geertdegezelle@telenet.be)
 
 TESTING/FEEDBACK
 ----------------

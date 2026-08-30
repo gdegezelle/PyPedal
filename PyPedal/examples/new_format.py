@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_format.py
@@ -9,8 +9,12 @@
 
 from PyPedal import pyp_newclasses
 
-if __name__ == '__main__':
+import os
+ini_file = os.path.join(
+    os.path.dirname(__file__), 'new_format.ini')
+
+if __name__ == "__main__":
 
     # Example taken from Boichard et al. (1997), Figure 2 / Table II.
-    example2a = pyp_newclasses.loadPedigree(optionsfile='new_format.ini')
+    example2a = pyp_newclasses.load_pedigree(options_file=ini_file)
     example2a.metadata.printme()

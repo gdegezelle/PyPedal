@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_ids.py
@@ -9,9 +9,18 @@
 
 from PyPedal import pyp_newclasses
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_ids.ini')
+    example = pyp_newclasses.load_pedigree(options_file="new_ids.ini")
 
     for _p in example.pedigree:
-        _p.printme()
+        print(
+            _p.animalID,
+            _p.originalID,
+            _p.sireID,
+            _p.damID,
+            _p.name,
+            _p.sex,
+            _p.gen,
+            getattr(_p, "userField", ""),
+        )

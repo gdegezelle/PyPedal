@@ -16,8 +16,6 @@ PyPedal/*.kde*
 PyPedal/gui
 PyPedal/locale
 PyPedal/*.bmp
-PyPedal/doc/tools
-PyPedal/doc/perl
 PyPedal/examples/jersey
 PyPedal/examples/sandcut
 PyPedal/examples/viszla
@@ -38,6 +36,9 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
+venv/
+.venv/
+_renumbered_*
 build/
 develop-eggs/
 dist/
@@ -77,3 +78,16 @@ PyPedal/.idea/
 # Things that aren't mine
 PyPedal/tests/
 PyPedal/research/
+
+# IDEs and editors
+/.idea
+
+# Coverage (Phase 2 stage E5)
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Tooling caches
+.ruff_cache/
+.mypy_cache/

@@ -1,0 +1,22 @@
+% asdg
+# Fixture proving the `gen` argument of a_effective_founders_boichard selects
+# the reference population. pedformat asdg. Every animal has both parents, so
+# the disputed one-parent-known branch (BL-3) is NOT exercised.
+#
+#   1..4  founders, generation 1
+#   5,6   1 x 2, generation 2   -- descend from founders 1,2 ONLY
+#   7     5 x 6, generation 3
+#   8     3 x 4, generation 3   -- brings founders 3,4 into generation 3
+#
+# reference = generation 2 -> founders 1,2 contribute 0.5 each, 3,4 contribute 0
+#             sum q^2 = 0.5      f_e = 2
+# reference = generation 3 -> all four contribute 0.25
+#             sum q^2 = 0.25     f_e = 4
+1 0 0 1
+2 0 0 1
+3 0 0 1
+4 0 0 1
+5 1 2 2
+6 1 2 2
+7 5 6 3
+8 3 4 3

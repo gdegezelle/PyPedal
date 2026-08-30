@@ -1,0 +1,78 @@
+# boichard_fig2.ped -- PUBLISHED WORKED EXAMPLE, transcribed with provenance.
+#
+# SOURCE: Boichard D, Maignel L, Verrier E (1997) "The value of using
+#         probabilities of gene origin to measure genetic variability in a
+#         population." Genet Sel Evol 29:5-23.
+#         FIGURE 2 and TABLE II, article pages 11-12.
+#         (HAL scan hal-00894153; PDF page 9 = article page 12.)
+#
+# All 20 animals carry the paper's own numbering.
+#
+# TOPOLOGY, read from the figure (bar convention; left parent recorded as sire,
+# right as dam -- the paper marks no sexes and no published value depends on it):
+#
+#   Family 1:  1 x 2 -> 5
+#              3 x 4 -> 6
+#              5 x 6 -> 7, 8, 9, 10, 11, 12, 13, 14
+#
+#   Family 2:  15 x 16 -> 17, 18
+#              17 x 18 -> 19, 20
+#
+#   founders: 1, 2, 3, 4 (family 1) and 15, 16 (family 2) -- six in total,
+#   which is the "Total No of founders" column of Table II.
+#
+#   population under study: {7..14} u {19, 20} -- ten animals, drawn inside
+#   the ellipse. Family 1 contributes 8 of them, family 2 contributes 2.
+#
+# PUBLISHED EXPECTED VALUES (Table II)
+#
+#     Population   founders   f_e    f_a    N_g
+#     Total            6      5.6    2.94   2.5
+#     Family 1         4      4.0    2.0    1.8
+#     Family 2         2      2.0    2.0    1.1
+#
+#   f_e and f_a are deterministic and are the targets for the Appendix A and
+#   Appendix B oracles. N_g is a Monte-Carlo gene-drop figure and is NOT an
+#   exact target.
+#
+# CORROBORATION -- this is not a guessed topology. Hand-derivation from
+# Appendices A and B reproduces all six deterministic values:
+#
+#     Total     f_e = 1/(4*0.2^2 + 2*0.1^2)          = 5.556  (published 5.6)
+#               f_a = 1/(0.4^2+0.4^2+0.1^2+0.1^2)    = 2.941  (published 2.94)
+#     Family 1  f_e = 4.0, f_a = 1/(0.5^2+0.5^2)     = 2.0    (published 4.0, 2.0)
+#     Family 2  f_e = 2.0, f_a = 2.0                          (published 2.0, 2.0)
+#
+#   The family figures require restricting the reference population to that
+#   family's offspring; the PyPedal-free oracle takes the reference set
+#   explicitly, so one fixture serves all three rows.
+#
+# GENERATIONS are labels designating the reference population, not biological
+# depth: 1 = ancestors, 2 = the population under study. Note that this puts 17
+# and 18 in generation 1 even though they are offspring of 15 x 16 -- they are
+# ancestors of the population, not members of it, which is exactly the
+# distinction the label encodes.
+#
+# pedformat: asdg
+# Columns are:
+#    Animal Sire Dam Generation
+1 0 0 1
+2 0 0 1
+3 0 0 1
+4 0 0 1
+5 1 2 1
+6 3 4 1
+7 5 6 2
+8 5 6 2
+9 5 6 2
+10 5 6 2
+11 5 6 2
+12 5 6 2
+13 5 6 2
+14 5 6 2
+15 0 0 1
+16 0 0 1
+17 15 16 1
+18 15 16 1
+19 17 18 2
+20 17 18 2

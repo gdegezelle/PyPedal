@@ -1,0 +1,28 @@
+# Development hooks. Install with:  pre-commit install
+#
+# Deliberately light. The repository-delta guard is a pytest fixture, not a
+# hook -- a pre-commit hook cannot snapshot a test-suite run -- and there is no
+# whole-tree formatter here, because Phase 2 does not do a repo-wide reformat.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      # Staged files only, so this never turns into a repo-wide clean-up.
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(build/|docs/manual-source/|PyPedal/examples/.*\.(ped|dat))
+      - id: end-of-file-fixer
+        exclude: ^(build/|docs/manual-source/|PyPedal/examples/.*\.(ped|dat))
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      # The 269 MB pickle in PyPedal/examples is gitignored; this stops a
+      # similar one being committed by accident.
+      - id: check-added-large-files
+        args: [--maxkb=2000]

@@ -1,0 +1,184 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PyPedal"
+version = "4.0.0rc8"
+description = "Tools for pedigree analysis"
+readme = "README.md"
+# This project follows Semantic Versioning. 4.0.0 is a MAJOR release because
+# the Python floor, exception contract, unknown-chronology model, and several
+# scientific corrections differ from PyPedal 2.0.4. The PEP 440 identity is
+# 4.0.0rc8 (human: 4.0.0-rc8). See CHANGELOG.md and MIGRATION.md.
+requires-python = ">=3.12"
+authors = [
+    { name = "John B. Cole, PhD", email = "john.b.cole@gmail.com" }
+]
+maintainers = [
+    { name = "Geert Degezelle", email = "geertdegezelle@telenet.be" }
+]
+# SPDX identity is LGPL-2.1-or-later. setuptools 75 (the current packaging
+# toolchain) does not yet accept the PEP 639 string form `license = "..."`,
+# so the equivalent `text` table is used. license-files is pinned so
+# setuptools cannot auto-discover a stale GPL or ADODB file.
+license = { text = "LGPL-2.1-or-later" }
+keywords = ["Python", "pedigree", "genetic", "analysis", "diversity"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Information Analysis"
+]
+dependencies = [
+    # Floors track what the >=3.12 requirement already implies. pyparsing was
+    # listed but is imported nowhere in the package, so it is dropped.
+    # matplotlib moved to the `graphics` extra: pyp_graphics imports it lazily
+    # inside each plotting function, so the library is fully usable without it.
+    # networkx is left UNPINNED on purpose -- an unpinned dependency is not a
+    # defect, and a bound should be added only when an identified
+    # incompatibility justifies it, recorded next to the bound.
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "networkx",
+    "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+graphics = ["matplotlib", "pydot", "graphviz", "pillow"]
+reports = ["reportlab"]
+gui = ["customtkinter"]
+graphviz-extra = ["pygraphviz"]
+test = ["pytest", "pypdf"]
+# Every FEATURE, so a user can install the whole library. Deliberately not the
+# toolchain: development tools belong in `dev`.
+all = [
+    "matplotlib",
+    "pydot",
+    "graphviz",
+    "pillow",
+    "reportlab",
+    "customtkinter",
+]
+# Development toolchain. Not part of `all` -- installing PyPedal to use it
+# should not drag in a linter and a type checker.
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pypdf",
+    "ruff",
+    "mypy",
+    "pre-commit",
+]
+# Living user manual (MkDocs). Not a runtime extra and not part of `all`.
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.5,<10",
+]
+
+[project.scripts]
+pypedal = "PyPedal.pyp_app:main"
+
+[project.gui-scripts]
+pypedal-gui = "PyPedal.pyp_app:main"
+
+[tool.setuptools]
+license-files = ["LICENSE"]
+# Default include-package-data=true copies MANIFEST.in paths that live inside
+# the PyPedal package into the *wheel* as well as the sdist. That is how
+# PyPedal/examples entered the RC3 wheel. Keep examples in the sdist via
+# MANIFEST.in; ship only explicit production data in the wheel.
+# A stale gitignored build/ tree can re-pack old files; packaging tests wipe it.
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ["PyPedal"]
+exclude = ["PyPedal.examples*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+PyPedal = ["*.ini", "*.txt"]
+
+[tool.setuptools.exclude-package-data]
+PyPedal = ["examples", "examples/*", "examples/**/*"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+# --strict-markers makes an APPLIED but unregistered marker an error rather
+# than a warning, so @pytest.mark.integraton never silently decorates nothing.
+# Note it does not validate `-m` EXPRESSIONS: `pytest -m nonsense` still just
+# deselects everything and exits 0, which is why the CI job runs the two
+# selections as separate commands whose collected counts are visible.
+addopts = "--strict-markers"
+markers = [
+    "integration: runs example scripts or large pedigrees as subprocesses; slow, deselected by default and run explicitly in CI",
+]
+
+[tool.ruff]
+# build/ is a stale full copy of the package; linting it would duplicate
+# every report. Examples are data and scripts, not linted library code.
+extend-exclude = ["build", "PyPedal/examples"]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+# Deliberately narrow to start. A broad rule set on a codebase this age produces
+# thousands of findings, which get blanket-ignored and then mean nothing. These
+# four are the ones that catch real defects rather than style: F (pyflakes --
+# undefined names, unused imports), E (pycodestyle errors), I (import order),
+# UP (constructs the >=3.12 floor makes obsolete).
+#
+# Of this set, exactly three rules are BLOCKING -- F821, F811 and F601 -- and
+# everything else is reporting-only. The blocking subset is not expressed here,
+# because `select` governs what is reported: it is applied as an explicit
+# `ruff check --select F821,F811,F601` in the CI lint job and in
+# tests/test_lint_gates.py, which is what makes it enforceable locally as well.
+# Those three are correctness rather than style, and each has found a real
+# defect in this repository. Changing the subset means changing all three
+# places; the test names them so a drift is a test failure.
+select = ["E", "F", "I", "UP"]
+ignore = [
+    "E501",  # line length; enforced by the formatter, not the linter
+    "E741",  # ambiguous names like `l` -- pervasive in the ported code and
+             # renaming them is a separate, reviewable change
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Re-exports for backwards compatibility; the names are unused by design.
+"PyPedal/__init__.py" = ["F401"]
+"tests/oracles/__init__.py" = ["F401", "E402"]
+
+[tool.ruff.format]
+# Format is checked on changed files only. There is no whole-tree
+# reformatting pass; it would destroy git blame on scientific modules.
+docstring-code-format = false
+
+[tool.coverage.run]
+source = ["PyPedal"]
+omit = ["PyPedal/examples/*", "PyPedal/pyp_tests.py"]
+
+[tool.coverage.report]
+# Reported, not gated. A threshold is worth setting once the real number is
+# known; setting one now would either be vacuous or immediately wrong.
+show_missing = true
+exclude_lines = ["pragma: no cover", "if __name__ == .__main__.:"]
+
+[tool.mypy]
+# Production library modules only. Examples are data and scripts, not typed
+# library code, and they are not in the wheel. Reporting-only: mypy does not
+# fail the 4.0 release. Historical annotation debt is measured, not zeroed.
+files = ["PyPedal"]
+exclude = ["PyPedal/examples/"]
+python_version = "3.12"
+ignore_missing_imports = true
+# The kw dict is ~80 untyped options threaded through every module.
+disallow_untyped_defs = false
+check_untyped_defs = false
+warn_unused_ignores = true

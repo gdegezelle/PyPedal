@@ -1,0 +1,17 @@
+# Ballou fixture isolating "inbred individual, non-inbred parents => f_a = 0".
+# pedformat asd.
+#
+#   1,2,3  unrelated non-inbred founders
+#   4      1 x 2                     F=0
+#   5      1 x 3                     F=0
+#   6      4 x 5  (half sibs via 1)  F=0.125, f_a=0
+#
+# Animal 6 IS inbred, yet its ancestral inbreeding is zero: neither parent was
+# inbred, so no allele it carries has been through inbreeding in the past. Every
+# f_a in this pedigree is 0.
+1 0 0
+2 0 0
+3 0 0
+4 1 2
+5 1 3
+6 4 5

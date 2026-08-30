@@ -1,38 +1,35 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-###############################################################################
-# NAME: new_graphics3.py
-# VERSION: 2.0.0b15 (18SEPTEMBER2006)
+#######################################################################
+# NAME: duplicates.py
+# VERSION: 2.0.0b15 (18SEPTEMBER2006); updated for PyPedal 4.0
 # AUTHOR: John B. Cole, PhD (jcole@aipl.arsusda.gov)
 # LICENSE: LGPL
-###############################################################################
+#######################################################################
 
-from PyPedal import pyp_graphics
-from PyPedal import pyp_utils
 from PyPedal import pyp_newclasses
-from PyPedal import pyp_metrics
+from PyPedal import pyp_utils
 
 options = {
-        'pedname': 'Test Duplicate Handling',
-        'pedformat': 'asd',
-        'pedfile': 'duplicates.ped',
-        'sepchar': ",",
-        'messages': 'verbose',
-        'debug': True,
-	'assign_sexes': True,
-	'renumber': 1,
-	'resolve_duplicates': 1,
+    "pedname": "Test Duplicate Handling",
+    "pedformat": "asd",
+    "pedfile": "duplicates.ped",
+    "sepchar": ",",
+    "messages": "verbose",
+    "debug": True,
+    "assign_sexes": True,
+    "renumber": False,
+    "reorder": False,
 }
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-	example = pyp_newclasses.loadPedigree(options=options, debugLoad=True)
+    example = pyp_newclasses.load_pedigree(options=options, debug_load=True)
 
-	for d in example.duplicates:
-		print d
-
-	gtitle = 'Pedigree of duplicate animals'
-
-	pyp_graphics.new_draw_pedigree(example, gfilename='duplicates', gtitle=gtitle,
-		gformat='jpg', gorient='l', gdirec='RL', gtitloc='t', gpenwidth=2, \
-		gfontsize=14)
+    print("Duplicate detection (not DUPLICATE_REDIRECT / merge):")
+    for d in pyp_utils.list_duplicates(example):
+        print(d)
+    print(
+        "PyPedal 4.0 refuses to reorder/renumber a pedigree that contains "
+        "duplicate animal IDs. There is no DUPLICATE_REDIRECT."
+    )

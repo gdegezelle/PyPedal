@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      # Do not cancel 3.13 because 3.14 failed. Knowing which versions break is
+      # the point of a matrix.
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      # Two explicit invocations. `pytest -m <expr>` does NOT validate the
+      # expression -- a typo deselects everything and exits 0 -- so both
+      # selections run as separate steps with their collected counts visible.
+      # A marker that silently matched nothing would show up as a count of 0.
+      - name: Unit tests
+        run: pytest tests/ -m "not integration" -v --cov --cov-report=term-missing
+
+      - name: Integration tests (example scripts)
+        run: pytest tests/ -m integration -v
+
+      # The real guard against the suite writing into the repository is
+      # repository_delta_guard in tests/conftest.py: a session fixture that
+      # hashes a filesystem manifest before and after the run and requires them
+      # to match, covering tracked, untracked AND ignored files. It has already
+      # run, inside the two pytest steps above.
+      #
+      # This step only adds the tracked-file check, and deliberately does NOT
+      # pass --ignored=matching: that flag REPORTS ignored files rather than
+      # suppressing them, so requiring its output to be empty would require a
+      # repository with no ignored files at all -- which after `pip install -e`
+      # and a pytest run means egg-info and __pycache__, i.e. always red.
+      - name: No tracked file was modified by the test run
+        run: |
+          git status --porcelain > /tmp/after.txt
+          if [ -s /tmp/after.txt ]; then
+            echo "The test run modified tracked files:"
+            cat /tmp/after.txt
+            exit 1
+          fi
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      # Install the pinned toolchain rather than a floating `pip install ruff`,
+      # so the blocking gate below runs the same Ruff version as local
+      # development and cannot change verdict on a Ruff release.
+      - run: pip install -e ".[dev]"
+
+      # BLOCKING. These three rules are correctness, not style: a name that is
+      # never bound (F821), a definition silently replaced by a later one
+      # (F811), and a dict key that discards an earlier value (F601). Each has
+      # found a real defect in this repository -- F821 found the pyp_graphics
+      # and pyp_jbc NameErrors, F811 the duplicate import in pyp_io, and F601
+      # the STUD_ID collision that became Findings 28 and 29.
+      #
+      # E999 is deliberately absent: Ruff removed it as a selectable rule in
+      # 0.16, and syntax errors are now always reported. Selecting it is a hard
+      # error, not a no-op.
+      - name: Ruff correctness subset (blocking)
+        run: ruff check --select F821,F811,F601 --output-format=github .
+
+      # REPORTING, not gating. Ruff reports ~390 further findings, essentially
+      # all stylistic. A blocking gate on those would be red from the first
+      # commit, and the usual response to that is a blanket ignore that
+      # suppresses the findings worth having.
+      - name: Ruff (report only)
+        run: ruff check . --output-format=github || true
+
+      - name: Ruff format check, changed files only
+        run: |
+          git fetch --no-tags --depth=50 origin "${GITHUB_BASE_REF:-master}" || true
+          CHANGED=$(git diff --name-only --diff-filter=ACM \
+            "origin/${GITHUB_BASE_REF:-master}"...HEAD -- '*.py' 2>/dev/null || true)
+          if [ -n "$CHANGED" ]; then
+            echo "$CHANGED" | xargs ruff format --check --diff || true
+          else
+            echo "no changed Python files"
+          fi
+
+      # Narrow by design: the two modules carrying the mathematics.
+      - name: mypy (report only)
+        run: mypy || true

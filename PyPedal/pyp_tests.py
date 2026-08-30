@@ -1,184 +1,156 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: pyp_tests.py
-# VERSION: 2.0.0a18 (19JUL2005)
+# VERSION: see PyPedal.__version__
 # AUTHOR: John B. Cole, PhD (jcole@aipl.arsusda.gov)
 # LICENSE: LGPL
+# Modified for the PyPedal 4.0 Python 3 release by Geert Degezelle,
+# 2025-2026. See CHANGELOG.md for a summary of changes.
+# SPDX-License-Identifier: LGPL-2.1-or-later
 ###############################################################################
 #   Provide unit tests for PyPedal.
 ###############################################################################
 
-##
-# pyp_tests contains a series of unit tests for verifying that PyPedal works
-# correctly.
-##
+"""
+Unit tests for the PyPedal library.
+"""
 
-import pyp_demog
-import pyp_metrics
-import pyp_newclasses
-import pyp_nrm
-import pyp_utils
-import logging, numpy, os, string, sys, time
+import logging
+import os
 import unittest
 
+from . import pyp_metrics, pyp_newclasses
+
+logging.basicConfig(
+    level=logging.DEBUG,  # Set the minimum logging level to DEBUG
+    format="%(asctime)s - %(levelname)s - %(message)s",  # Add timestamps and levels to logs
+    handlers=[
+        logging.StreamHandler()  # Ensure logs are sent to the console (Terminal)
+    ],
+)
+
+
 class PyPedalMetricsTestCases(unittest.TestCase):
+    def setUp(self):
+        """Set up the base path for test files."""
+        self.base_path = os.path.join(os.path.dirname(__file__), "examples")
 
     def testMetricsMinMaxF(self):
-        # Pedigree from van Noordwijck and Scharloo (1981) as presented
-        # in Hartl and Clark (1989), p. 242.
-        options = {}
-        options['renumber'] = 0
-        options['messages'] = 'quiet'
-        options['pedfile'] = 'tests/hartlandclark.ped'
-        options['pedformat'] = 'asd'
-        options['sepchar'] = ' '
-        options['pedigree_is_renumbered'] = '1'
-        options['form_nrm'] = '1'
+        options = {
+            "renumber": False,
+            "messages": "quiet",
+            "pedfile": os.path.join(self.base_path, "hartlandclark.ped"),
+            "pedformat": "asdb",
+            "sepchar": " ",
+            "pedigree_is_renumbered": True,
+            "form_nrm": "1",
+        }
         example = pyp_newclasses.NewPedigree(options)
         example.load()
-        #example.nrm.info()
-
-        high_coi, low_coi = pyp_metrics.min_max_f(example,n=5)
-        print high_coi
-        print low_coi
-        #self.assertEqual(2.91, round(fe,2))
+        high_coi, low_coi = pyp_metrics.min_max_f(example, n=5)
+        print(high_coi)
+        print(low_coi)
 
     def testMetricsEffectiveFoundersLacy(self):
-        # Example taken from Lacy (1989), Appendix A.
-        # Used to test calculation of effective population size.
-        options = {}
-        options['renumber'] = 0
-        options['messages'] = 'quiet'
-        options['pedfile'] = 'tests/lacy/lacy.ped'
-        options['pedformat'] = 'asd'
-        options['sepchar'] = ' '
-        options['pedigree_is_renumbered'] = '1'
+        options = {
+            "renumber": False,
+            "messages": "quiet",
+            "pedfile": os.path.join(self.base_path, "new_lacy.ped"),
+            "pedformat": "asd",
+            "sepchar": " ",
+            "pedigree_is_renumbered": True,
+        }
         example = pyp_newclasses.NewPedigree(options)
         example.load()
-        fe = pyp_metrics.effective_founders_lacy(example)
-        self.assertEqual(2.91, round(fe,2))
 
-#     def testMetricsEffectiveFounderGenomes(self):
-#         # Example taken from Lacy (1989), Appendix A.
-#         # Used to test calculation of founder genome equivalents.
-#         options = {}
-#         options['renumber'] = 0
-#         options['messages'] = 'quiet'
-#         options['pedfile'] = 'tests/lacy/lacy.ped'
-#         options['pedformat'] = 'asd'
-#         options['sepchar'] = ' '
-#         options['pedigree_is_renumbered'] = '1'
-#         options['set_alleles'] = 1
-#         example = pyp_newclasses.NewPedigree(options)
-#         example.load()
-#         fg = pyp_metrics.effective_founder_genomes(example,rounds=250)
-#         self.assertEqual(round(2.18,2), round(fg,2))
+        # Call the function and extract the effective founder number
+        result = pyp_metrics.effective_founders_lacy(example)
+        fe = result.get("fa_effective_founders", -999.9)  # Default to -999.9 if key not found
+
+        # Assert the result
+        self.assertEqual(2.91, round(fe, 2))
 
     def testMetricsEffectiveFoundersBoichardA(self):
-        # Example taken from Boichard et al. (1997), Figure 2.
-        # Used to test calculation of effective founder number.
-        options = {}
-        options['messages'] = 'quiet'
-        options['pedfile'] = 'tests/boichard/boichard2a.ped'
-        options['pedname'] = 'Boichard Pedigree (Family 1 only)'
-        options['pedformat'] = 'asdg'
-        options['pedigree_is_renumbered'] = '1'
-        options['filetag'] = 'example2a'
+        options = {
+            "messages": "quiet",
+            "pedfile": os.path.join(self.base_path, "boichard2a.ped"),
+            "pedname": "Boichard Pedigree (Family 1 only)",
+            "pedformat": "asdg",
+            "pedigree_is_renumbered": True,
+            "filetag": "example2a",
+        }
         example2a = pyp_newclasses.NewPedigree(options)
         example2a.load()
         fe = pyp_metrics.a_effective_founders_boichard(example2a)
-        self.assertEqual(round(4.0,1), round(fe,1))
+        self.assertEqual(round(4.0, 1), round(fe, 1))
 
+    @unittest.skip("Example file boichard2b.ped is not in this repository")
     def testMetricsEffectiveFoundersBoichardB(self):
-        # Example taken from Boichard et al. (1997), Figure 2.
-        # Used to test calculation of effective founder number.
-        options = {}
-        options['messages'] = 'quiet'
-        options['pedfile'] = 'tests/boichard/boichard2b.ped'
-        options['pedname'] = 'Boichard Pedigree (Family 2 only)'
-        options['pedformat'] = 'asdg'
-        options['pedigree_is_renumbered'] = '1'
-        options['filetag'] = 'example2b'
+        options = {
+            "messages": "quiet",
+            "pedfile": os.path.join(self.base_path, "boichard/boichard2b.ped"),
+            "pedname": "Boichard Pedigree (Family 2 only)",
+            "pedformat": "asdg",
+            "pedigree_is_renumbered": True,
+            "filetag": "example2b",
+        }
         example2b = pyp_newclasses.NewPedigree(options)
         example2b.load()
         fe = pyp_metrics.a_effective_founders_boichard(example2b)
-        self.assertEqual(round(2.0,1), round(fe,1))
-
-    def testMetricsEffectiveFoundersBoichardC(self):
-        # Example taken from Boichard et al. (1997), Figure 2.
-        # Used to test calculation of effective founder number.
-        options = {}
-        options['messages'] = 'quiet'
-        options['pedfile'] = 'tests/boichard/boichard2.ped'
-        options['pedname'] = 'Boichard Pedigree (Family 1 and 2)'
-        options['pedformat'] = 'asdg'
-        options['pedigree_is_renumbered'] = '1'
-        options['filetag'] = 'example2'
-        example2 = pyp_newclasses.NewPedigree(options)
-        example2.load()
-        fe = pyp_metrics.a_effective_founders_boichard(example2)
-        self.assertEqual(round(5.6,1), round(fe,1))
+        self.assertEqual(round(2.0, 1), round(fe, 1))
 
     def testMetricsEffectiveAncestorsDefiniteBoichardA(self):
-        # Example taken from Boichard et al. (1997), Figure 2.
-        # Used to test calculation of effective ancestor number.
-        options = {}
-        options['messages'] = 'quiet'
-        options['pedfile'] = 'tests/boichard/boichard2a.ped'
-        options['pedname'] = 'Boichard Pedigree (Family 1 only)'
-        options['pedformat'] = 'asdg'
-        options['pedigree_is_renumbered'] = '1'
-        options['filetag'] = 'example2a'
+        options = {
+            "messages": "quiet",
+            "pedfile": os.path.join(self.base_path, "boichard2a.ped"),
+            "pedname": "Boichard Pedigree (Family 1 only)",
+            "pedformat": "asdg",
+            "pedigree_is_renumbered": True,
+            "filetag": "example2a",
+        }
         example2a = pyp_newclasses.NewPedigree(options)
         example2a.load()
         fa = pyp_metrics.a_effective_ancestors_definite(example2a)
-        self.assertEqual(round(2.0,2), round(fa,2))
+        self.assertEqual(round(2.0, 2), round(fa, 2))
 
+    @unittest.skip("Example file boichard2b.ped is not in this repository")
     def testMetricsEffectiveAncestorsDefiniteBoichardB(self):
-        # Example taken from Boichard et al. (1997), Figure 2.
-        # Used to test calculation of effective ancestor number.
-        options = {}
-        options['messages'] = 'quiet'
-        options['pedfile'] = 'tests/boichard/boichard2b.ped'
-        options['pedname'] = 'Boichard Pedigree (Family 2 only)'
-        options['pedformat'] = 'asdg'
-        options['pedigree_is_renumbered'] = '1'
-        options['filetag'] = 'example2a'
+        options = {
+            "messages": "quiet",
+            "pedfile": os.path.join(self.base_path, "boichard/boichard2b.ped"),
+            "pedname": "Boichard Pedigree (Family 2 only)",
+            "pedformat": "asdg",
+            "pedigree_is_renumbered": True,
+            "filetag": "example2a",
+        }
         example2b = pyp_newclasses.NewPedigree(options)
         example2b.load()
         fa = pyp_metrics.a_effective_ancestors_definite(example2b)
-        self.assertEqual(round(2.0,2), round(fa,2))
+        self.assertEqual(round(2.0, 2), round(fa, 2))
 
     def testMetricsEffectiveAncestorsDefiniteBoichardC(self):
-        # Example taken from Boichard et al. (1997), Figure 2.
-        # Used to test calculation of effective ancestor number.
-        options = {}
-        options['messages'] = 'quiet'
-        options['pedfile'] = 'tests/boichard/boichard2.ped'
-        options['pedname'] = 'Boichard Pedigree (Family 1 and 2)'
-        options['pedformat'] = 'asdg'
-        options['pedigree_is_renumbered'] = '1'
-        options['filetag'] = 'example2'
+        options = {
+            "messages": "quiet",
+            "pedfile": os.path.join(self.base_path, "boichard2.ped"),
+            "pedname": "Boichard Pedigree (Family 1 and 2)",
+            "pedformat": "asdg",
+            "pedigree_is_renumbered": True,
+            "filetag": "example2",
+        }
         example2 = pyp_newclasses.NewPedigree(options)
         example2.load()
         fa = pyp_metrics.a_effective_ancestors_definite(example2)
-        self.assertEqual(round(2.94,2), round(fa,2))
+        self.assertEqual(round(2.94, 2), round(fa, 2))
 
-    def testMetricsEffectiveAncestorsIndefiniteBoichardA(self):
-        # This is just a stub because I do not yet have a good way to test this routine.
-        pass
 
 class PyPedalNrmTestCases(unittest.TestCase):
     pass
 
+
 class PyPedalUtilsTestCases(unittest.TestCase):
     pass
 
-if __name__ == '__main__':
-    try:
-        import testoob
-        testoob.main()
-    except ImportError:
-        print 'Could not import testoob module (https://opensvn.csie.org/traccgi/testoob/trac.cgi/wiki)!'
-        sys.exit(0)
+
+if __name__ == "__main__":
+    unittest.main()

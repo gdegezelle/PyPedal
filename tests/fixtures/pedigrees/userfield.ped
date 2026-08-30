@@ -1,0 +1,20 @@
+# userfield.ped
+#    Exercises the 'u' pedformat code (NewAnimal.userField).
+#    Deliberately hand-written: no other corpus pedigree carries a 'u' column,
+#    so without this one the differential can only test the *default* branch of
+#    the assignment, never the *column* branch.
+#
+#    Chosen so the field is not trivially unique per animal:
+#      - 'hatch' repeats across two founders,
+#      - 'other' repeats across two non-founders,
+#      - 'third' appears once,
+#    giving 3 unique values over 5 animals. A per-animal-unique field would make
+#    PedigreeMetadata.nufields() pass for the wrong reason.
+#
+# Columns are:
+#    Animal Sire Dam UserField
+1 0 0 hatch
+2 0 0 hatch
+3 1 2 other
+4 1 2 other
+5 3 4 third

@@ -1,6 +1,12 @@
-include ez_setup.py
-include PyPedal/*.txt
-include PyPedal/doc/pypedal.p*
-recursive-include PyPedal/tests *
-recursive-include PyPedal/tests/boichard *
-include PyPedal/examples/new_*.*
+include README.md
+include LICENSE
+include CHANGELOG.md
+include MIGRATION.md
+include CONTRIBUTING.md
+include THIRD-PARTY.md
+include mkdocs.yml
+include verify_setup.py
+recursive-include docs/manual *
+# Source distribution keeps examples as checkout learning material.
+# The wheel excludes them via [tool.setuptools.exclude-package-data].
+recursive-include PyPedal/examples *

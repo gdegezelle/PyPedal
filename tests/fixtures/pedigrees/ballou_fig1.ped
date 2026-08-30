@@ -1,0 +1,63 @@
+# ballou_fig1.ped -- PUBLISHED WORKED EXAMPLE, transcribed with provenance.
+#
+# SOURCE: Ballou JD (1997) "Ancestral inbreeding only minimally affects
+#         inbreeding depression in mammalian populations." J Hered 88:169-178.
+#         FIGURE 1, article page 170.
+#
+# The figure labels no animals; they are numbered 1-7 here in reading order
+# (top row left to right, then down). Sexes ARE marked in the figure -- circle
+# = female, square = male -- and are honoured in the sire/dam assignment.
+#
+# TOPOLOGY, read from the figure (edges run from each parent to the child):
+#
+#     1 = circle, no parents          founder, female
+#     2 = square, no parents          founder, male
+#     3 = circle, no parents          founder, female
+#     4 = circle, parents 2 and 3     f = 0
+#     5 = square, parents 2 and 4     f = .25   (parent x offspring: 2 x its own child 4)
+#     6 = square, parents 5 and 1     f = 0
+#     7 = square, parents 5 and 4     f = .375
+#
+# PUBLISHED EXPECTED VALUES, printed beside each node in the figure:
+#
+#     animal   f       f_a     LL
+#       1      0       0       0
+#       2      0       0       0
+#       3      0       0       0
+#       4      0       0       0
+#       5      .25     0       .125
+#       6      0       .125    0
+#       7      .375    .125    .145
+#
+#   f_a is Ballou's ancestral inbreeding coefficient (eq. 1, p.170) and is the
+#   target for ballou_ancestral_inbreeding and oracle_ballou.
+#
+#   LL is the lethal-recessive homozygosity probability from Ballou's SEPARATE
+#   Monte-Carlo model (p.171). It is NOT ancestral inbreeding, is not computed
+#   by PyPedal, and must never be used as a gene-drop target. It is recorded
+#   here only so the figure is transcribed completely.
+#
+# CORROBORATION -- this is not a guessed topology. Every published f and f_a
+# reproduces by hand:
+#
+#   f(5)   = 1/2 * a(2,4) = 1/2 * 1/2 * (a(2,2) + a(2,3)) = 1/2 * 1/2 * 1 = .25
+#   f(7)   = 1/2 * a(5,4);  a(4,2) = .5  =>  a(5,4) = 1/2 (a(4,2) + a(4,4)) = .75
+#          = 1/2 * .75 = .375
+#   f_a(6) = 1/2 [ f_a(5) + (1-f_a(5)) f(5) + f_a(1) + (1-f_a(1)) f(1) ]
+#          = 1/2 [ 0 + .25 + 0 + 0 ] = .125
+#   f_a(7) = 1/2 [ f_a(5) + (1-f_a(5)) f(5) + f_a(4) + (1-f_a(4)) f(4) ]
+#          = 1/2 [ 0 + .25 + 0 + 0 ] = .125
+#
+#   The founder base case f_a = 0 is read off the figure; the paper does not
+#   state it in prose.
+#
+# pedformat: asd
+# Columns are:
+#    Animal Sire Dam
+1 0 0
+2 0 0
+3 0 0
+4 2 3
+5 2 4
+6 5 1
+7 5 4

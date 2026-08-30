@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_graphics.py
@@ -11,16 +11,21 @@ from PyPedal import pyp_graphics
 from PyPedal import pyp_newclasses
 from PyPedal import pyp_nrm
 
-if __name__ == '__main__':
+import os
+test_file = test_file = os.path.join(
+    os.path.dirname(__file__), 'new_renumbering.ini')
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_renumbering.ini')
+if __name__ == "__main__":
+    example = pyp_newclasses.load_pedigree(options_file=test_file)
 
-    print '-'*80
-    print 'INFO: Pedigree ID map: %s' % (example.idmap)
-    print '-'*80
-    print 'INFO: Pedigree ID reverse map: %s' % (example.backmap)
-    print '-'*80
-    myinbr = pyp_nrm.inbreeding(example)
-    print 'INFO: Coefficients of inbreeding: %s' % (myinbr)
+    print("-" * 80)
+    print(f"INFO: Pedigree ID map: {example.idmap}")
+    print("-" * 80)
+    print(f"INFO: Pedigree ID reverse map: {example.backmap}")
+    print("-" * 80)
+    my_inbreeding = pyp_nrm.inbreeding(example)
+    print(f"INFO: Coefficients of inbreeding: {my_inbreeding}")
 
-    pyp_graphics.draw_pedigree(example,gfilename='new_renumbering',gtitle='My  Pedigree')
+    # pyp_graphics.draw_pedigree(
+    #     example, gfilename="new_renumbering", gtitle="My  Pedigree"
+    # )

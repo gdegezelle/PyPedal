@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ###############################################################################
 # NAME: new_graphics2.py
@@ -13,14 +13,19 @@ from PyPedal import pyp_newclasses
 from PyPedal import pyp_nrm
 from PyPedal import pyp_metrics
 from PyPedal.pyp_utils import pyp_nice_time
-#import pyp_demog, pyp_graphics, pyp_newclasses, pyp_nrm, pyp_metrics
-#from pyp_utils import pyp_nice_time
 
-if __name__ == '__main__':
+import os
 
-    print 'Starting pypedal.py at %s' % (pyp_nice_time())
+ini_file = os.path.join(os.path.dirname(__file__), 'new_graphics.ini')
 
-    example = pyp_newclasses.loadPedigree(optionsfile='new_graphics.ini')
-    if example.kw['messages'] == 'verbose':
-        print '[INFO]: Calling pyp_graphics.draw_pedigree() at %s' % (pyp_nice_time())
-    pyp_graphics.draw_pedigree(example, gfilename='graphics2', gtitle='graphics2 pedigree', gorient='p')
+if __name__ == "__main__":
+
+    print("Starting pypedal.py at %s" % (pyp_nice_time()))
+
+    example = pyp_newclasses.load_pedigree(options_file=ini_file)
+    if example.kw["messages"] == "verbose":
+        print("[INFO]: Calling pyp_graphics.draw_pedigree() at %s" %
+              (pyp_nice_time()))
+    pyp_graphics.draw_pedigree(
+        example, gfilename="graphics2", gtitle="graphics2 pedigree", gorient="p"
+    )
