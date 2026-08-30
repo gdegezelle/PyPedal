@@ -9,9 +9,8 @@ a small desktop application.
 
 The original program was written by **John B. Cole**. PyPedal 4 is a
 Python 3 reimplementation of PyPedal 2.0.4, maintained by Geert Degezelle.
-This manual describes **PyPedal 4.0**. The current line is a local
-**4.0.0-rc8** publication candidate. It is not tagged, not published to
-PyPI, and not a final 4.0.0 release.
+This manual describes **PyPedal 4.0**. This is **PyPedal 4.0.0**. It has
+not been published to PyPI.
 
 PyPedal is a research tool. It works from pedigree structure, not from
 individual genotypes, except for an optional genomic relationship matrix.

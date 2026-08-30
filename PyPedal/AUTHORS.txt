@@ -1,6 +1,6 @@
 ###############################################################################
 # NAME: AUTHORS
-# VERSION: 4.0.0-rc8
+# VERSION: 4.0.0
 # LICENSE: LGPL-2.1-or-later
 ###############################################################################
 # People who contributed code, files, or testing help to PyPedal.

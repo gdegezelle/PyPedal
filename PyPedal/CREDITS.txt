@@ -1,4 +1,4 @@
-CREDITS - PyPedal 4.0.0-rc8
+CREDITS - PyPedal 4.0.0
 ---------------------------
 
 This file lists people known to be responsible for, or to have helped

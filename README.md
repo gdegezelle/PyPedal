@@ -1,4 +1,4 @@
-# PyPedal 4.0.0-rc8
+# PyPedal 4.0.0
 
 PyPedal is a Python package for **pedigree analysis**. It loads a recorded
 animal pedigree, checks common data problems, and computes inbreeding,
@@ -11,8 +11,7 @@ summaries.
 **Python:** Python 3.12 or newer (3.12, 3.13, and 3.14)
 
 This repository is a standalone Python 3 port of Cole’s PyPedal 2.0.4.
-This is **4.0.0-rc8**, a local publication candidate. It is not tagged,
-not a final 4.0.0 release, and **has not been published** to PyPI.
+This is **PyPedal 4.0.0**. It **has not been published** to PyPI.
 
 ## What you can compute
 
@@ -28,7 +27,7 @@ Bounds of those capabilities are in the [user manual](docs/manual/index.md).
 
 ## Installation
 
-Install from a local checkout. There is no PyPI package for this candidate.
+Install from a local checkout. There is no PyPI package yet.
 
 ```bash
 conda create -n pypedal3_env python=3.12

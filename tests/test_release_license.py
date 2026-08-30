@@ -58,14 +58,13 @@ def test_lic6_adodb_is_not_the_project_license():
 
 def test_lic8_readme_is_current_candidate_and_not_published_final():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert text.startswith("# PyPedal 4.0.0-rc8")
+    assert text.startswith("# PyPedal 4.0.0\n")
     assert "LGPL-2.1-or-later" in text or "GNU LGPL 2.1 or later" in text
     assert "Python 3.12" in text
     assert "John B. Cole" in text
     assert "Geert Degezelle" in text
     lowered = text.lower()
     assert "has not been published" in lowered
-    assert "not a final 4.0.0" in lowered
     assert "v4.0.0-rc3 tag already exists" not in lowered
     assert "docs/RELEASE-4.0.0-FINAL.md" not in text
 

@@ -4,7 +4,36 @@ All notable changes to PyPedal are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 where practical. Version identifiers follow [Semantic Versioning](https://semver.org/)
-and PEP 440 (`4.0.0rc8` in metadata; `4.0.0-rc8` in prose).
+and PEP 440 (`4.0.0`).
+
+## [4.0.0] — 2026-08-30
+
+First release of the Python 3 PyPedal 4 line. It has not been published to
+PyPI.
+
+### Changed
+
+- Python 3.12 or newer, modern packaging, tests, and a task-oriented user
+  manual.
+- Pedigree validation and mutation safety, scientific algorithm validation,
+  string identity support, unknown chronology handling, mating analysis,
+  reporting, and desktop support.
+- Improved Meuwissen-Luo inbreeding and Lacy effective-founder calculations
+  on large pedigrees without changing validated coefficients.
+- Lacy effective-founder calculations use the validated phantom-founder
+  treatment. Historical strict/absorb/half variants are refused instead of
+  returning non-probability effective-founder values.
+- The 2021 Griffon Bruxellois sample was replaced by the 2026 export
+  canonical dataset (`PyPedal/examples/griffonbruxellois_2026_pyp.ped`;
+  checkout/sdist only). The file is a 2026 export with recorded births
+  through 2025.
+
+### Fixed
+
+- The desktop application now normalizes pedigree separators so a comma
+  (with or without surrounding spaces) loads comma-separated files, and
+  empty/whitespace separators still mean space. Column-count load errors
+  name the separator in use.
 
 ## [4.0.0-rc8] — 2026-08-30
 
