@@ -106,7 +106,30 @@ def pedigree_open_options(
     }
 
 
-def _format_inbreeding(result: Any) -> str:
+GUI_PREVIEW_ROWS = 500
+
+
+def gui_control_states(busy: bool) -> dict:
+    """Enabled/disabled intent for GUI controls while work is running.
+
+    About stays available. Open and analysis actions do not.
+    """
+    return {
+        "open": not busy,
+        "analyses": not busy,
+        "about": True,
+    }
+
+
+def format_preview_caption(shown: int, total: int) -> str:
+    return f"Showing {shown:,} of {total:,}"
+
+
+def _format_inbreeding(
+    result: Any,
+    max_rows: int = GUI_PREVIEW_ROWS,
+    result_file: Optional[str] = None,
+) -> str:
     if isinstance(result, tuple):
         result = result[0]
     if not isinstance(result, dict):
@@ -123,26 +146,36 @@ def _format_inbreeding(result: Any) -> str:
 
     fx = result.get("fx") or {}
     if fx:
+        items = sorted(fx.items(), key=lambda item: item[0])
+        total = len(items)
+        shown = items[:max_rows]
         lines.append("Coefficients by animal")
         lines.append("-" * 40)
-        for animal_id, coef in sorted(fx.items(), key=lambda item: item[0]):
+        if total > max_rows:
+            lines.append(format_preview_caption(len(shown), total))
+            if result_file:
+                lines.append(f"Full coefficients are in {os.path.basename(result_file)}")
+        for animal_id, coef in shown:
             lines.append(f"  {animal_id}: {pyp_io.format_display_coefficient(coef)}")
         if all(float(coef) == 0.0 for coef in fx.values()):
             lines.append("")
             lines.append(
-                "No inbreeding in this pedigree (every coefficient is 0).\n"
-                "That is expected for new_lacy.ped. Try mrode.ped (format asd)\n"
-                "or hartlandclark.ped (format asdb) to see non-zero values."
+                "No inbreeding in this pedigree (every coefficient is 0)."
             )
     return "\n".join(lines)
 
 
-def _list_animals(pedigree) -> str:
+def _list_animals(pedigree, max_rows: int = GUI_PREVIEW_ROWS) -> str:
+    animals = list(pedigree.pedigree)
+    total = len(animals)
+    shown = animals[:max_rows]
     lines = [
         f"{'ID':>8}  {'Sire':>8}  {'Dam':>8}  {'Year':>6}  {'Sex':<4}  Name",
         "-" * 64,
     ]
-    for animal in pedigree.pedigree:
+    if total > max_rows:
+        lines.insert(0, format_preview_caption(len(shown), total))
+    for animal in shown:
         year = getattr(animal, "by", None)
         year_label = "" if year is None else year
         sex = getattr(animal, "sex", "")
@@ -228,9 +261,10 @@ class PyPedalApp:
         controls = ctk.CTkFrame(self.root)
         controls.pack(fill="x", padx=16, pady=8)
 
-        ctk.CTkButton(controls, text="Open pedigree…", command=self.open_pedigree, width=140).pack(
-            side="left", padx=8, pady=10
+        self.open_button = ctk.CTkButton(
+            controls, text="Open pedigree…", command=self.open_pedigree, width=140
         )
+        self.open_button.pack(side="left", padx=8, pady=10)
 
         ctk.CTkLabel(controls, text="Format").pack(side="left", padx=(8, 4))
         self.format_var = ctk.StringVar(value="asdxb")
@@ -264,14 +298,16 @@ class PyPedalApp:
             ("Effective founders", self.calc_founders),
             ("Inbreeding by year", self.inbreeding_by_year),
         ]
+        self.action_buttons = []
         for label, command in actions:
-            ctk.CTkButton(sidebar, text=label, command=command, anchor="w").pack(
-                fill="x", padx=10, pady=6
-            )
+            button = ctk.CTkButton(sidebar, text=label, command=command, anchor="w")
+            button.pack(fill="x", padx=10, pady=6)
+            self.action_buttons.append(button)
 
-        ctk.CTkButton(sidebar, text="About", command=self.show_about, fg_color="gray").pack(
-            fill="x", padx=10, pady=(18, 6)
+        self.about_button = ctk.CTkButton(
+            sidebar, text="About", command=self.show_about, fg_color="gray"
         )
+        self.about_button.pack(fill="x", padx=10, pady=(18, 6))
 
         self.output = ctk.CTkTextbox(body, font=ctk.CTkFont(family="Menlo", size=13))
         self.output.pack(side="left", fill="both", expand=True)
@@ -285,6 +321,7 @@ class PyPedalApp:
 
         self.status = ctk.CTkLabel(self.root, text="No pedigree loaded", anchor="w")
         self.status.pack(fill="x", padx=16, pady=(0, 12))
+        self.progress = ctk.CTkProgressBar(self.root, mode="indeterminate")
 
     def _write(self, text: str) -> None:
         self.output.delete("1.0", "end")
@@ -292,6 +329,23 @@ class PyPedalApp:
 
     def _set_status(self, text: str) -> None:
         self.status.configure(text=text)
+
+    def _set_busy(self, busy: bool) -> None:
+        self._busy = busy
+        states = gui_control_states(busy)
+        open_state = "normal" if states["open"] else "disabled"
+        analysis_state = "normal" if states["analyses"] else "disabled"
+        about_state = "normal" if states["about"] else "disabled"
+        self.open_button.configure(state=open_state)
+        for button in self.action_buttons:
+            button.configure(state=analysis_state)
+        self.about_button.configure(state=about_state)
+        if busy:
+            self.progress.pack(fill="x", padx=16, pady=(0, 8), before=self.status)
+            self.progress.start()
+        else:
+            self.progress.stop()
+            self.progress.pack_forget()
 
     def _need_pedigree(self) -> bool:
         if self.pedigree is None:
@@ -302,7 +356,7 @@ class PyPedalApp:
     def _run_background(self, work, title: str, finish=None) -> None:
         if self._busy:
             return
-        self._busy = True
+        self._set_busy(True)
         self._set_status(f"{title}…")
         complete = finish or self._finish_background
 
@@ -326,13 +380,13 @@ class PyPedalApp:
         threading.Thread(target=runner, daemon=True).start()
 
     def _finish_background(self, title: str, result, error=None) -> None:
-        self._busy = False
+        self._set_busy(False)
         text = error if error is not None else result
         self._write(text)
         self._set_status(f"{title} finished — {os.path.basename(self.filename)}" if self.filename else title)
 
     def _finish_load(self, attempted_path: str, title: str, result, error=None) -> None:
-        self._busy = False
+        self._set_busy(False)
         outcome = apply_pedigree_load(
             self,
             attempted_path,
@@ -390,7 +444,8 @@ class PyPedalApp:
 
         def work():
             result = pyp_nrm.inbreeding(self.pedigree, method="meu_luo")
-            return _format_inbreeding(result)
+            result_file = f"{self.pedigree.kw.get('filetag')}_inbreeding.dat"
+            return _format_inbreeding(result, result_file=result_file)
 
         self._run_background(work, "Calculating inbreeding")
 

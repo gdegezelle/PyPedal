@@ -82,6 +82,9 @@ class TestCorePedigreeWorkflow(unittest.TestCase):
         self.assertIn("Coefficients by animal", summary)
         self.assertTrue(all(float(v) == 0.0 for v in result["fx"].values()))
         self.assertIn("No inbreeding in this pedigree", summary)
+        self.assertNotIn("new_lacy.ped", summary)
+        self.assertNotIn("mrode.ped", summary)
+        self.assertNotIn("hartlandclark.ped", summary)
 
     def test_inbreeding_mrode_has_nonzero_coi(self):
         ped = load_example(
