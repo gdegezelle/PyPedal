@@ -27,6 +27,7 @@
 # polymorphism (SNP) genotype data.
 
 import logging
+
 import numpy as np
 import pandas as pd
 import random
@@ -34,6 +35,8 @@ import random
 from . import pyp_errors, pyp_validate
 from .pyp_errors import PyPedalUsageError
 
+
+logger = logging.getLogger(__name__)
 
 def read_agil_chromosome_data(filename='chromosome.data'):
     """
@@ -49,10 +52,10 @@ def read_agil_chromosome_data(filename='chromosome.data'):
             names=['snp_name', 'chrome', 'within', 'overall', 'location']
         )
         print(f'[INFO]: Successfully read {len(df)} SNP records from {filename}.')
-        logging.info(f'Successfully read {len(df)} SNP records from {filename}.')
+        logger.info(f'Successfully read {len(df)} SNP records from {filename}.')
         return df
     except Exception as e:
-        logging.error(f'Could not access the file {filename}: {e}')
+        logger.error(f'Could not access the file {filename}: {e}')
         print(f'[ERROR]: Could not access the file {filename}.')
         return False
 
@@ -69,10 +72,10 @@ def read_agil_genotypes_txt(filename='genotypes.txt'):
             names=['animalID', 'chip_type', 'n_snps', 'genotype']
         )
         print(f'[INFO]: Successfully read {len(df)} genotype records from {filename}.')
-        logging.info(f'Successfully read {len(df)} genotype records from {filename}.')
+        logger.info(f'Successfully read {len(df)} genotype records from {filename}.')
         return df
     except Exception as e:
-        logging.error(f'Could not access the file {filename}: {e}')
+        logger.error(f'Could not access the file {filename}: {e}')
         print(f'[ERROR]: Could not access the file {filename}.')
         return False
 
@@ -88,10 +91,10 @@ def read_agil_true_frequency(filename='true.frequency'):
             names=['snp_name', 'overall', 'frequency']
         )
         print(f'[INFO]: Successfully read {len(df)} SNP frequencies from {filename}.')
-        logging.info(f'Successfully read {len(df)} SNP frequencies from {filename}.')
+        logger.info(f'Successfully read {len(df)} SNP frequencies from {filename}.')
         return df
     except Exception as e:
-        logging.error(f'Could not access the file {filename}: {e}')
+        logger.error(f'Could not access the file {filename}: {e}')
         print(f'[ERROR]: Could not access the file {filename}.')
         return False
 
@@ -185,7 +188,7 @@ def form_p_matrix_from_snp(pedobj, base_frequencies=None, debug=False):
     taken, so the choice appears in the run record instead of being implicit.
     """
     if pedobj.snp is False or pedobj.snp is None or getattr(pedobj.snp, "empty", True):
-        logging.error('No SNP data available in the pedigree.')
+        logger.error('No SNP data available in the pedigree.')
         print('[ERROR]: No SNP data available in the pedigree.')
         return False
 
@@ -194,7 +197,7 @@ def form_p_matrix_from_snp(pedobj, base_frequencies=None, debug=False):
         P = validate_base_frequencies(base_frequencies, n_loci,
                                       'form_p_matrix_from_snp')
     else:
-        logging.info(
+        logger.info(
             'form_p_matrix_from_snp(): no base_frequencies supplied, so allele '
             'frequencies are being ESTIMATED from the genotyped sample. '
             'VanRaden (2008) p.4416 calls for frequencies from the unselected '
@@ -243,7 +246,7 @@ def form_m_matrix_from_snp(pedobj, scale_m=True, base_frequencies=None, debug=Fa
             'matrix and its diagonal minus one is not a genomic inbreeding '
             'coefficient. The centring is not optional.')
     if pedobj.snp is False or pedobj.snp is None or getattr(pedobj.snp, "empty", True):
-        logging.error('No SNP data available in the pedigree.')
+        logger.error('No SNP data available in the pedigree.')
         print('[ERROR]: No SNP data available in the pedigree.')
         return False
 
@@ -293,7 +296,7 @@ def form_grm_from_snp(pedobj, scale_m=True, method=1, base_frequencies=None, deb
         algebraically, not quoted.
     """
     if pedobj.snp is False or pedobj.snp is None or getattr(pedobj.snp, "empty", True):
-        logging.error('No SNP data available in the pedigree.')
+        logger.error('No SNP data available in the pedigree.')
         print('[ERROR]: No SNP data available in the pedigree.')
         return False
 
@@ -437,7 +440,7 @@ def compute_genomic_homozygosity_from_snp(pedobj, missing_code=None, store=True)
         genotype = pedobj.snp.iloc[row, 3]
         typed = [c for c in genotype if missing_code is None or c != missing_code]
         if not typed:
-            logging.warning(
+            logger.warning(
                 'compute_genomic_homozygosity_from_snp(): animal %s has no '
                 'typed loci, so its homozygosity is undefined and is reported '
                 'as the missing value rather than as 0.0.', animal_id)
@@ -471,7 +474,7 @@ def compute_genomic_homozygosity_from_snp(pedobj, missing_code=None, store=True)
 #     Renumber SNP animal IDs in the SNP dataframe to match pedigree IDs.
 #     """
 #     if pedobj.snp is False or pedobj.snp is None or getattr(pedobj.snp, "empty", True):
-#         logging.error('No SNP data available to renumber IDs.')
+#         logger.error('No SNP data available to renumber IDs.')
 #         print('[ERROR]: No SNP data available to renumber IDs.')
 #         return
 
@@ -495,7 +498,7 @@ def renumber_snp_ids(pedobj):
     """
     # Check if SNP data is available and valid
     if pedobj.snp is False or pedobj.snp is None:
-        logging.error(
+        logger.error(
             "pyp_snp/renumber_snp_ids(): SNP data is not available. No IDs need to be renumbered."
         )
         if pedobj.kw.get('debug_messages', False):
@@ -509,7 +512,7 @@ def renumber_snp_ids(pedobj):
             print(
                 "[INFO]: pyp_snp/renumber_snp_ids(): Renumbering animal IDs in the SNP dataframe."
             )
-        logging.info("pyp_snp/renumber_snp_ids(): Renumbering animal IDs in the SNP dataframe")
+        logger.info("pyp_snp/renumber_snp_ids(): Renumbering animal IDs in the SNP dataframe")
 
         # Replace `originalID` with `animalID` in the SNP dataframe.
         #
@@ -527,7 +530,7 @@ def renumber_snp_ids(pedobj):
                 pedobj.snp['animalID'])
         )
     else:
-        logging.error(
+        logger.error(
             "pyp_snp/renumber_snp_ids(): Invalid or empty SNP dataframe. No renumbering performed."
         )
         if pedobj.kw.get('debug_messages', False):
@@ -608,7 +611,7 @@ def load_snp_file(pedobj, snpfile=None, sepchar=None):
     _warn_about_unmatched_animals(pedobj, snp, snpfile)
 
     pedobj.snp = snp
-    logging.info('Read %d genotype records of %d loci from %s',
+    logger.info('Read %d genotype records of %d loci from %s',
                  len(snp), len(snp['genotype'].iloc[0]), snpfile)
     return snp
 
@@ -664,11 +667,11 @@ def _warn_about_unmatched_animals(pedobj, snp, snpfile):
     only_snp = snp_ids - pedigree_ids
     only_ped = pedigree_ids - snp_ids
     if only_snp:
-        logging.warning(
+        logger.warning(
             '%d animal(s) in %s are not in the pedigree, e.g. %r',
             len(only_snp), snpfile, sorted(only_snp)[:5])
     if only_ped:
-        logging.warning(
+        logger.warning(
             '%d animal(s) in the pedigree have no genotype in %s, e.g. %r',
             len(only_ped), snpfile, sorted(only_ped)[:5])
 

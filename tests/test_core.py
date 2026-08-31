@@ -1,41 +1,37 @@
 import os
 import unittest
 
-from PyPedal.pyp_newclasses import NewPedigree, load_pedigree
 from PyPedal import pyp_metrics, pyp_nrm
 from PyPedal.pyp_app import _format_inbreeding
 
 from _pedhelpers import load_example, load_griffon_test_small
 
 
-EXAMPLES = os.path.abspath(os.path.join(os.path.dirname(__file__), "../PyPedal/examples"))
-
-
 class TestCorePedigreeWorkflow(unittest.TestCase):
     def test_load_lacy_pedigree(self):
-        options = {
-            "pedfile": os.path.join(EXAMPLES, "new_lacy.ped"),
-            "pedformat": "asd",
-            "sepchar": " ",
-            "messages": "quiet",
-            "renumber": True,
-            "pedname": "Lacy test",
-        }
-        ped = NewPedigree(options)
-        ped.load()
+        ped = load_example(
+            "new_lacy.ped",
+            {
+                "pedformat": "asd",
+                "sepchar": " ",
+                "messages": "quiet",
+                "renumber": True,
+                "pedname": "Lacy test",
+            },
+        )
         self.assertEqual(len(ped.pedigree), 7)
         self.assertGreater(ped.metadata.num_unique_founders, 0)
         self.assertTrue(ped.metadata.stringme())
 
     def test_load_pedigree_alias(self):
-        ped = load_pedigree(
+        ped = load_example(
+            "new_graphics.ped",
             {
-                "pedfile": os.path.join(EXAMPLES, "new_graphics.ped"),
                 "pedformat": "asdgy",
                 "sepchar": " ",
                 "messages": "quiet",
                 "renumber": True,
-            }
+            },
         )
         self.assertTrue(ped)
         self.assertGreater(len(ped.pedigree), 0)
@@ -66,14 +62,14 @@ class TestCorePedigreeWorkflow(unittest.TestCase):
         self.assertGreater(fe, 0)
 
     def test_inbreeding_returns_coefficients(self):
-        ped = load_pedigree(
+        ped = load_example(
+            "new_lacy.ped",
             {
-                "pedfile": os.path.join(EXAMPLES, "new_lacy.ped"),
                 "pedformat": "asd",
                 "sepchar": " ",
                 "messages": "quiet",
                 "renumber": True,
-            }
+            },
         )
         result = pyp_nrm.inbreeding(ped, method="meu_luo", output=False)
         if isinstance(result, tuple):
@@ -88,15 +84,15 @@ class TestCorePedigreeWorkflow(unittest.TestCase):
         self.assertIn("No inbreeding in this pedigree", summary)
 
     def test_inbreeding_mrode_has_nonzero_coi(self):
-        ped = load_pedigree(
+        ped = load_example(
+            "mrode.ped",
             {
-                "pedfile": os.path.join(EXAMPLES, "mrode.ped"),
                 "pedformat": "asd",
                 "sepchar": " ",
                 "messages": "quiet",
                 "renumber": True,
                 "pedigree_is_renumbered": True,
-            }
+            },
         )
         result = pyp_nrm.inbreeding(ped, method="meu_luo", output=False)
         fx = {int(k): float(v) for k, v in result["fx"].items()}

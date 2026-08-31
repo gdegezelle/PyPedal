@@ -17,6 +17,7 @@ import shutil
 import heapq
 import numpy as np
 import logging
+
 from scipy.sparse import lil_matrix, coo_matrix, csr_matrix
 import math
 import copy
@@ -28,6 +29,8 @@ from . import pyp_errors, pyp_network, pyp_utils
 from . import pyp_validate
 from typing import List
 
+
+logger = logging.getLogger(__name__)
 
 def _matrix_value(matrix, row, col):
     """Return A[row, col] as a float for dense or sparse relationship matrices."""
@@ -67,7 +70,7 @@ def a_matrix(pedobj, save=False):
     :param save: Flag to indicate whether or not the relationship matrix is written to a file.
     :return: The NRM as a NumPy matrix.
     """
-    logging.info('Entered a_matrix()')
+    logger.info('Entered a_matrix()')
 
     try:
         l = pedobj.metadata.num_records
@@ -115,11 +118,11 @@ def a_matrix(pedobj, save=False):
                     line = ",".join(f"{a[row, col]:.5f}" for col in range(l)) + "\n"
                     aout.write(line)
 
-        logging.info('Exited a_matrix()')
+        logger.info('Exited a_matrix()')
         return a
 
     except Exception as e:
-        logging.error(f"Error in a_matrix(): {e}")
+        logger.error(f"Error in a_matrix(): {e}")
         return np.zeros((1, 1), dtype=float)
 
 
@@ -138,7 +141,7 @@ def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, f
     Returns:
         The NRM as a NumPy matrix or sparse matrix, depending on method.
     """
-    logging.info('Entered fast_a_matrix()')
+    logger.info('Entered fast_a_matrix()')
 
     foundercoi = int(pedopts.get("foundercoi", 0))
     if foundercoi not in [0, 1]:
@@ -171,13 +174,13 @@ def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, f
     except MemoryError:
         # Fallback to memmap if even sparse fails
         if use_sparse:
-            logging.warning("Sparse matrix allocation failed, falling back to memmap")
+            logger.warning("Sparse matrix allocation failed, falling back to memmap")
             use_sparse = False
         a = np.memmap(
             "fast_a_matrix_mmap.bin", dtype="float32", mode="w+", shape=(ped_length, ped_length)
         )
     except Exception as e:
-        logging.error(f"Unable to allocate a matrix of rank {ped_length} in fast_a_matrix(): {e}")
+        logger.error(f"Unable to allocate a matrix of rank {ped_length} in fast_a_matrix(): {e}")
         return False
 
     # Priority 2: Eliminate string conversions - use integer comparisons directly
@@ -229,7 +232,7 @@ def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, f
                 line = ",".join(f"{float(a_dense[row, col]):.5f}" for col in range(ped_length)) + "\n"
                 aout.write(line)
 
-    logging.info('Exited fast_a_matrix()')
+    logger.info('Exited fast_a_matrix()')
     
     # Return sparse matrix directly if sparse, or convert to numpy array if dense
     if use_sparse and not save:
@@ -250,7 +253,7 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
     :param save: Flag to indicate whether or not the relationship matrix is written to a file.
     :param method: Use dense or sparse matrix storage. Defaults to 'sparse' for better memory efficiency.
     """
-    logging.info("Entered fast_a_matrix_r()")
+    logger.info("Entered fast_a_matrix_r()")
 
     ped_length = len(pedigree)
     
@@ -277,13 +280,13 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
             a = np.zeros((ped_length, ped_length), dtype="float64")
     except MemoryError:
         if use_sparse:
-            logging.warning("Sparse matrix allocation failed, falling back to memmap")
+            logger.warning("Sparse matrix allocation failed, falling back to memmap")
             use_sparse = False
         a = np.memmap(
             "fast_a_matrix_r_mmap.bin", dtype="float32", mode="w+", shape=(ped_length, ped_length)
         )
     except Exception as e:
-        logging.error(f"Unable to allocate a matrix of rank {ped_length} in fast_a_matrix_r(): {e}")
+        logger.error(f"Unable to allocate a matrix of rank {ped_length} in fast_a_matrix_r(): {e}")
         return False
 
     # Priority 2: Use integer comparisons directly (no string conversions)
@@ -332,7 +335,7 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
                 line = ",".join(f"{float(a_dense[row, col]):.5f}" for col in range(ped_length)) + "\n"
                 aout.write(line)
 
-    logging.info("Exited fast_a_matrix_r()")
+    logger.info("Exited fast_a_matrix_r()")
     
     # Return sparse matrix directly if sparse, or convert to numpy array if dense
     if use_sparse and not save:
@@ -361,18 +364,18 @@ def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=Fals
     :param amethod: Method parameter for Aguilar's INBUPGF90 program.
     :return: Dictionary of CoI keyed to renumbered animal IDs.
     """
-    logging.info('Entered inbreeding()')
+    logger.info('Entered inbreeding()')
     
     fx = {}
     reldict = None
     
     valid_methods = ['vanraden', 'tabular', 'meu_luo', 'mod_meu_luo', 'aguilar']
     if method not in valid_methods:
-        logging.warning(f"Unrecognized method '{method}' provided to inbreeding(); defaulting to 'tabular'.")
+        logger.warning(f"Unrecognized method '{method}' provided to inbreeding(); defaulting to 'tabular'.")
         method = 'tabular'
 
     if gens < 0:
-        logging.warning(f"Invalid gens value '{gens}' provided to inbreeding(); defaulting to 0.")
+        logger.warning(f"Invalid gens value '{gens}' provided to inbreeding(); defaulting to 0.")
         gens = 0
 
     if rels:
@@ -390,7 +393,7 @@ def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=Fals
 
     # Use precomputed NRM if available
     if pedobj.kw['form_nrm'] and pedobj.nrm.nrm.shape[0] == pedobj.metadata.num_records and not force:
-        logging.info("Using precomputed NRM for CoI.")
+        logger.info("Using precomputed NRM for CoI.")
         for _i in range(pedobj.metadata.num_records):
             fx[pedobj.pedigree[_i].animalID] = _coi_from_matrix(pedobj.nrm.nrm, _i)
 
@@ -410,7 +413,7 @@ def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=Fals
                 inbreeding_modified_meuwissen_luo(pedobj, gens=gens), rels
             )
         elif method == 'aguilar':
-            logging.info(f"Using INBUPGF90 program with method {amethod}.")
+            logger.info(f"Using INBUPGF90 program with method {amethod}.")
             fx, reldict = _unpack_inbreeding(inbreeding_aguilar(pedobj, amethod), rels)
         else:
             fx, reldict = _unpack_inbreeding(
@@ -437,7 +440,7 @@ def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=Fals
 def warn_no_relationships(method, rels):
     """Log a warning if relationships were requested for a method that does not provide them."""
     if rels:
-        logging.warning(
+        logger.warning(
             f"Method '{method}' does not compute relationships. Only coefficients of inbreeding will be returned."
         )
 
@@ -537,7 +540,7 @@ def write_inbreeding_output(pedobj, fx):
                 else:
                     f.write(f"{animal.originalID}\t{k}\t{v}\n")
     except OSError as exc:
-        logging.error("Unable to write inbreeding output %s: %s", output_file, exc)
+        logger.error("Unable to write inbreeding output %s: %s", output_file, exc)
 
 
 def inbreeding_vanraden(pedobj, cleanmaps=True, gens=0, rels=False):
@@ -551,7 +554,7 @@ def inbreeding_vanraden(pedobj, cleanmaps=True, gens=0, rels=False):
     :param rels: Whether to compute summary statistics for coefficients of relationship.
     :return: A dictionary of CoI keyed to renumbered animal IDs (and optionally the relationship dictionary).
     """
-    logging.info("Entered inbreeding_vanraden()")
+    logger.info("Entered inbreeding_vanraden()")
     from . import pyp_network
 
     ng = pyp_network.ped_to_graph(pedobj)
@@ -657,7 +660,7 @@ def inbreeding_vanraden(pedobj, cleanmaps=True, gens=0, rels=False):
                 if cleanmaps:
                     pyp_utils.delete_id_map(f"{pedobj.kw['filetag']}_{i}")
 
-    logging.info("Exited inbreeding_vanraden()")
+    logger.info("Exited inbreeding_vanraden()")
     return (fx, reldict) if rels else fx
 
 
@@ -681,7 +684,7 @@ def inbreeding_aguilar(pedobj, amethod=3):
     # Verbose logging
     if pedobj.kw.get('messages') == 'verbose':
         print(f"[inbreeding_aguilar]: Started INBUPGF90 to calculate COI at {datetime.datetime.now():%Y-%m-%d %H:%M}")
-        logging.info("[inbreeding_aguilar]: Started INBUPGF90 to calculate COI.")
+        logger.info("[inbreeding_aguilar]: Started INBUPGF90 to calculate COI.")
 
     # Check for INBUPGF90 binary in the system's PATH
     if not shutil.which("inbupgf90"):
@@ -710,25 +713,25 @@ def inbreeding_aguilar(pedobj, amethod=3):
         time_waited += 10
         if time_waited % 60 == 0 and pedobj.kw.get('messages') == 'verbose':
             print(f"\t[inbreeding_aguilar]: Waiting for INBUPGF90 to finish -- {time_waited // 60} minutes so far...")
-            logging.info("[inbreeding_aguilar]: Waiting for INBUPGF90 to finish -- %d minutes so far...", time_waited // 60)
+            logger.info("[inbreeding_aguilar]: Waiting for INBUPGF90 to finish -- %d minutes so far...", time_waited // 60)
 
     # Capture output and errors
     results, errors = process.communicate()
 
     if errors:
-        logging.error("[inbreeding_aguilar]: INBUPGF90 finished with errors: %s", errors.decode("utf-8"))
+        logger.error("[inbreeding_aguilar]: INBUPGF90 finished with errors: %s", errors.decode("utf-8"))
         if pedobj.kw.get('messages') == 'verbose':
             print(f"\t[inbreeding_aguilar]: INBUPGF90 finished with errors: {errors.decode('utf-8')}")
         raise RuntimeError(f"INBUPGF90 finished with errors: {errors.decode('utf-8')}")
     else:
-        logging.info("[inbreeding_aguilar]: INBUPGF90 finished successfully.")
+        logger.info("[inbreeding_aguilar]: INBUPGF90 finished successfully.")
         if pedobj.kw.get('messages') == 'verbose':
             print(f"\t[inbreeding_aguilar]: INBUPGF90 finished successfully at {datetime.datetime.now():%Y-%m-%d %H:%M}")
 
     # Load coefficients of inbreeding into a dictionary
     if pedobj.kw.get('messages') == 'verbose':
         print(f"[inbreeding_aguilar]: Loading coefficients of inbreeding from {coifile} at {datetime.datetime.now():%Y-%m-%d %H:%M}")
-        logging.info("[inbreeding_aguilar]: Loading coefficients of inbreeding from %s.", coifile)
+        logger.info("[inbreeding_aguilar]: Loading coefficients of inbreeding from %s.", coifile)
 
     inbr = {}
     if not os.path.exists(coifile):
@@ -792,7 +795,7 @@ def recurse_pedigree(pedobj, anid: int, _ped: List) -> List:
         # was computed on part of the pedigree. Failing loudly is the only
         # honest outcome: the caller must raise the recursion limit or use an
         # iterative path.
-        logging.error(
+        logger.error(
             "recurse_pedigree() exceeded the recursion limit (%d) while walking "
             "the ancestors of animal %s. The ancestor list would have been "
             "silently truncated, so the traversal is being failed instead. "
@@ -801,7 +804,7 @@ def recurse_pedigree(pedobj, anid: int, _ped: List) -> List:
         raise
     except (IndexError, KeyError, ValueError, TypeError, AttributeError) as e:
         # Genuine data problems: an ID with no record, or an unparseable one.
-        logging.error(f"Error in recurse_pedigree for animal {anid}: {e}")
+        logger.error(f"Error in recurse_pedigree for animal {anid}: {e}")
 
     return _ped
 
@@ -833,7 +836,7 @@ def recurse_pedigree_n(pedobj, anid, _ped, depth=3):
                 recurse_pedigree_n(pedobj, dam_id, _ped, depth - 1)
     except Exception as e:
         # Log the exception or handle it if necessary
-        logging.error(f"An error occurred in recurse_pedigree_n: {e}")
+        logger.error(f"An error occurred in recurse_pedigree_n: {e}")
         pass
 
     return _ped
@@ -866,7 +869,7 @@ def recurse_pedigree_onesided(pedobj, anid, _ped, side):
                 recurse_pedigree(pedobj, dam_id, _ped)
     except Exception as e:
         # Log the exception or handle it if necessary
-        logging.error(f"An error occurred in recurse_pedigree_onesided: {e}")
+        logger.error(f"An error occurred in recurse_pedigree_onesided: {e}")
         pass
 
     return _ped
@@ -902,7 +905,7 @@ def recurse_pedigree_idonly(pedobj, anid, _ped):
 
     except Exception as e:
         # Log the exception or handle it if necessary
-        logging.error(f"An error occurred in recurse_pedigree_idonly: {e}")
+        logger.error(f"An error occurred in recurse_pedigree_idonly: {e}")
         pass
 
     return _ped
@@ -943,7 +946,7 @@ def recurse_pedigree_idonly_side(pedobj, anid, _ped, side='s'):
 
     except Exception as e:
         # Log the exception or handle it if necessary
-        logging.error(f"Error in recurse_pedigree_idonly_side: {e}")
+        logger.error(f"Error in recurse_pedigree_idonly_side: {e}")
         pass
 
     return _ped
@@ -961,7 +964,7 @@ def inbreeding_tabular(pedobj, gens=0, rels=0):
     :param rels: Flag indicating whether to compute summary statistics for coefficients of relationship.
     :return: A dictionary of CoI keyed to renumbered animal IDs, and optionally a dictionary of relationship statistics if `rels` is True.
     """
-    logging.info('Entered inbreeding_tabular()')
+    logger.info('Entered inbreeding_tabular()')
 
     if rels:
         reldict = {
@@ -1043,7 +1046,7 @@ def inbreeding_tabular(pedobj, gens=0, rels=0):
                             reldict['r_count'] += 1
                             reldict['r_sum'] += rel_value
 
-        logging.info('Exited inbreeding_tabular()')
+        logger.info('Exited inbreeding_tabular()')
 
         if rels:
             return fx, reldict
@@ -1058,10 +1061,10 @@ def inbreeding_tabular(pedobj, gens=0, rels=0):
         # cut, reorder could not resolve them, and this handler turned the
         # failure into an empty result. Every generation limit that produced a
         # dangling parent reference would otherwise look like "no inbreeding".
-        logging.error("inbreeding_tabular() refused", exc_info=True)
+        logger.error("inbreeding_tabular() refused", exc_info=True)
         raise
     except Exception as e:
-        logging.error(f"Error in inbreeding_tabular(): {e}")
+        logger.error(f"Error in inbreeding_tabular(): {e}")
         if rels:
             return {}, {}
         else:
@@ -1132,7 +1135,7 @@ def inbreeding_meuwissen_luo(pedobj, gens=0, **kw):
     :class:`~PyPedal.pyp_errors.PyPedalUsageError`.
     """
     try:
-        logging.info("Entered inbreeding_meuwissen_luo()")
+        logger.info("Entered inbreeding_meuwissen_luo()")
     except Exception:
         pass
 
@@ -1154,12 +1157,12 @@ def inbreeding_meuwissen_luo(pedobj, gens=0, **kw):
             dam_idx[i] = int(dam_id) - 1
 
     try:
-        logging.info("Allocating vectors in inbreeding_meuwissen_luo().")
+        logger.info("Allocating vectors in inbreeding_meuwissen_luo().")
         lvec = [0.0] * n
         dvec = [0.0] * n
         fvec = [0.0] * n
     except Exception as e:
-        logging.error(
+        logger.error(
             f"Unable to allocate vectors in inbreeding_meuwissen_luo(): {str(e)}"
         )
         return False
@@ -1225,7 +1228,7 @@ def inbreeding_meuwissen_luo(pedobj, gens=0, **kw):
 
     fx = {animal_id[i]: fvec[i] for i in range(n)}
 
-    logging.info("Exited inbreeding_meuwissen_luo()")
+    logger.info("Exited inbreeding_meuwissen_luo()")
     return fx
 
 
@@ -1238,7 +1241,7 @@ def inbreeding_modified_meuwissen_luo(pedobj, gens=0, **kw):
     algorithms. An unpublished note.
     """
     try:
-        logging.info("Entered inbreeding_modified_meuwissen_luo()")
+        logger.info("Entered inbreeding_modified_meuwissen_luo()")
     except Exception:
         pass
 
@@ -1247,13 +1250,13 @@ def inbreeding_modified_meuwissen_luo(pedobj, gens=0, **kw):
 
     # Allocate memory for vectors
     try:
-        logging.info("Allocating vectors in inbreeding_modified_meuwissen_luo().")
+        logger.info("Allocating vectors in inbreeding_modified_meuwissen_luo().")
         lvecs = np.zeros(len(pedobj.pedigree), dtype=np.float64)
         lvecd = np.zeros(len(pedobj.pedigree), dtype=np.float64)
         avec = np.zeros(len(pedobj.pedigree), dtype=np.float64)
         dvec = np.zeros(len(pedobj.pedigree), dtype=np.float64)
     except MemoryError:
-        logging.info(
+        logger.info(
             "Unable to allocate vectors in RAM, trying to allocate memory-mapped files."
         )
         lvecs = np.memmap("lvecs_memmap.bin", dtype="float64", mode="w+", shape=(len(pedobj.pedigree),))
@@ -1261,7 +1264,7 @@ def inbreeding_modified_meuwissen_luo(pedobj, gens=0, **kw):
         avec = np.memmap("avec_memmap.bin", dtype="float64", mode="w+", shape=(len(pedobj.pedigree),))
         dvec = np.memmap("dvec_memmap.bin", dtype="float64", mode="w+", shape=(len(pedobj.pedigree),))
     except Exception as e:
-        logging.error(
+        logger.error(
             f"Unable to allocate vectors in inbreeding_modified_meuwissen_luo(): {str(e)}"
         )
         return False
@@ -1369,7 +1372,7 @@ def inbreeding_modified_meuwissen_luo(pedobj, gens=0, **kw):
 
     # Clean-up allocated resources
     del lvecs, lvecd, avec, dvec
-    logging.info("Exited inbreeding_modified_meuwissen_luo()")
+    logger.info("Exited inbreeding_modified_meuwissen_luo()")
     return fx
 
 
@@ -1379,7 +1382,7 @@ def a_decompose(pedobj):
     Henderson, 1976; Thompson, 1977; Mrode, 1996).  Return D, a diagonal
     matrix, and T, a lower triangular matrix such that A = TDT'.
     """
-    logging.info("Entered a_decompose()")
+    logger.info("Entered a_decompose()")
 
     l = pedobj.metadata.num_records
 
@@ -1443,13 +1446,13 @@ def a_decompose(pedobj):
                             + T[pedobj.pedigree[row].damID - 1, col]
                         )
                 else:
-                    logging.error(
+                    logger.error(
                         f"[ERROR]: There is a problem with the sire (ID {pedobj.pedigree[col].sireID}) and/or "
                         f"dam (ID {pedobj.pedigree[col].damID}) of animal {pedobj.pedigree[col].animalID}"
                     )
                     break
     except Exception as e:
-        logging.error(f"An error occurred in a_decompose: {e}")
+        logger.error(f"An error occurred in a_decompose: {e}")
         D = np.identity(1, dtype=float)
         T = np.identity(1, dtype=float)
 
@@ -1467,7 +1470,7 @@ def a_decompose(pedobj):
             line = ",".join(f"{T[row, col]:7.5f}" for col in range(l))
             aout.write(f"{line}\n")
 
-    logging.info("Exited a_decompose()")
+    logger.info("Exited a_decompose()")
     return D, T
 
 
@@ -1480,7 +1483,7 @@ def form_d_nof(pedobj):
     formation of D.
     """
     try:
-        logging.info("Entered form_d_nof()")
+        logger.info("Entered form_d_nof()")
     except Exception:
         pass
 
@@ -1517,16 +1520,16 @@ def form_d_nof(pedobj):
                     if row == col:
                         D[row, col] = 0.5
                 else:
-                    logging.error(
+                    logger.error(
                         f"[ERROR]: There is a problem with the sire (ID {pedobj.pedigree[col].sireID}) and/or "
                         f"dam (ID {pedobj.pedigree[col].damID}) of animal {pedobj.pedigree[col].animalID}"
                     )
                     break
     except Exception as e:
-        logging.error(f"An error occurred in form_d_nof: {e}")
+        logger.error(f"An error occurred in form_d_nof: {e}")
         D = np.identity(1, dtype=float)
 
-    logging.info("Exited form_d_nof()")
+    logger.info("Exited form_d_nof()")
     return D
 
 
@@ -1536,7 +1539,7 @@ def a_inverse_dnf(pedobj, filetag='_a_inverse_dnf_'):
     does not account for inbreeding.
     """
     try:
-        logging.info('Entered a_inverse_dnf()')
+        logger.info('Entered a_inverse_dnf()')
     except Exception:
         pass
 
@@ -1582,13 +1585,13 @@ def a_inverse_dnf(pedobj, filetag='_a_inverse_dnf_'):
                 a_inv[d, s] += 0.25 * d_inv[i, i]
                 a_inv[d, d] += 0.25 * d_inv[i, i]
             else:
-                logging.error(
+                logger.error(
                     f"[ERROR]: There is a problem with the sire (ID {pedobj.pedigree[i].sireID}) "
                     f"and/or dam (ID {pedobj.pedigree[i].damID}) of animal {pedobj.pedigree[i].animalID}"
                 )
                 break
     except Exception as e:
-        logging.error(f"An error occurred in a_inverse_dnf: {e}")
+        logger.error(f"An error occurred in a_inverse_dnf: {e}")
         a_inv = np.zeros((1, 1), dtype=float)
 
     # Write the inverse matrix to a file
@@ -1605,7 +1608,7 @@ def a_inverse_dnf(pedobj, filetag='_a_inverse_dnf_'):
             line = ','.join(f"{d_inv[row, col]:7.5f}" for col in range(l)) + '\n'
             aout.write(line)
 
-    logging.info('Exited a_inverse_dnf()')
+    logger.info('Exited a_inverse_dnf()')
     return a_inv
 
 
@@ -1615,7 +1618,7 @@ def a_inverse_df(pedobj):
     inbreeding - using the method of Quaas (1976).
     """
     try:
-        logging.info('Entered a_inverse_df()')
+        logger.info('Entered a_inverse_df()')
     except Exception:
         pass
 
@@ -1683,7 +1686,7 @@ def a_inverse_df(pedobj):
                 a_inv[d, s] += 0.25 * d_inv[i, i]
                 a_inv[d, d] += 0.25 * d_inv[i, i]
     except Exception as e:
-        logging.error(f"An error occurred in a_inverse_df: {e}")
+        logger.error(f"An error occurred in a_inverse_df: {e}")
         a_inv = np.zeros((1, 1), dtype=float)
 
     # Write the inverse matrix to a file
@@ -1707,7 +1710,7 @@ def a_inverse_df(pedobj):
             line = ','.join(f"{d_inv[row, col]:7.5f}" for col in range(l)) + '\n'
             aout.write(line)
 
-    logging.info('Exited a_inverse_df()')
+    logger.info('Exited a_inverse_df()')
     return a_inv
 
 
@@ -1723,7 +1726,7 @@ def partial_inbreeding(pedobj, animals=None, gens=0, rels=1, cleanmaps=1):
         animals = []
 
     try:
-        logging.info('Entered partial_inbreeding()')
+        logger.info('Entered partial_inbreeding()')
     except Exception:
         pass
 
@@ -1813,7 +1816,7 @@ def partial_inbreeding(pedobj, animals=None, gens=0, rels=1, cleanmaps=1):
                     pyp_utils.delete_id_map(_tag)
 
     try:
-        logging.info('Exited partial_inbreeding()')
+        logger.info('Exited partial_inbreeding()')
     except Exception:
         pass
 
@@ -1842,7 +1845,7 @@ def fast_partial_a_matrix(pedigree, founder, founderlist, pedopts, method='dense
         except Exception:
             if pedopts['messages'] != 'quiet':
                 print('[WARNING]: Could not create a sparse identity matrix in fast_partial_a_matrix()!')
-            logging.warning('Could not create a sparse identity matrix in fast_partial_a_matrix()!.')
+            logger.warning('Could not create a sparse identity matrix in fast_partial_a_matrix()!.')
             return fast_partial_a_matrix(pedigree, founder, founderlist, pedopts, method='dense', debug=debug)
     else:
         try:
@@ -1851,7 +1854,7 @@ def fast_partial_a_matrix(pedigree, founder, founderlist, pedopts, method='dense
             a = np.memmap('fast_partial_a_matrix_mmap.bin', dtype='float32', mode='w+', shape=(l, l))
         except Exception:
             print(f'[ERROR]: Unable to allocate a matrix of rank {l} in fast_partial_a_matrix()!')
-            logging.error(f'Unable to allocate a matrix of rank {l} in fast_partial_a_matrix()!')
+            logger.error(f'Unable to allocate a matrix of rank {l} in fast_partial_a_matrix()!')
             return False
 
     # Initialize animal, sire, and dam lists

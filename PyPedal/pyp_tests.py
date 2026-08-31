@@ -16,19 +16,10 @@
 Unit tests for the PyPedal library.
 """
 
-import logging
 import os
 import unittest
 
 from . import pyp_metrics, pyp_newclasses
-
-logging.basicConfig(
-    level=logging.DEBUG,  # Set the minimum logging level to DEBUG
-    format="%(asctime)s - %(levelname)s - %(message)s",  # Add timestamps and levels to logs
-    handlers=[
-        logging.StreamHandler()  # Ensure logs are sent to the console (Terminal)
-    ],
-)
 
 
 class PyPedalMetricsTestCases(unittest.TestCase):

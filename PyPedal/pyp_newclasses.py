@@ -19,6 +19,7 @@ Modified for the PyPedal 4.0 Python 3 release by Geert Degezelle, 2025-2026. See
 
 import hashlib
 import logging
+
 import os
 import sys
 import warnings
@@ -38,6 +39,49 @@ from . import (
     pyp_snp,
     pyp_utils,
 )
+
+logger = logging.getLogger(__name__)
+
+PYPEDAL_LOGGER_NAME = "PyPedal"
+_PYPEDAL_OWNED_HANDLER = "_pypedal_owned"
+
+
+def filetag_from_pedfile(pedfile) -> str:
+    """Return the output prefix for a pedigree path.
+
+    Only the final extension is stripped, so the directory is kept and a
+    leading ``./`` does not collapse to ``untitled_pedigree``.
+    """
+    tag = os.path.splitext(str(pedfile))[0]
+    if len(tag) == 0:
+        return "untitled_pedigree"
+    return tag
+
+
+def install_pedigree_logfile(logfile: str) -> None:
+    """Attach a PyPedal-owned FileHandler for the current pedigree logfile.
+
+    Any previous PyPedal-owned FileHandler is closed and removed first.
+    Handlers owned by the host application are not touched. The package
+    logger is used, never the root logger.
+    """
+    package = logging.getLogger(PYPEDAL_LOGGER_NAME)
+    package.setLevel(logging.DEBUG)
+    for handler in list(package.handlers):
+        if getattr(handler, _PYPEDAL_OWNED_HANDLER, False):
+            package.removeHandler(handler)
+            handler.close()
+    handler = logging.FileHandler(logfile, mode="w")
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s %(levelname)-8s %(message)s",
+            datefmt="%a, %d %b %Y %H:%M:%S",
+        )
+    )
+    setattr(handler, _PYPEDAL_OWNED_HANDLER, True)
+    package.addHandler(handler)
+
 
 class NewPedigree:
     """
@@ -101,11 +145,7 @@ class NewPedigree:
         # Pedigree file handling
         if kw["simulate_pedigree"]:
             kw["pedfile"] = "simulated_pedigree"
-        # Strip only the final extension so dotted directories stay intact
-        # and "./mrode.ped" does not collapse to untitled_pedigree.
-        kw["filetag"] = os.path.splitext(str(kw["pedfile"]))[0]
-        if len(kw["filetag"]) == 0:
-            kw["filetag"] = "untitled_pedigree"
+        kw["filetag"] = filetag_from_pedfile(kw["pedfile"])
 
         # Handle database settings
         kw.setdefault("database_name", "pypedal")
@@ -213,14 +253,8 @@ class NewPedigree:
                 self.kw["logfile"] = f"{self.kw['filetag']}_{pyp_utils.pyp_datestamp()}.log"
             else:
                 self.kw["logfile"] = f"{self.kw['filetag']}.log"
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format="%(asctime)s %(levelname)-8s %(message)s",
-            datefmt="%a, %d %b %Y %H:%M:%S",
-            filename=self.kw["logfile"],
-            filemode="w",
-        )
-        logging.info("Logfile %s instantiated.", self.kw["logfile"])
+        install_pedigree_logfile(self.kw["logfile"])
+        logger.info("Logfile %s instantiated.", self.kw["logfile"])
         if self.kw["messages"] == "verbose" and self.kw["pedigree_summary"]:
             print(f"[INFO]: Logfile {self.kw['logfile']} instantiated.")
 
@@ -230,23 +264,23 @@ class NewPedigree:
             self.kw["log_ped_lines"] = int(self.kw["log_ped_lines"])
         except ValueError:
             self.kw["log_ped_lines"] = 0
-            logging.warning(
+            logger.warning(
                 "An incorrect value (%s) was provided for the option log_ped_lines, "
                 "which must be a number greater than or equal to 0. It has been set to 0.",
                 _lpl,
             )
         if self.kw["log_ped_lines"] < 0:
             self.kw["log_ped_lines"] = 0
-            logging.warning(
+            logger.warning(
                 "A negative value (%s) was provided for the option log_ped_lines, "
                 "which must be greater than or equal to 0. It has been set to 0.",
                 self.kw["log_ped_lines"],
             )
 
         if self.kw["messages"] == "verbose" and self.kw["debug_messages"]:
-            logging.info("Printing program options for debugging")
+            logger.info("Printing program options for debugging")
             for _k, _v in self.kw.items():
-                logging.debug("\t%s\t%s", _k, _v)
+                logger.debug("\t%s\t%s", _k, _v)
 
 
     def __len__(self):
@@ -430,19 +464,19 @@ class NewPedigree:
             A NewPedigree object with the contents of the merged pedigrees or False on failure.
         """
         if isinstance(self, NewPedigree) and isinstance(other, NewPedigree):
-            logging.info("Adding pedigrees %s and %s", self.kw['pedname'], other.kw['pedname'])
+            logger.info("Adding pedigrees %s and %s", self.kw['pedname'], other.kw['pedname'])
             if self.kw.get('debug_messages', False):
                 print("[DEBUG]: self and other are both NewPedigree objects. Combining them.")
                 print(f"[DEBUG]: Using match rule: {self.kw['match_rule']}")
-            logging.info("Using match rule %s to merge pedigrees", self.kw['match_rule'])
+            logger.info("Using match rule %s to merge pedigrees", self.kw['match_rule'])
 
             # Ensure both pedigrees are renumbered
             if not self.kw['pedigree_is_renumbered']:
                 self.renumber()
-                logging.info("Renumbering pedigree %s", self.kw['pedname'])
+                logger.info("Renumbering pedigree %s", self.kw['pedname'])
             if not other.kw['pedigree_is_renumbered']:
                 other.renumber()
-                logging.info("Renumbering pedigree %s", other.kw['pedname'])
+                logger.info("Renumbering pedigree %s", other.kw['pedname'])
 
             ped_to_write = {"a": {}, "b": {}}
             for a in self.pedigree:
@@ -502,15 +536,15 @@ class NewPedigree:
                 new_pedigree = loadPedigree(new_options, debugLoad=debugLoad)
                 if self.kw["messages"] == "verbose":
                     print(f"[INFO]: Loaded merged pedigree {merged_pedname} from file {filename}!")
-                logging.info("Loaded merged pedigree %s from file %s.", merged_pedname, filename)
+                logger.info("Loaded merged pedigree %s from file %s.", merged_pedname, filename)
                 return new_pedigree
             except Exception as e:
                 if self.kw['messages'] == 'verbose':
                     print(f"[ERROR]: Could not load merged pedigree {merged_pedname} from file {filename}! Error: {e}")
-                logging.error("Could not load merged pedigree %s from file %s! Error: %s", merged_pedname, filename, e)
+                logger.error("Could not load merged pedigree %s from file %s! Error: %s", merged_pedname, filename, e)
                 return False
         else:
-            logging.error("Cannot complete __add__() operation because types do not match.")
+            logger.error("Cannot complete __add__() operation because types do not match.")
             return NotImplemented
 
     def __sub__(self, other, filename=False, debugLoad=False):
@@ -534,16 +568,16 @@ class NewPedigree:
             The resulting pedigree object or False on failure.
         """
         if isinstance(other, NewPedigree):
-            logging.info("Subtracting pedigrees %s and %s", self.kw['pedname'], other.kw['pedname'])
-            logging.info("Using match rule %s to subtract pedigrees", self.kw['match_rule'])
+            logger.info("Subtracting pedigrees %s and %s", self.kw['pedname'], other.kw['pedname'])
+            logger.info("Using match rule %s to subtract pedigrees", self.kw['match_rule'])
 
             # Ensure pedigrees are renumbered
             if not self.kw['pedigree_is_renumbered']:
                 self.renumber()
-                logging.info("Renumbering pedigree %s", self.kw['pedname'])
+                logger.info("Renumbering pedigree %s", self.kw['pedname'])
             if not other.kw['pedigree_is_renumbered']:
                 other.renumber()
-                logging.info("Renumbering pedigree %s", other.kw['pedname'])
+                logger.info("Renumbering pedigree %s", other.kw['pedname'])
 
             # Track animals to write
             ped_to_write = {'a': {}, 'b': {}}
@@ -599,15 +633,15 @@ class NewPedigree:
                 new_pedigree = loadPedigree(new_options, debugLoad=debugLoad)
                 if self.kw['messages'] == 'verbose':
                     print(f"[INFO]: Loaded subtracted pedigree {merged_pedname} from file {filename}!")
-                logging.info("Loaded subtracted pedigree %s from file %s.", merged_pedname, filename)
+                logger.info("Loaded subtracted pedigree %s from file %s.", merged_pedname, filename)
                 return new_pedigree
             except Exception as e:
                 if self.kw['messages'] == 'verbose':
                     print(f"[ERROR]: Could not load subtracted pedigree {merged_pedname} from file {filename}! Error: {e}")
-                logging.error("Could not load subtracted pedigree %s from file %s. Error: %s", merged_pedname, filename, e)
+                logger.error("Could not load subtracted pedigree %s from file %s. Error: %s", merged_pedname, filename, e)
                 return False
         else:
-            logging.error("Cannot complete __sub__() operation because types do not match.")
+            logger.error("Cannot complete __sub__() operation because types do not match.")
             return NotImplemented
 
     def union(self, other, filename=False, debugLoad=False):
@@ -650,16 +684,16 @@ class NewPedigree:
             or False on failure.
         """
         if isinstance(self, NewPedigree) and isinstance(other, NewPedigree):
-            logging.info('Computing intersection of pedigrees %s and %s', self.kw['pedname'], other.kw['pedname'])
-            logging.info('Using match rule %s to compare pedigrees', self.kw['match_rule'])
+            logger.info('Computing intersection of pedigrees %s and %s', self.kw['pedname'], other.kw['pedname'])
+            logger.info('Using match rule %s to compare pedigrees', self.kw['match_rule'])
 
             # Ensure pedigrees are renumbered
             if not self.kw.get('pedigree_is_renumbered', False):
                 self.renumber()
-                logging.info('Renumbering pedigree %s', self.kw['pedname'])
+                logger.info('Renumbering pedigree %s', self.kw['pedname'])
             if not other.kw.get('pedigree_is_renumbered', False):
                 other.renumber()
-                logging.info('Renumbering pedigree %s', other.kw['pedname'])
+                logger.info('Renumbering pedigree %s', other.kw['pedname'])
 
             # Determine common animals based on match rules
             animals_to_write = []
@@ -688,8 +722,8 @@ class NewPedigree:
             # Save intersected pedigree to a file
             filename = f'{newpedname}.ped'
             if self.kw.get('debug_messages', False):
-                logging.info('Filename: %s', filename)
-                logging.info('There are %s animals in the intersection of pedigrees %s and %s.',
+                logger.info('Filename: %s', filename)
+                logger.info('There are %s animals in the intersection of pedigrees %s and %s.',
                             len(animals_to_write), self.kw['pedname'], other.kw['pedname'])
             pyp_io.save_newanimals_to_file(animals_to_write, filename, self.kw, self.new_animal_attr)
 
@@ -708,14 +742,14 @@ class NewPedigree:
             try:
                 new_pedigree = loadPedigree(new_options, debugLoad=True)
                 if self.kw['messages'] == 'verbose':
-                    logging.info('Loaded intersected pedigree %s from file %s', intersect_pedname, filename)
+                    logger.info('Loaded intersected pedigree %s from file %s', intersect_pedname, filename)
                 return new_pedigree
             except Exception as e:
                 if self.kw['messages'] == 'verbose':
-                    logging.error('Could not load intersected pedigree %s from file %s: %s', intersect_pedname, filename, e)
+                    logger.error('Could not load intersected pedigree %s from file %s: %s', intersect_pedname, filename, e)
                 return False
         else:
-            logging.error('Cannot complete intersection operation because types do not match.')
+            logger.error('Cannot complete intersection operation because types do not match.')
             return NotImplemented
 
     def load(self, pedsource='file', pedgraph=None, pedstream='', animallist=None):
@@ -747,7 +781,7 @@ class NewPedigree:
         ]
 
         if pedsource not in valid_sources:
-            logging.error('Invalid pedsource provided: %s', pedsource)
+            logger.error('Invalid pedsource provided: %s', pedsource)
             raise pyp_errors.PyPedalUsageError(
                 'Invalid pedsource %r. Valid sources are: %s.'
                 % (pedsource, ', '.join(valid_sources)))
@@ -763,7 +797,7 @@ class NewPedigree:
         elif pedsource == 'db':
             self.kw['pedformat'] = 'ASDx'
             self.kw['sepchar'] = ','
-            logging.info('Loading from database %s.%s at %s.',
+            logger.info('Loading from database %s.%s at %s.',
                         self.kw['database_name'], self.kw['database_table'], pyp_utils.pyp_nice_time())
 
             try:
@@ -777,14 +811,14 @@ class NewPedigree:
                         conn.close()
                         self.preprocess(dbstream=dbstream)
                     else:
-                        logging.error('Failed to connect to database %s', self.kw['database_name'])
+                        logger.error('Failed to connect to database %s', self.kw['database_name'])
                         raise pyp_errors.PyPedalConfigurationError(
                             'Could not connect to database %r.'
                             % self.kw['database_name'])
             except pyp_errors.PyPedalError:
                 raise
             except Exception as e:
-                logging.error('Database load failed: %s', e)
+                logger.error('Database load failed: %s', e)
                 raise pyp_errors.PyPedalConfigurationError(
                     'Loading from database %r failed: %s'
                     % (self.kw.get('database_name'), e)) from e
@@ -793,7 +827,7 @@ class NewPedigree:
             if pedgraph is not None:
                 self.fromgraph(pedgraph)
             else:
-                logging.error('No pedgraph provided for graph source')
+                logger.error('No pedgraph provided for graph source')
                 raise pyp_errors.PyPedalUsageError(
                     "pedsource='graph' requires a pedgraph argument, but none "
                     'was given.')
@@ -805,19 +839,19 @@ class NewPedigree:
                     pedgraph = nx.read_adjlist(self.kw['pedfile'])
                     self.fromgraph(pedgraph)
                 else:
-                    logging.error('No filename provided for graphfile source')
+                    logger.error('No filename provided for graphfile source')
                     raise pyp_errors.PyPedalConfigurationError(
                         "pedsource='graphfile' requires kw['pedfile'] to be "
                         'set, but it is empty.')
             except ImportError as e:
-                logging.error('NetworkX module not available')
+                logger.error('NetworkX module not available')
                 raise pyp_errors.PyPedalDependencyError(
                     "pedsource='graphfile' needs NetworkX, which is not "
                     "installed. Install it with: pip install networkx") from e
             except pyp_errors.PyPedalError:
                 raise
             except Exception as e:
-                logging.error('Failed to load graph from file: %s', e)
+                logger.error('Failed to load graph from file: %s', e)
                 raise pyp_errors.PyPedalPedigreeSourceError(
                     'Could not read an adjacency list from %r: %s'
                     % (self.kw['pedfile'], e)) from e
@@ -826,7 +860,7 @@ class NewPedigree:
             try:
                 self.fromnull()
             except Exception as e:
-                logging.error('Failed to create null pedigree: %s', e)
+                logger.error('Failed to create null pedigree: %s', e)
                 raise pyp_errors.PyPedalInternalError(
                     'Constructing a null pedigree failed: %s' % e) from e
 
@@ -835,12 +869,12 @@ class NewPedigree:
                 try:
                     self.fromanimallist(animallist)
                 except Exception as e:
-                    logging.error('Failed to create pedigree from animallist: %s', e)
+                    logger.error('Failed to create pedigree from animallist: %s', e)
                     raise pyp_errors.PyPedalInputError(
                         'Building a pedigree from the supplied animallist '
                         'failed: %s' % e) from e
             else:
-                logging.error('Empty or missing animallist provided')
+                logger.error('Empty or missing animallist provided')
                 raise pyp_errors.PyPedalUsageError(
                     "pedsource='animallist' requires a non-empty animallist, "
                     'but none was given.')
@@ -863,19 +897,19 @@ class NewPedigree:
                     })
                     self.preprocess()
                 else:
-                    logging.error('Invalid pedigree format from GEDCOM file')
+                    logger.error('Invalid pedigree format from GEDCOM file')
                     raise pyp_errors.PyPedalPedigreeSourceError(
                         'Could not determine a pedigree format from the GEDCOM '
                         'file %r.' % self.kw['pedfile'])
             else:
-                logging.error('No filename provided for GEDCOM file')
+                logger.error('No filename provided for GEDCOM file')
                 raise pyp_errors.PyPedalConfigurationError(
                     "pedsource='gedcomfile' requires kw['pedfile'] to be set, "
                     'but it is empty.')
 
         elif pedsource == 'textstream':
             self.kw.update({'pedformat': 'ASD', 'sepchar': ','})
-            logging.info('Preprocessing a textstream')
+            logger.info('Preprocessing a textstream')
             self.preprocess(textstream=pedstream)
 
         else:  # Default is loading from a file
@@ -883,12 +917,12 @@ class NewPedigree:
                 print(f"pedfile is None or not set: {self.kw.get('pedfile')}")
                 raise ValueError("The key 'pedfile' must be set in self.kw before calling preprocess().")
 
-            logging.info('Preprocessing %s', self.kw['pedfile'])
+            logger.info('Preprocessing %s', self.kw['pedfile'])
             self.preprocess()
 
         # Post-processing: renumbering, assigning generations, etc.
         if self.kw.get('reorder') and not self.kw.get('renumber'):
-            logging.info('Reordering pedigree')
+            logger.info('Reordering pedigree')
             self.pedigree = (
                 pyp_utils.fast_reorder(
                     self.pedigree,
@@ -915,7 +949,7 @@ class NewPedigree:
         # `pedobj.snp is False` always took the failure path and
         # form_grm_from_snp() was unreachable in production.
         if self.kw.get('snpfile'):
-            logging.info('Reading SNP genotypes from %s', self.kw['snpfile'])
+            logger.info('Reading SNP genotypes from %s', self.kw['snpfile'])
             pyp_snp.load_snp_file(self)
 
         if self.kw.get('renumber'):
@@ -923,28 +957,28 @@ class NewPedigree:
             pyp_snp.renumber_snp_ids(self)
 
         if self.kw.get('set_ancestors'):
-            logging.info('Setting ancestor flags')
+            logger.info('Setting ancestor flags')
             pyp_utils.set_ancestor_flag(self)
 
         if self.kw.get('set_sexes') or self.kw.get('assign_sexes'):
-            logging.info('Assigning sexes')
+            logger.info('Assigning sexes')
             pyp_utils.set_sexes(self)
 
         if self.kw.get('set_alleles'):
-            logging.info('Gene dropping to compute founder genome equivalents')
+            logger.info('Gene dropping to compute founder genome equivalents')
             pyp_metrics.effective_founder_genomes(self)
 
         if self.kw.get('form_nrm'):
-            logging.info('Forming numerator relationship matrix')
+            logger.info('Forming numerator relationship matrix')
             self.nrm = NewAMatrix(self.kw)
             self.nrm.form_a_matrix(self.pedigree)
 
         if self.kw.get('set_offspring') and not self.kw.get('renumber'):
-            logging.info('Assigning offspring')
+            logger.info('Assigning offspring')
             pyp_utils.set_offspring(self)
 
         # Metadata and summary
-        logging.info('Creating pedigree metadata')
+        logger.info('Creating pedigree metadata')
         self.metadata = PedigreeMetadata(self.pedigree, self.kw, self.snp)
         # Carry the implicit-parent record onto the metadata so callers can
         # reconcile input rows against post-load counts.
@@ -956,7 +990,7 @@ class NewPedigree:
         # load-time request used to raise AttributeError, get swallowed,
         # and leave igen at the initialisation sentinel.
         if self.kw.get('set_generations'):
-            logging.info('Assigning generations')
+            logger.info('Assigning generations')
             pyp_utils.set_generation(self)
 
         pyp_chronology.validate_recorded_chronology(self)
@@ -969,7 +1003,7 @@ class NewPedigree:
             self.metadata.printme()
 
         if self.kw.get('pedcomp'):
-            logging.info('Calculating pedigree completeness for %s generations', self.kw['pedcomp_gens'])
+            logger.info('Calculating pedigree completeness for %s generations', self.kw['pedcomp_gens'])
             pyp_metrics.pedigree_completeness(self, self.kw['pedcomp_gens'])
 
     def oldsave(self, filename='', outformat='o', idformat='o'):
@@ -998,13 +1032,13 @@ class NewPedigree:
             filename = f"{self.kw['filetag']}_saved.ped"
             if self.kw.get('messages') == 'verbose':
                 print(f"[WARNING]: Saving pedigree to file {filename} to avoid overwriting {self.kw['pedfile']}.")
-            logging.warning("Saving pedigree to file %s to avoid overwriting %s.", filename, self.kw['pedfile'])
+            logger.warning("Saving pedigree to file %s to avoid overwriting %s.", filename, self.kw['pedfile'])
 
         try:
             with open(filename, 'w', encoding='utf-8') as ofh:
                 if self.kw.get('messages') == 'verbose':
                     print(f"[INFO]: Opened file {filename} for pedigree save at {pyp_utils.pyp_nice_time()}.")
-                logging.info("Opened file %s for pedigree save at %s.", filename, pyp_utils.pyp_nice_time())
+                logger.info("Opened file %s for pedigree save at %s.", filename, pyp_utils.pyp_nice_time())
 
                 # Determine the new pedigree format
                 if outformat == 'l':
@@ -1095,7 +1129,7 @@ class NewPedigree:
 
             if self.kw.get('messages') == 'verbose':
                 print(f"[INFO]: Closed file {filename} after pedigree save at {pyp_utils.pyp_nice_time()}.")
-            logging.info("Closed file %s after pedigree save at %s.", filename, pyp_utils.pyp_nice_time())
+            logger.info("Closed file %s after pedigree save at %s.", filename, pyp_utils.pyp_nice_time())
             return True
 
         except pyp_errors.PyPedalError:
@@ -1103,7 +1137,7 @@ class NewPedigree:
         except Exception as e:
             if self.kw.get('messages') == 'verbose':
                 print(f"[ERROR]: Unable to open file {filename} for pedigree save!")
-            logging.error("Unable to open file %s for pedigree save. Error: %s", filename, str(e))
+            logger.error("Unable to open file %s for pedigree save. Error: %s", filename, str(e))
             return False
 
     def save(self, filename='', pedformat='asd', sepchar=' ', append=False, write_list=None, originalID=False):
@@ -1139,34 +1173,34 @@ class NewPedigree:
             invalid_codes = [pf for pf in pedformat_in if pf not in self.pedformat_codes]
             if self.kw.get('messages') == 'verbose':
                 print(f"[WARNING]: Invalid pedigree format codes {invalid_codes} in NewPedigree::save().")
-            logging.warning("Invalid pedigree format codes %s in NewPedigree::save().", invalid_codes)
+            logger.warning("Invalid pedigree format codes %s in NewPedigree::save().", invalid_codes)
 
         # Warn about incomplete information in the pedformat
         if 'asd' not in pedformat.lower():
             if self.kw.get('messages') == 'verbose':
                 print(f"[WARNING]: Pedigree format {pedformat} may lead to incomplete parentage information.")
-            logging.warning("Pedigree format %s may lead to incomplete parentage information.", pedformat)
+            logger.warning("Pedigree format %s may lead to incomplete parentage information.", pedformat)
 
         # Validate sepchar
         if not sepchar:
             sepchar = self.kw['sepchar']
             if self.kw.get('messages') == 'verbose':
                 print(f"[WARNING]: Invalid sepchar ''. Changed to '{sepchar}'.")
-            logging.warning("Invalid sepchar ''. Changed to '%s'.", sepchar)
+            logger.warning("Invalid sepchar ''. Changed to '%s'.", sepchar)
 
         # Ensure filename is valid
         if not filename:
             filename = f"{self.kw['filetag']}_saved.ped"
             if self.kw.get('messages') == 'verbose':
                 print(f"[WARNING]: Saving pedigree to file {filename} to avoid overwriting {self.kw['pedfile']}.")
-            logging.warning("Saving pedigree to file %s to avoid overwriting %s.", filename, self.kw['pedfile'])
+            logger.warning("Saving pedigree to file %s to avoid overwriting %s.", filename, self.kw['pedfile'])
 
         mode = 'a' if append else 'w'
         try:
             with open(filename, mode, encoding='utf-8') as ofh:
                 if self.kw.get('messages') == 'verbose':
                     print(f"[INFO]: Opened file {filename} for saving at {pyp_utils.pyp_nice_time()}.")
-                logging.info("Opened file %s for saving at %s.", filename, pyp_utils.pyp_nice_time())
+                logger.info("Opened file %s for saving at %s.", filename, pyp_utils.pyp_nice_time())
 
                 if append:
                     ofh.write(f"# {filename} created by PyPedal at {pyp_utils.pyp_nice_time()}\n")
@@ -1211,13 +1245,13 @@ class NewPedigree:
 
                 if self.kw.get('messages') == 'verbose':
                     print(f"[INFO]: Closed file {filename} after saving at {pyp_utils.pyp_nice_time()}.")
-                logging.info("Closed file %s after saving at %s.", filename, pyp_utils.pyp_nice_time())
+                logger.info("Closed file %s after saving at %s.", filename, pyp_utils.pyp_nice_time())
             return True
 
         except Exception as e:
             if self.kw.get('messages') == 'verbose':
                 print(f"[ERROR]: Unable to save pedigree to file {filename}. Error: {e}")
-            logging.error("Unable to save pedigree to file %s. Error: %s", filename, e)
+            logger.error("Unable to save pedigree to file %s. Error: %s", filename, e)
             return False
 
     def estimate_birth_date_ranges(self, profile=None):
@@ -1254,23 +1288,23 @@ class NewPedigree:
                 try:
                     from . import pyp_network
                     pedgraph = pyp_network.ped_to_graph(self)
-                    logging.info("[savegraph]: Converted pedigree to a directed graph.")
+                    logger.info("[savegraph]: Converted pedigree to a directed graph.")
                 except Exception as e:
-                    logging.error("[savegraph]: Unable to convert pedigree to a directed graph. Error: %s", e)
+                    logger.error("[savegraph]: Unable to convert pedigree to a directed graph. Error: %s", e)
                     return False
 
             # Save the graph to a file as an adjacency list
             try:
                 import networkx as nx
                 nx.write_adjlist(pedgraph, pedoutfile)
-                logging.info("[savegraph]: Saved directed graph to file %s.", pedoutfile)
+                logger.info("[savegraph]: Saved directed graph to file %s.", pedoutfile)
                 _retval = True
             except Exception as e:
-                logging.error("[savegraph]: Unable to save directed graph to file %s. Error: %s", pedoutfile, e)
+                logger.error("[savegraph]: Unable to save directed graph to file %s. Error: %s", pedoutfile, e)
                 _retval = False
 
         except Exception as e:
-            logging.error("[savegraph]: An unexpected error occurred. Error: %s", e)
+            logger.error("[savegraph]: An unexpected error occurred. Error: %s", e)
             _retval = False
 
         return _retval
@@ -1301,14 +1335,14 @@ class NewPedigree:
                 # Save the pedigree to a GEDCOM file
                 from . import pyp_io
                 pyp_io.save_to_gedcom(self, pedoutfile)
-                logging.info("[savegedcom]: Saved GEDCOM pedigree to the file %s.", pedoutfile)
+                logger.info("[savegedcom]: Saved GEDCOM pedigree to the file %s.", pedoutfile)
                 _retval = True
             except Exception as e:
-                logging.error("[savegedcom]: Unable to save GEDCOM pedigree to the file %s. Error: %s", pedoutfile, e)
+                logger.error("[savegedcom]: Unable to save GEDCOM pedigree to the file %s. Error: %s", pedoutfile, e)
                 _retval = False
 
         except Exception as e:
-            logging.error("[savegedcom]: An unexpected error occurred. Error: %s", e)
+            logger.error("[savegedcom]: An unexpected error occurred. Error: %s", e)
             _retval = False
 
         return _retval
@@ -1357,14 +1391,14 @@ class NewPedigree:
                             conn.commit()
                             _table_created = True
                         except Exception as e:
-                            logging.error('[savedb]: Error creating table. Error: %s', e)
+                            logger.error('[savedb]: Error creating table. Error: %s', e)
 
                     else:
                         if self.kw['messages'] == 'verbose':
                             print(f"[WARNING]: The table {self.kw['database_table']} already exists in database "
                                 f"{self.kw['database_name']} and you chose to keep existing data. This may lead to "
                                 "duplicate data or multiple pedigrees stored in the same table!")
-                        logging.warning("The table %s already exists in database %s and you chose to keep existing data. "
+                        logger.warning("The table %s already exists in database %s and you chose to keep existing data. "
                                         "This may lead to duplicate data or multiple pedigrees stored in the same table!",
                                         self.kw['database_table'], self.kw['database_name'])
 
@@ -1384,13 +1418,13 @@ class NewPedigree:
                                 conn.commit()
                             _table_loaded = True
                         except Exception as e:
-                            logging.error('[savedb]: Error loading pedigree data into table. Error: %s', e)
+                            logger.error('[savedb]: Error loading pedigree data into table. Error: %s', e)
 
                     conn.close()
 
             else:
                 # Only SQLite is supported in Python 3 version
-                logging.error('[savedb]: Only SQLite database is supported. database_compatibility must be "sqlite".')
+                logger.error('[savedb]: Only SQLite database is supported. database_compatibility must be "sqlite".')
                 if self.kw['messages'] == 'verbose':
                     print('[ERROR]: Only SQLite database is supported. Set database_compatibility to "sqlite".')
 
@@ -1398,18 +1432,18 @@ class NewPedigree:
                 if self.kw['messages'] == 'verbose':
                     print(f"[INFO]: Saved pedigree to {self.kw['database_name']}.{self.kw['database_table']} at "
                         f"{pyp_utils.pyp_nice_time()}.")
-                logging.info('Saved pedigree to %s.%s at %s.', self.kw['database_name'],
+                logger.info('Saved pedigree to %s.%s at %s.', self.kw['database_name'],
                             self.kw['database_table'], pyp_utils.pyp_nice_time())
                 _retval = True
             else:
                 if self.kw['messages'] == 'verbose':
                     print(f"[ERROR]: Could not save pedigree to {self.kw['database_name']}.{self.kw['database_table']} "
                         f"at {pyp_utils.pyp_nice_time()}.")
-                logging.error('Could not save pedigree to %s.%s at %s.', self.kw['database_name'],
+                logger.error('Could not save pedigree to %s.%s at %s.', self.kw['database_name'],
                             self.kw['database_table'], pyp_utils.pyp_nice_time())
 
         except Exception as e:
-            logging.error('[savedb]: An unexpected error occurred. Error: %s', e)
+            logger.error('[savedb]: An unexpected error occurred. Error: %s', e)
             _retval = False
 
         return _retval
@@ -1445,16 +1479,16 @@ class NewPedigree:
         try:
             if not self.kw.get('pedfile'):
                 raise ValueError("pedfile is not set in self.kw")
-            logging.info(f"Processing file: {self.kw['pedfile']}")
+            logger.info(f"Processing file: {self.kw['pedfile']}")
         except Exception as e:
-            logging.error(f"Error during preprocessing: {e}")
+            logger.error(f"Error during preprocessing: {e}")
             raise
 
         try:
             # Ensure pedformat is defined
             if not self.kw.get('pedformat'):
                 self.kw['pedformat'] = 'asd'
-                logging.error('Null pedigree format string assigned a default value of %s.', self.kw['pedformat'])
+                logger.error('Null pedigree format string assigned a default value of %s.', self.kw['pedformat'])
                 if self.kw['messages'] == 'verbose':
                     print(f"[ERROR]: Null pedigree format string assigned a default value of {self.kw['pedformat']}.")
                 raise ValueError("pedformat is not set in self.kw")
@@ -1469,14 +1503,14 @@ class NewPedigree:
                     _pedformat.append('.')
                     if self.kw['messages'] == 'verbose':
                         print("[INFO]: Skipping one or more columns in the input file.")
-                    logging.info('Skipping one or more columns in the input file as requested by the pedigree format string %s',
+                    logger.info('Skipping one or more columns in the input file as requested by the pedigree format string %s',
                                  self.kw['pedformat'])
                 else:
                     # Replace the invalid code with a period, which is ignored when the string is parsed.
                     _pedformat.append('.')
                     if self.kw['messages'] == 'verbose':
                         print(f"[DEBUG]: Invalid format code, {_char}, encountered!")
-                    logging.error('Invalid column format code %s found while reading pedigree format string %s',
+                    logger.error('Invalid column format code %s found while reading pedigree format string %s',
                                   _char, self.kw['pedformat'])
                     
             # Map pedformat to column indices
@@ -1607,7 +1641,7 @@ class NewPedigree:
                             print("[DEBUG]: The same separating character was specified for both columns of input "
                                 "(option sepchar) and alleles (option alleles_sepchar) in an animal's "
                                 "allelotype. The allelotypes will not be used in this pedigree.")
-                        logging.warning('The same separating character was specified for both columns of input '
+                        logger.warning('The same separating character was specified for both columns of input '
                                         '(option sepchar) and alleles (option alleles_sepchar) in an animal\'s '
                                         'allelotype. The allelotypes will not be used in this pedigree.')
                         pedformat_locations['alleles'] = -999
@@ -1655,7 +1689,7 @@ class NewPedigree:
                 counter = 0
                 if self.kw['messages'] == 'verbose' and self.kw['pedigree_summary']:
                     print(f"[INFO]: Opening pedigree file {self.kw['pedfile']}")
-                    logging.info('Opening pedigree file %s', self.kw['pedfile'])
+                    logger.info('Opening pedigree file %s', self.kw['pedfile'])
 
                 ## Open the file
                 if textstream == '' and dbstream == "":
@@ -1677,7 +1711,7 @@ class NewPedigree:
                         try:
                             line = infile.pop(0)
                         except IndexError:
-                            logging.warning('Reached the end of the textstream after reading %s records.', line_counter)
+                            logger.warning('Reached the end of the textstream after reading %s records.', line_counter)
                             line = False
                             break
                     else:
@@ -1689,53 +1723,53 @@ class NewPedigree:
                             line = ','.join(map(str, dbline))
                             counter += 1
                         except IndexError:
-                            logging.info('Reached the end of the dbstream after reading %s records.', line_counter)
+                            logger.info('Reached the end of the dbstream after reading %s records.', line_counter)
                             line = False
                             break
 
                     # Log the raw line
-                    logging.debug(f"Raw line read: {repr(line)}")
+                    logger.debug(f"Raw line read: {repr(line)}")
                     
                     if not line or line.strip() == '':
-                        logging.info('Skipping empty or null line. Reached end-of-line in %s after reading %s lines.', self.kw['pedfile'], line_counter)
-                        # logging.info('Skipping empty or null line.')
+                        logger.info('Skipping empty or null line. Reached end-of-line in %s after reading %s lines.', self.kw['pedfile'], line_counter)
+                        # logger.info('Skipping empty or null line.')
                         # sys.exit(0)
-                        # logging.info('Reached end-of-line in %s after reading %s lines.', self.kw['pedfile'], line_counter)
+                        # logger.info('Reached end-of-line in %s after reading %s lines.', self.kw['pedfile'], line_counter)
                         break
 
                     else:
-                        logging.debug(f"Processing line: {line.strip()}")
+                        logger.debug(f"Processing line: {line.strip()}")
                         # Handling and processing each line
                         line_counter += 1
                         if line_counter <= self.kw['log_ped_lines']:
-                            logging.info('Pedigree (line %s): %s', line_counter, line.strip())
+                            logger.info('Pedigree (line %s): %s', line_counter, line.strip())
 
                         # Handle header lines
                         if line_counter == 1 and self.kw['has_header']:
-                            logging.info('Converted the first line in the input file into a comment because the pedigree file has a header row.')
+                            logger.info('Converted the first line in the input file into a comment because the pedigree file has a header row.')
                             if self.kw['messages'] == 'verbose' and self.kw['pedigree_summary']:
                                 print(f"[INFO]: Converted the first line in the input file into a comment because the pedigree file has a header row.")
                             line = f"# {line}"
 
                         # Handle comment lines
                         if line[0] == '#':
-                            logging.info('Pedigree comment (line %s): %s', line_counter, line.strip())
+                            logger.info('Pedigree comment (line %s): %s', line_counter, line.strip())
                             continue
 
                         # Handle deprecated pedigree format strings
                         elif line[0] == '%':
                             self.kw['old_pedformat'] = line[1:].strip()  # Store the format string
-                            logging.warning('Encountered deprecated pedigree format string (%s) on line %s of the pedigree file.', line.strip(), line_counter)
+                            logger.warning('Encountered deprecated pedigree format string (%s) on line %s of the pedigree file.', line.strip(), line_counter)
                             continue
 
                         # Handle empty or blank lines
                         elif len(line.strip()) == 0:
-                            logging.warning('Encountered an empty (blank) record on line %s of the pedigree file.', line_counter)
+                            logger.warning('Encountered an empty (blank) record on line %s of the pedigree file.', line_counter)
                             continue
                         else:
                             animal_counter += 1
                             if animal_counter % self.kw['counter'] == 0:
-                                logging.info('Records read: %s', animal_counter)
+                                logger.info('Records read: %s', animal_counter)
 
                             # Split the line based on the separator and validate fields
                             lfields = line.strip().split(self.kw['sepchar'])
@@ -1762,7 +1796,7 @@ class NewPedigree:
                                                      f"is the same as the missing value code specified for the pedigree. This animal is being "
                                                      f"skipped and will not have an entry in the pedigree.")
                                         print(f"[ERROR]: {error_msg}")
-                                        logging.error(error_msg)
+                                        logger.error(error_msg)
                                         continue
 
                                     # Track sires and dams
@@ -1818,7 +1852,7 @@ class NewPedigree:
                                 if self.kw.get('debug_messages'):
                                     print(f"[DEBUG]: {self.kw['pedformat']}")
                                     print(f"[DEBUG]: {lfields}")
-                                logging.error(error_msg)
+                                logger.error(error_msg)
                                 raise pyp_errors.PyPedalPedigreeFormatError(
                                     error_msg)
 
@@ -1869,7 +1903,7 @@ class NewPedigree:
                             self.backmap[an.animalID] = an.animalID
                             self.namemap[an.name] = an.animalID
                             self.namebackmap[an.animalID] = an.name
-                            logging.info(f'Added pedigree entry for sire {_s}')
+                            logger.info(f'Added pedigree entry for sire {_s}')
                             if self.kw['messages'] == 'verbose':
                                 print(f'[NOTE]: Added pedigree entry for sire {_s}')
                             self._implicit_parents.append(an.animalID)
@@ -1895,7 +1929,7 @@ class NewPedigree:
                             self.backmap[an.animalID] = an.animalID
                             self.namemap[an.name] = an.animalID
                             self.namebackmap[an.animalID] = an.name
-                            logging.info(f'Added pedigree entry for dam {_d}')
+                            logger.info(f'Added pedigree entry for dam {_d}')
                             if self.kw['messages'] == 'verbose':
                                 print(f'[NOTE]: Added pedigree entry for dam {_d}')
                             self._implicit_parents.append(an.animalID)
@@ -1903,7 +1937,7 @@ class NewPedigree:
 
             # Finish up
             #
-            logging.info('Closing pedigree file') 
+            logger.info('Closing pedigree file') 
             if textstream == '' and dbstream == '':
                 infile.close()
             elif textstream == '':
@@ -1924,7 +1958,7 @@ class NewPedigree:
             # anyway, so the flag was never even consulted. A caller who asks
             # for a pedigree and receives an empty one silently is worse off
             # than one who receives an exception.
-            logging.error("Error during preprocessing: %s", e)
+            logger.error("Error during preprocessing: %s", e)
             raise PyPedalError(
                 "Failed to read pedigree %r after %d record(s): %s: %s. The "
                 "pedigree has NOT been loaded. Check the pedigree format string "
@@ -1974,10 +2008,10 @@ class NewPedigree:
                 self.namebackmap[an.animalID] = an.name
 
                 if self.kw.get('debug_messages', False):
-                    logging.info('Added pedigree entry for animal %s', _n)
+                    logger.info('Added pedigree entry for animal %s', _n)
 
             if self.kw.get('debug_messages', False):
-                logging.info('Added %s animals to the pedigree in NewPedigree.fromgraph()', len(pedgraph.nodes))
+                logger.info('Added %s animals to the pedigree in NewPedigree.fromgraph()', len(pedgraph.nodes))
 
             if self.kw.get('messages', False) == 'verbose':
                 print(f"[INFO]: Added {len(pedgraph.nodes)} animals to the pedigree in NewPedigree.fromgraph()!")
@@ -1986,7 +2020,7 @@ class NewPedigree:
 
         except Exception as e:
             if self.kw.get('debug_messages', False):
-                logging.error('Unable to add animals to the pedigree in NewPedigree.fromgraph(). Error: %s', e)
+                logger.error('Unable to add animals to the pedigree in NewPedigree.fromgraph(). Error: %s', e)
             if self.kw.get('messages', False) == 'verbose':
                 print(f"[ERROR]: Unable to add animals to the pedigree in NewPedigree.fromgraph()! Error: {e}")
             _retval = False
@@ -2003,7 +2037,7 @@ class NewPedigree:
             Always True, indicating success.
         """
         # Log the creation of an empty pedigree
-        logging.info('Created a null (empty) pedigree.')
+        logger.info('Created a null (empty) pedigree.')
         return True
 
     def fromanimallist(self, animallist):
@@ -2034,15 +2068,15 @@ class NewPedigree:
                     self.namemap[an.name] = an.animalID
                     self.namebackmap[an.animalID] = an.name
                     if self.kw['debug_messages']:
-                        logging.info('Added pedigree entry for animal %s', an.originalID)
+                        logger.info('Added pedigree entry for animal %s', an.originalID)
                 else:
-                    logging.error('An entry in the animallist was not a NewAnimal object, skipping!')
+                    logger.error('An entry in the animallist was not a NewAnimal object, skipping!')
 
             _retval = True
         else:
             if self.kw['messages']:
                 print('[ERROR]: Could not create a pedigree from an empty animal list!')
-            logging.error('Could not create a pedigree from an empty animal list!')
+            logger.error('Could not create a pedigree from an empty animal list!')
             _retval = False
 
         return _retval
@@ -2074,11 +2108,11 @@ class NewPedigree:
 
             if self.kw['messages'] == 'verbose':
                 print('[INFO]: Created text stream from pedigree.')
-            logging.info('Created text stream from pedigree.')
+            logger.info('Created text stream from pedigree.')
         except Exception as e:
             if self.kw['messages'] == 'verbose':
                 print(f'[ERROR]: Could not create text stream from pedigree! Exception: {e}')
-            logging.error('Could not create text stream from pedigree!', exc_info=True)
+            logger.error('Could not create text stream from pedigree!', exc_info=True)
 
         return streamout
 
@@ -2096,7 +2130,7 @@ class NewPedigree:
             if self.kw['messages'] == 'verbose' and self.kw['pedigree_summary']:
                 print(f'\t[INFO]: Renumbering pedigree at {pyp_utils.pyp_nice_time()}')
                 print(f'\t\t[INFO]: Reordering pedigree at {pyp_utils.pyp_nice_time()}')
-            logging.info('Reordering pedigree')
+            logger.info('Reordering pedigree')
 
             # Determine whether to use fast or slow reorder based on format and configuration
             if ('b' in self.kw['pedformat'] or 'y' in self.kw['pedformat']) and not self.kw['slow_reorder']:
@@ -2113,7 +2147,7 @@ class NewPedigree:
 
             if self.kw['messages'] == 'verbose' and self.kw['pedigree_summary']:
                 print(f'\t\t[INFO]: Renumbering at {pyp_utils.pyp_nice_time()}')
-            logging.info('Renumbering pedigree')
+            logger.info('Renumbering pedigree')
 
             # Renumber the pedigree
             self.pedigree = pyp_utils.renumber(
@@ -2124,14 +2158,14 @@ class NewPedigree:
 
             if self.kw['messages'] == 'verbose' and self.kw['pedigree_summary']:
                 print(f'\t\t[INFO]: Updating ID map at {pyp_utils.pyp_nice_time()}')
-            logging.info('Updating ID map')
+            logger.info('Updating ID map')
 
             # Update the ID map
             self.updateidmap()
 
             if self.kw['messages'] == 'verbose' and self.kw['pedigree_summary']:
                 print(f'\t[INFO]: Assigning offspring at {pyp_utils.pyp_nice_time()}')
-            logging.info('Assigning offspring')
+            logger.info('Assigning offspring')
 
             # Assign offspring
             pyp_utils.set_offspring(self)
@@ -2149,11 +2183,11 @@ class NewPedigree:
             # so a pedigree left half-renumbered by a failure was indistinguish-
             # able from one that renumbered cleanly, and the analysis layer went
             # on to compute coefficients from it.
-            logging.error('Renumbering refused; the pedigree was not modified '
+            logger.error('Renumbering refused; the pedigree was not modified '
                           'past the point of failure', exc_info=True)
             raise
         except Exception as e:
-            logging.error('Error during renumbering', exc_info=True)
+            logger.error('Error during renumbering', exc_info=True)
             if self.kw['messages'] == 'verbose':
                 print(f'[ERROR]: An error occurred during renumbering: {e}')
             return False
@@ -2270,7 +2304,7 @@ class NewPedigree:
             self.duplicates = False
 
         if self.duplicates:
-            logging.warning(
+            logger.warning(
                 "There are duplicate animals in the pedigree file, requiring manual intervention to correct!"
             )
             if self.kw.get('messages', '') != 'quiet':
@@ -2303,7 +2337,7 @@ class NewPedigree:
         prior_caller = self.kw.get('newanimal_caller')
 
         if not self.kw['pedigree_is_renumbered']:
-            logging.warning(
+            logger.warning(
                 "Adding an animal to an unrenumbered pedigree using NewPedigree::addanimal() is unsafe!"
             )
 
@@ -2361,7 +2395,7 @@ class NewPedigree:
             added = True
             self._invalidate_relationship_cache()
         except Exception as e:
-            logging.error("Error adding animal to the pedigree: %s", e, exc_info=True)
+            logger.error("Error adding animal to the pedigree: %s", e, exc_info=True)
             added = False
             if appended is not None:
                 for i in range(len(self.pedigree) - 1, -1, -1):
@@ -2404,7 +2438,7 @@ class NewPedigree:
         deleted = False
 
         if not self.kw['pedigree_is_renumbered']:
-            logging.warning(
+            logger.warning(
                 "Deleting an animal from an unrenumbered pedigree using NewPedigree::delanimal() is unsafe!"
             )
 
@@ -2423,16 +2457,16 @@ class NewPedigree:
 
             deleted = True
             self._invalidate_relationship_cache()
-            logging.info("Successfully deleted animal with ID %s from the pedigree.", animalID)
+            logger.info("Successfully deleted animal with ID %s from the pedigree.", animalID)
 
         except KeyError as e:
-            logging.error(
+            logger.error(
                 "Failed to delete animal with ID %s: Animal not found in the pedigree. Error: %s",
                 animalID,
                 e,
             )
         except Exception as e:
-            logging.error(
+            logger.error(
                 "An unexpected error occurred while deleting animal with ID %s: %s",
                 animalID,
                 e,
@@ -2706,7 +2740,7 @@ class NewPedigree:
         :param self: NewPedigree object.
         :return: None
         """
-        logging.info("Updating ID map...")
+        logger.info("Updating ID map...")
 
         # Initialize or reset the ID maps
         self.idmap = {}
@@ -2724,15 +2758,15 @@ class NewPedigree:
                     self.namemap[animal.name] = animal.originalID
                     self.namebackmap[animal.originalID] = animal.name
             except KeyError as e:
-                logging.warning(
+                logger.warning(
                     "A KeyError occurred while updating ID map for animal: %s", animal
                 )
             except Exception as e:
-                logging.error(
+                logger.error(
                     "An unexpected error occurred while updating ID map: %s", e, exc_info=True
                 )
 
-        logging.info("ID map update complete.")
+        logger.info("ID map update complete.")
 
     def printoptions(self):
         """
@@ -2761,11 +2795,11 @@ class NewPedigree:
 
         if self.kw.get('messages') == 'verbose':
             print('[SIMULATE]: Preparing to simulate a pedigree')
-            logging.info('Preparing to simulate a pedigree')
+            logger.info('Preparing to simulate a pedigree')
 
         # Ensure the pedigree is empty before simulation
         if len(self.pedigree) > 0:
-            logging.error(
+            logger.error(
                 'The simulate() method did not create a new randomly-generated pedigree because the pedigree %s '
                 'has already been populated with animals.',
                 self.kw['pedname']
@@ -2876,7 +2910,7 @@ class NewPedigree:
                         if entry and entry.animalID != 0:
                             f.write(f"{entry.stringme()}\n")
             except Exception as e:
-                logging.error(f"Failed to save pedigree to file: {e}")
+                logger.error(f"Failed to save pedigree to file: {e}")
 
 
 class SimAnimal:
@@ -3484,24 +3518,24 @@ class NewAMatrix:
             self.kw['nrm_method'] = 'nrm'
         if self.kw['messages'] == 'verbose':
             print(f"[INFO]: Forming A-matrix from pedigree at {pyp_utils.pyp_nice_time()}.")
-        logging.info("Forming A-matrix from pedigree")
+        logger.info("Forming A-matrix from pedigree")
 
         try:
             if self.kw['nrm_method'] == 'nrm':
                 self.nrm = pyp_nrm.fast_a_matrix(pedigree, self.kw)
                 if self.kw['messages'] == 'verbose':
                     print(f"[INFO]: Formed A-matrix from pedigree using pyp_nrm.fast_a_matrix() at {pyp_utils.pyp_nice_time()}.")
-                logging.info("Formed A-matrix from pedigree using pyp_nrm.fast_a_matrix()")
+                logger.info("Formed A-matrix from pedigree using pyp_nrm.fast_a_matrix()")
             else:
                 self.nrm = pyp_nrm.fast_a_matrix_r(pedigree, self.kw)
                 if self.kw['messages'] == 'verbose':
                     print(f"[INFO]: Formed A-matrix from pedigree using pyp_nrm.fast_a_matrix_r() at {pyp_utils.pyp_nice_time()}.")
-                logging.info("Formed A-matrix from pedigree using pyp_nrm.fast_a_matrix_r()")
+                logger.info("Formed A-matrix from pedigree using pyp_nrm.fast_a_matrix_r()")
             return True
         except Exception as e:
             if self.kw['messages'] == 'verbose':
                 print(f"[ERROR]: Unable to form A-matrix from pedigree using {self.kw['nrm_method']} at {pyp_utils.pyp_nice_time()}. Error: {e}")
-            logging.error(f"Unable to form A-matrix from pedigree using {self.kw['nrm_method']}")
+            logger.error(f"Unable to form A-matrix from pedigree using {self.kw['nrm_method']}")
             return False
 
     def load(self, nrm_filename):
@@ -3511,7 +3545,7 @@ class NewAMatrix:
         """
         if self.kw['messages'] == 'verbose':
             print(f"[INFO]: Loading A-matrix from file {nrm_filename} at {pyp_utils.pyp_nice_time()}.")
-        logging.info(f"Loading A-matrix from file {nrm_filename}")
+        logger.info(f"Loading A-matrix from file {nrm_filename}")
 
         try:
             self.nrm = np.fromfile(nrm_filename, dtype='float64', sep=self.kw.get('sepchar', ' '))
@@ -3519,12 +3553,12 @@ class NewAMatrix:
             self.nrm = np.reshape(self.nrm, (size, size))
             if self.kw['messages'] == 'verbose':
                 print(f"[INFO]: A-matrix successfully loaded from file {nrm_filename} at {pyp_utils.pyp_nice_time()}.")
-            logging.info(f"A-matrix successfully loaded from file {nrm_filename}")
+            logger.info(f"A-matrix successfully loaded from file {nrm_filename}")
             return True
         except Exception as e:
             if self.kw['messages'] == 'verbose':
                 print(f"[ERROR]: Unable to load A-matrix from file {nrm_filename} at {pyp_utils.pyp_nice_time()}. Error: {e}")
-            logging.error(f"Unable to load A-matrix from file {nrm_filename}")
+            logger.error(f"Unable to load A-matrix from file {nrm_filename}")
             return False
 
     def save(self, nrm_filename, nrm_format=''):
@@ -3533,7 +3567,7 @@ class NewAMatrix:
         """
         if self.kw['messages'] == 'verbose':
             print(f"[INFO]: Saving A-matrix to file {nrm_filename} at {pyp_utils.pyp_nice_time()}.")
-        logging.info(f"Saving A-matrix to file {nrm_filename}")
+        logger.info(f"Saving A-matrix to file {nrm_filename}")
 
         try:
             if not nrm_format:
@@ -3544,12 +3578,12 @@ class NewAMatrix:
                 self.nrm.tofile(nrm_filename, sep=self.kw.get('sepchar', ' '))
             if self.kw['messages'] == 'verbose':
                 print(f"[INFO]: A-matrix successfully saved to file {nrm_filename} at {pyp_utils.pyp_nice_time()}.")
-            logging.info(f"A-matrix successfully saved to file {nrm_filename}")
+            logger.info(f"A-matrix successfully saved to file {nrm_filename}")
             return True
         except Exception as e:
             if self.kw['messages'] == 'verbose':
                 print(f"[ERROR]: Unable to save A-matrix to file {nrm_filename} at {pyp_utils.pyp_nice_time()}. Error: {e}")
-            logging.error(f"Unable to save A-matrix to file {nrm_filename}")
+            logger.error(f"Unable to save A-matrix to file {nrm_filename}")
             return False
 
     def printme(self):
@@ -3625,13 +3659,13 @@ def loadPedigree(
     except TypeError as e:
         error_msg = f"[ERROR]: loadPedigree() failed due to a type mismatch. Error: {e}"
         print(error_msg)
-        logging.error(error_msg)
+        logger.error(error_msg)
         return False
 
     except Exception as e:
         error_msg = f"[ERROR]: loadPedigree() encountered an unexpected error. Error: {e}"
         print(error_msg)
-        logging.error(error_msg)
+        logger.error(error_msg)
         return False
 
 

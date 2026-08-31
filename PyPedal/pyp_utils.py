@@ -54,6 +54,7 @@ Functions:
 
 import os
 import logging
+
 import copy
 import heapq
 import math
@@ -67,6 +68,8 @@ from functools import cmp_to_key
 
 if TYPE_CHECKING:
     from PyPedal.pyp_newclasses import NewPedigree
+
+logger = logging.getLogger(__name__)
 
 def set_ancestor_flag(pedobj):
     """
@@ -111,15 +114,15 @@ def set_ancestor_flag(pedobj):
                     aout.write(f"# FILE: {a_outputfile}\n")
                     aout.write("# ANCESTOR list produced by PyPedal.\n")
                     aout.writelines(f"{parent_id}\n" for parent_id in sorted(parents))
-                logging.info(f"Ancestor list written to {a_outputfile}.")
+                logger.info(f"Ancestor list written to {a_outputfile}.")
             except IOError as e:
-                logging.error(f"Could not write to {a_outputfile}: {e}")
+                logger.error(f"Could not write to {a_outputfile}: {e}")
                 return False
 
         return True
 
     except Exception as e:
-        logging.error(f"An error occurred in set_ancestor_flag: {e}")
+        logger.error(f"An error occurred in set_ancestor_flag: {e}")
         return False
 
 
@@ -165,13 +168,13 @@ def set_generation(pedobj):
                 dam = pedobj.pedigree[int(animal.damID) - 1]
                 animal.igen = max(sire.igen + 1, dam.igen + 1)
 
-        logging.info(f"pyp_utils/set_generation() assigned inferred generations in pedigree {pedobj.kw['pedname']}.")
+        logger.info(f"pyp_utils/set_generation() assigned inferred generations in pedigree {pedobj.kw['pedname']}.")
         return True
 
     except pyp_errors.PyPedalError:
         raise
     except Exception as e:
-        logging.error(f"pyp_utils/set_generation() was unable to assign inferred generations in pedigree {pedobj.kw['pedname']}: {e}")
+        logger.error(f"pyp_utils/set_generation() was unable to assign inferred generations in pedigree {pedobj.kw['pedname']}: {e}")
         return False
 
 
@@ -199,11 +202,11 @@ def set_age(pedobj):
             else:
                 animal.age = year - pyp_demog.BASE_DEMOGRAPHIC_YEAR
 
-        logging.info(f"pyp_utils/set_age() assigned year-offsets in pedigree {pedobj.kw['pedname']}.")
+        logger.info(f"pyp_utils/set_age() assigned year-offsets in pedigree {pedobj.kw['pedname']}.")
         return True
 
     except Exception as e:
-        logging.error(f"pyp_utils/set_age() was unable to assign ages in pedigree {pedobj.kw['pedname']}: {e}")
+        logger.error(f"pyp_utils/set_age() was unable to assign ages in pedigree {pedobj.kw['pedname']}: {e}")
         return False
 
 
@@ -222,11 +225,11 @@ def set_species(pedobj, species='Unknown'):
         for animal in pedobj.pedigree:
             animal.species = species if species else 'u'
 
-        logging.info(f"pyp_utils/set_species() assigned species in pedigree {pedobj.kw['pedname']}.")
+        logger.info(f"pyp_utils/set_species() assigned species in pedigree {pedobj.kw['pedname']}.")
         return True
 
     except Exception as e:
-        logging.error(f"pyp_utils/set_species() was unable to assign species in pedigree {pedobj.kw['pedname']}: {e}")
+        logger.error(f"pyp_utils/set_species() was unable to assign species in pedigree {pedobj.kw['pedname']}: {e}")
         return False
 
 
@@ -276,11 +279,11 @@ def set_sexes(pedobj):
                         print(f"\t\tAnimal {sire_id} sex changed from {sire.sex} to 'm'")
                     sire.sex = 'm'
 
-        logging.info(f"pyp_utils/set_sexes() assigned sexes in pedigree {pedobj.kw['pedname']}.")
+        logger.info(f"pyp_utils/set_sexes() assigned sexes in pedigree {pedobj.kw['pedname']}.")
         return True
 
     except Exception as e:
-        logging.error(f"pyp_utils/set_sexes() was unable to assign sexes in pedigree {pedobj.kw['pedname']}: {e}")
+        logger.error(f"pyp_utils/set_sexes() was unable to assign sexes in pedigree {pedobj.kw['pedname']}: {e}")
         return False
 
 
@@ -297,7 +300,7 @@ def assign_sexes(pedobj):
         set_sexes(pedobj)
         return True
     except Exception as e:
-        logging.error(f"pyp_utils/assign_sexes() was unable to assign sexes in pedigree {pedobj.kw['pedname']}: {e}")
+        logger.error(f"pyp_utils/assign_sexes() was unable to assign sexes in pedigree {pedobj.kw['pedname']}: {e}")
         return False
 
 
@@ -350,10 +353,10 @@ def set_offspring(pedobj):
                     if animal.damID != pedobj.kw['missing_parent']:
                         pedobj.pedigree[int(animal.damID) - 1].unks[animal.animalID] = animal.animalID
 
-        logging.info(f"pyp_utils/set_offspring() assigned offspring in pedigree {pedobj.kw['pedname']}")
+        logger.info(f"pyp_utils/set_offspring() assigned offspring in pedigree {pedobj.kw['pedname']}")
         return True
     except Exception as e:
-        logging.error(f"pyp_utils/set_offspring() was unable to assign offspring in pedigree {pedobj.kw['pedname']}: {e}")
+        logger.error(f"pyp_utils/set_offspring() was unable to assign offspring in pedigree {pedobj.kw['pedname']}: {e}")
         return False
 
 
@@ -370,7 +373,7 @@ def assign_offspring(pedobj):
         set_offspring(pedobj)
         return True
     except Exception as e:
-        logging.error(f"pyp_utils/assign_offspring() was unable to assign sexes in pedigree {pedobj.kw['pedname']}: {e}")
+        logger.error(f"pyp_utils/assign_offspring() was unable to assign sexes in pedigree {pedobj.kw['pedname']}: {e}")
         return False
 
 
@@ -394,17 +397,17 @@ def set_upg(pedobj, upg_rule='asd'):
                         p.damID = -888888
                         p.damName = 'Dam_UPG'
                 else:
-                    logging.error(f"No rule for assigning unknown parent group '{upg_rule}'!")
+                    logger.error(f"No rule for assigning unknown parent group '{upg_rule}'!")
                     if pedobj.kw.get('message') == 'verbose':
                         print(f"[ERROR]: No rule for assigning unknown parent group '{upg_rule}'!")
             return True
         else:
-            logging.error("Cannot assign unknown parent groups to a renumbered pedigree!")
+            logger.error("Cannot assign unknown parent groups to a renumbered pedigree!")
             if pedobj.kw.get('message') == 'verbose':
                 print("[ERROR]: Cannot assign unknown parent groups to a renumbered pedigree!")
             return False
     except Exception as e:
-        logging.error(f"pyp_utils/set_upg() encountered an error: {e}")
+        logger.error(f"pyp_utils/set_upg() encountered an error: {e}")
         return False
 
 
@@ -422,7 +425,7 @@ def assign_upg(pedobj, upg_rule='asd'):
         set_upg(pedobj, upg_rule)
         return True
     except Exception as e:
-        logging.error(f"pyp_utils/assign_upg() was unable to assign unknown parent groups in pedigree "
+        logger.error(f"pyp_utils/assign_upg() was unable to assign unknown parent groups in pedigree "
                       f"{pedobj.kw.get('pedname', 'unknown')}: {e}")
         return False
 
@@ -1364,7 +1367,7 @@ def list_intersection(pedobjs):
     :return: A new PyPedal pedigree containing the animals that are common to both input pedigrees, or False.
     """
     if not pedobjs:
-        logging.error(
+        logger.error(
             "An empty list was passed to pyp_utils/list_intersection(). Cannot compute intersection on 0 pedigrees."
         )
         return False
@@ -1372,7 +1375,7 @@ def list_intersection(pedobjs):
     try:
         if pedobjs[0].kw.get('debug_messages', False):
             print(f"[INFO]: Computing intersection of {len(pedobjs)} pedigrees")
-        logging.info("Computing intersection of %s pedigrees", len(pedobjs))
+        logger.info("Computing intersection of %s pedigrees", len(pedobjs))
 
         plen = len(pedobjs)
 
@@ -1390,7 +1393,7 @@ def list_intersection(pedobjs):
                     print(
                         f"[ERROR]: Pedigree {p} in pyp_utils.list_intersection() is not a NewPedigree instance! Skipping."
                     )
-                logging.error(
+                logger.error(
                     "Pedigree %s in pyp_utils.list_intersection() is not a NewPedigree instance! Skipping.", p
                 )
             else:
@@ -1399,7 +1402,7 @@ def list_intersection(pedobjs):
         return intersected
 
     except Exception as e:
-        logging.error("An error occurred in pyp_utils/list_intersection(): %s", str(e))
+        logger.error("An error occurred in pyp_utils/list_intersection(): %s", str(e))
         return False
 
 
@@ -1412,44 +1415,44 @@ def list_union(pedobjs):
              on failure.
     """
     if not pedobjs:
-        logging.error("Cannot complete union operation because no pedigrees were provided.")
+        logger.error("Cannot complete union operation because no pedigrees were provided.")
         return NotImplemented
 
     try:
-        logging.info("Computing union of %s pedigrees", len(pedobjs))
+        logger.info("Computing union of %s pedigrees", len(pedobjs))
         # Initialize an empty (null) pedigree to build the union
         new_pedigree = pyp_newclasses.loadPedigree({'pedfile': 'null'}, pedsource='null')
 
         for idx, ped in enumerate(pedobjs):
             if ped.__class__.__name__ != "NewPedigree":
-                logging.warning(
+                logger.warning(
                     "Pedigree %s in pyp_utils.list_union() is not a NewPedigree instance! Skipping.", idx
                 )
                 continue
 
-            logging.info("Using match rule %s to compare pedigrees", ped.kw.get("match_rule", "default"))
+            logger.info("Using match rule %s to compare pedigrees", ped.kw.get("match_rule", "default"))
 
             # Renumber the pedigrees if necessary
             if idx > 0 and not new_pedigree.kw.get("pedigree_is_renumbered", False):
                 new_pedigree.renumber()
-                logging.info("Renumbering pedigree %s", new_pedigree.kw.get("pedname"))
+                logger.info("Renumbering pedigree %s", new_pedigree.kw.get("pedname"))
 
             if ped.kw.get("pedigree_is_renumbered") != 1:
                 ped.renumber()
-                logging.info("Renumbering pedigree %s", ped.kw.get("pedname"))
+                logger.info("Renumbering pedigree %s", ped.kw.get("pedname"))
 
             # Compute the union using the NewPedigree::__add__() method
             try:
                 new_pedigree += ped
             except Exception as e:
-                logging.error("Could not compute union of input pedigrees: %s", str(e))
+                logger.error("Could not compute union of input pedigrees: %s", str(e))
                 return False
 
         # Return the union of all pedigrees
         return new_pedigree
 
     except Exception as e:
-        logging.error("An error occurred during the union operation: %s", str(e))
+        logger.error("An error occurred during the union operation: %s", str(e))
         return False
 
 
@@ -1473,7 +1476,7 @@ def guess_pedformat(animal, ped_kw):
             elif isinstance(animal.originalID, str):
                 pedformat = "ASD"
             else:
-                logging.error(
+                logger.error(
                     "pyp_utils/guess_pedformat() cannot process animal.originalID if it is not a string or an integer type!"
                 )
                 if ped_kw.get("messages") == "verbose":
@@ -1509,17 +1512,17 @@ def guess_pedformat(animal, ped_kw):
                 pedformat += "u"
 
             # Logging the guessed pedformat.
-            logging.info("The best-guess pedformat is: '%s'", pedformat)
+            logger.info("The best-guess pedformat is: '%s'", pedformat)
             if ped_kw.get("messages") == "verbose":
                 print(f"[INFO]: The best-guess pedformat is: '{pedformat}'")
             return pedformat
         except KeyError as e:
-            logging.error("Missing key in ped_kw: %s", e)
+            logger.error("Missing key in ped_kw: %s", e)
             if ped_kw.get("messages") == "verbose":
                 print(f"[ERROR]: Missing key in ped_kw: {e}")
             return False
     else:
-        logging.error("You passed an item to pyp_utils/guess_pedformat() that is not a NewAnimal!")
+        logger.error("You passed an item to pyp_utils/guess_pedformat() that is not a NewAnimal!")
         if ped_kw.get("messages") == "verbose":
             print("[ERROR]: You passed an item to pyp_utils/guess_pedformat() that is not a NewAnimal!")
         return False
@@ -1538,7 +1541,7 @@ def list_duplicates(pedobj, keep_rule=''):
     duplicates = []
     if pedobj.kw.get('messages') == 'verbose':
         print(f"\t[INFO]: pyp_utils/resolve_duplicates(): There are {len(pedobj.pedigree)} animals in the pedigree.")
-    logging.info("pyp_utils/resolve_duplicates(): There are %s animals in the pedigree.", len(pedobj.pedigree))
+    logger.info("pyp_utils/resolve_duplicates(): There are %s animals in the pedigree.", len(pedobj.pedigree))
 
     _p_idx = 0
     for _p in pedobj.pedigree:
@@ -1579,7 +1582,7 @@ def list_duplicates(pedobj, keep_rule=''):
     for k, v in duplicate_id_count.items():
         if pedobj.kw.get('messages') == 'verbose':
             print(f"\t[INFO]: pyp_utils/resolve_duplicates(): originalID {k} occurs {v} times in the pedigree file!")
-        logging.info("pyp_utils/resolve_duplicates(): originalID %s occurs %s times in the pedigree file!", k, v)
+        logger.info("pyp_utils/resolve_duplicates(): originalID %s occurs %s times in the pedigree file!", k, v)
 
     return duplicates
 
@@ -1690,7 +1693,7 @@ def list_likely_same_animals(pedobj, unique_external_field=None):
             "[INFO]: list_likely_same_animals() found %s candidate group(s)."
             % len(groups)
         )
-        logging.info(
+        logger.info(
             "list_likely_same_animals() found %s candidate group(s).",
             len(groups),
         )
@@ -1760,5 +1763,5 @@ def remove_missing(pedobj):
         return pedobj
 
     except Exception as e:
-        logging.error(f"pyp_utils/remove_missing() encountered an error: {e}")
+        logger.error(f"pyp_utils/remove_missing() encountered an error: {e}")
         return False

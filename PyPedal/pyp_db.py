@@ -11,8 +11,11 @@ PyPedal 4 modernization. Original author remains John B. Cole.
 """
 
 import logging
+
 import sqlite3
 from . import pyp_io, pyp_nrm, pyp_utils
+
+logger = logging.getLogger(__name__)
 
 def connect_to_database(pedobj):
     """
@@ -20,10 +23,10 @@ def connect_to_database(pedobj):
     """
     try:
         conn = sqlite3.connect(pedobj.kw['database_file'])
-        logging.info(f"Connected to SQLite database {pedobj.kw['database_file']}.")
+        logger.info(f"Connected to SQLite database {pedobj.kw['database_file']}.")
         return conn
     except sqlite3.Error as e:
-        logging.error(f"Unable to connect to SQLite database {pedobj.kw['database_file']}: {e}")
+        logger.error(f"Unable to connect to SQLite database {pedobj.kw['database_file']}: {e}")
         return None
 
 
@@ -37,15 +40,15 @@ def create_pedigree_table(pedobj, conn=None, drop=False):
         created_conn = True
 
     if not conn:
-        logging.error("No valid database connection.")
+        logger.error("No valid database connection.")
         return False
 
     if does_table_exist(pedobj, conn):
         if drop:
             table_drop_rows(pedobj, conn)
-            logging.warning(f"Dropped existing table rows in {pedobj.kw['database_table']}.")
+            logger.warning(f"Dropped existing table rows in {pedobj.kw['database_table']}.")
         else:
-            logging.info(f"Table {pedobj.kw['database_table']} already exists. No action taken.")
+            logger.info(f"Table {pedobj.kw['database_table']} already exists. No action taken.")
             if created_conn:
                 conn.close()
             return False
@@ -84,10 +87,10 @@ def create_pedigree_table(pedobj, conn=None, drop=False):
         '''
         conn.execute(sql)
         conn.commit()
-        logging.info(f"Table {pedobj.kw['database_table']} created successfully.")
+        logger.info(f"Table {pedobj.kw['database_table']} created successfully.")
         return True
     except sqlite3.Error as e:
-        logging.error(f"Failed to create table {pedobj.kw['database_table']}: {e}")
+        logger.error(f"Failed to create table {pedobj.kw['database_table']}: {e}")
         return False
     finally:
         if created_conn:
@@ -104,7 +107,7 @@ def does_table_exist(pedobj, conn=None):
         created_conn = True
 
     if not conn:
-        logging.error("No valid database connection.")
+        logger.error("No valid database connection.")
         return False
 
     try:
@@ -113,7 +116,7 @@ def does_table_exist(pedobj, conn=None):
         result = cursor.fetchone()
         return result is not None
     except sqlite3.Error as e:
-        logging.error(f"Error checking table existence: {e}")
+        logger.error(f"Error checking table existence: {e}")
         return False
     finally:
         if created_conn:
@@ -130,7 +133,7 @@ def table_count_rows(pedobj, conn=None):
         created_conn = True
 
     if not conn:
-        logging.error("No valid database connection.")
+        logger.error("No valid database connection.")
         return 0
 
     try:
@@ -138,13 +141,13 @@ def table_count_rows(pedobj, conn=None):
             sql = f"SELECT COUNT(*) FROM {pedobj.kw['database_table']};"
             cursor = conn.execute(sql)
             count = cursor.fetchone()[0]
-            logging.info(f"Table {pedobj.kw['database_table']} has {count} rows.")
+            logger.info(f"Table {pedobj.kw['database_table']} has {count} rows.")
             return count
         else:
-            logging.warning(f"Table {pedobj.kw['database_table']} does not exist.")
+            logger.warning(f"Table {pedobj.kw['database_table']} does not exist.")
             return 0
     except sqlite3.Error as e:
-        logging.error(f"Error counting rows: {e}")
+        logger.error(f"Error counting rows: {e}")
         return 0
     finally:
         if created_conn:
@@ -161,7 +164,7 @@ def table_drop_rows(pedobj, conn=None):
         created_conn = True
 
     if not conn:
-        logging.error("No valid database connection.")
+        logger.error("No valid database connection.")
         return False
 
     try:
@@ -169,13 +172,13 @@ def table_drop_rows(pedobj, conn=None):
             sql = f"DELETE FROM {pedobj.kw['database_table']};"
             conn.execute(sql)
             conn.commit()
-            logging.info(f"All rows deleted from table {pedobj.kw['database_table']}.")
+            logger.info(f"All rows deleted from table {pedobj.kw['database_table']}.")
             return True
         else:
-            logging.warning(f"Table {pedobj.kw['database_table']} does not exist.")
+            logger.warning(f"Table {pedobj.kw['database_table']} does not exist.")
             return False
     except sqlite3.Error as e:
-        logging.error(f"Error deleting rows: {e}")
+        logger.error(f"Error deleting rows: {e}")
         return False
     finally:
         if created_conn:
@@ -192,13 +195,13 @@ def populate_pedigree_table(pedobj, conn=None):
         created_conn = True
 
     if not conn:
-        logging.error("No valid database connection.")
+        logger.error("No valid database connection.")
         return False
 
     try:
         if not does_table_exist(pedobj, conn):
             if not create_pedigree_table(pedobj, conn):
-                logging.error("Failed to create table for population.")
+                logger.error("Failed to create table for population.")
                 return False
 
         for record in pedobj.pedigree:
@@ -223,10 +226,10 @@ def populate_pedigree_table(pedobj, conn=None):
                 record.originalHerd, record.gencoeff, alleles, str(record.userField)
             ))
         conn.commit()
-        logging.info("Table populated successfully.")
+        logger.info("Table populated successfully.")
         return True
     except sqlite3.Error as e:
-        logging.error(f"Error populating table: {e}")
+        logger.error(f"Error populating table: {e}")
         return False
     finally:
         if created_conn:
@@ -241,19 +244,19 @@ def delete_table(pedobj, conn=None):
         created_conn = True
 
     if not conn:
-        logging.error("No valid database connection.")
+        logger.error("No valid database connection.")
         return False
 
     try:
         if does_table_exist(pedobj, conn):
             conn.execute(f"DROP TABLE {pedobj.kw['database_table']};")
             conn.commit()
-            logging.info(f"Dropped table {pedobj.kw['database_table']}.")
+            logger.info(f"Dropped table {pedobj.kw['database_table']}.")
             return True
-        logging.warning(f"Table {pedobj.kw['database_table']} does not exist.")
+        logger.warning(f"Table {pedobj.kw['database_table']} does not exist.")
         return False
     except sqlite3.Error as e:
-        logging.error(f"Error dropping table: {e}")
+        logger.error(f"Error dropping table: {e}")
         return False
     finally:
         if created_conn:

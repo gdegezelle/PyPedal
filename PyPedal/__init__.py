@@ -14,6 +14,10 @@
 Package initialization for the PyPedal library.
 """
 
+import logging
+
+logging.getLogger("PyPedal").addHandler(logging.NullHandler())
+
 __all__ = [
     "pyp_chronology",
     "pyp_db",

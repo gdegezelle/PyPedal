@@ -17,6 +17,7 @@ Metrics calculations for PyPedal.
 
 import copy
 import logging
+
 import numbers
 import operator
 import random
@@ -32,6 +33,8 @@ from .pyp_errors import (
     PyPedalError, PyPedalInternalError,
     PyPedalPedigreeStructureError, PyPedalUsageError, PyPedalValidationError)
 
+
+logger = logging.getLogger(__name__)
 
 def _current_animal_id(pedobj, animal_id):
     """Return the live (possibly renumbered) ID for an original or current ID."""
@@ -113,11 +116,11 @@ def min_max_f(
     tuple
         Lists of the n largest and the n smallest CoI in the pedigree, or False on failure.
     """
-    logging.info('Entered min_max_f()')
+    logger.info('Entered min_max_f()')
 
     # Validate 'forma'
     if forma not in ['dense', 'sparse']:
-        logging.warning(f"Invalid 'forma' value: {forma}. Defaulting to 'dense'.")
+        logger.warning(f"Invalid 'forma' value: {forma}. Defaulting to 'dense'.")
         forma = 'dense'
 
     try:
@@ -125,13 +128,13 @@ def min_max_f(
         if not pedobj.kw['form_nrm'] and a is None:
             a = pyp_nrm.fast_a_matrix(pedobj.pedigree, pedobj.kw, method=forma)
             if pedobj.kw.get('debug_messages'):
-                logging.debug("Matrix `a` created in min_max_f():")
-                logging.debug(a)
+                logger.debug("Matrix `a` created in min_max_f():")
+                logger.debug(a)
 
         # Calculate individual coefficients of inbreeding
         individual_coi = fast_a_coefficients(pedobj, a=a)
         if not individual_coi:
-            logging.error("Failed to compute individual CoI in min_max_f()")
+            logger.error("Failed to compute individual CoI in min_max_f()")
             return False
         
         # Convert dictionary to sorted list
@@ -146,7 +149,7 @@ def min_max_f(
         if n > total_individuals:
             old_n = n
             n = max(1, total_individuals // 2)  # Ensure at least one result
-            logging.info(
+            logger.info(
                 f"Requested {old_n} high/low CoI values, but only {total_individuals} available. "
                 f"Adjusted `n` to {n}."
             )
@@ -156,15 +159,15 @@ def min_max_f(
         high_coi = sorted_coi[-n:]
 
         if pedobj.kw.get('debug_messages'):
-            logging.debug(f"Low CoI: {low_coi}")
-            logging.debug(f"High CoI: {high_coi}")
+            logger.debug(f"Low CoI: {low_coi}")
+            logger.debug(f"High CoI: {high_coi}")
 
-        logging.info('Exited min_max_f()')
+        logger.info('Exited min_max_f()')
         return high_coi, low_coi
     
     except Exception as e:
-        logging.error(f"Error in min_max_f: {e}")
-        logging.info('Exited min_max_f() with failure')
+        logger.error(f"Error in min_max_f: {e}")
+        logger.info('Exited min_max_f() with failure')
         return False
 
 
@@ -458,7 +461,7 @@ def a_effective_founders_lacy(
     """
     mode = _resolve_lacy_mode(mode, half, 'a_effective_founders_lacy')
     if pedobj.kw.get('debug_messages'):
-        logging.info('Entered a_effective_founders_lacy()')
+        logger.info('Entered a_effective_founders_lacy()')
 
     try:
         # Generate numerator relationship matrix if not provided
@@ -544,16 +547,16 @@ def a_effective_founders_lacy(
             aout.write(f"{line}\n")
 
         if pedobj.kw.get('debug_messages'):
-            logging.info('Exited a_effective_founders_lacy()')
+            logger.info('Exited a_effective_founders_lacy()')
 
         return out_dict
 
     except PyPedalError:
         raise
     except Exception as e:
-        logging.error("Error in a_effective_founders_lacy: %s", e)
+        logger.error("Error in a_effective_founders_lacy: %s", e)
         if pedobj.kw.get('debug_messages'):
-            logging.info('Exited a_effective_founders_lacy() with failure')
+            logger.info('Exited a_effective_founders_lacy() with failure')
         raise PyPedalError(
             'a_effective_founders_lacy: unexpected failure: %s' % e
         ) from e
@@ -595,7 +598,7 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET) -> Dict[str, Union
         failure return.
     """
     mode = _resolve_lacy_mode(mode, half, 'effective_founders_lacy')
-    logging.info("Entered effective_founders_lacy()")
+    logger.info("Entered effective_founders_lacy()")
 
     caller = "pyp_metrics.effective_founders_lacy"
     out_dict = {}
@@ -603,7 +606,7 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET) -> Dict[str, Union
     try:
         # Ensure the pedigree is renumbered
         if not pedobj.kw.get("pedigree_is_renumbered", False):
-            logging.info("[NOTE]: The pedigree is not renumbered. Renumbering...")
+            logger.info("[NOTE]: The pedigree is not renumbered. Renumbering...")
             pedobj.kw["renumber"] = True
             pedobj.renumber()
 
@@ -677,14 +680,14 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET) -> Dict[str, Union
             pedobj, float(_f_e), 'effective_founders_lacy: f_e',
             n_contributors=len(_f_contribs_weighted))
 
-        logging.info("Exited effective_founders_lacy()")
+        logger.info("Exited effective_founders_lacy()")
         return out_dict
 
     except PyPedalError:
         raise
     except Exception as e:
-        logging.error("Error in effective_founders_lacy: %s", e)
-        logging.info("Exited effective_founders_lacy() with failure")
+        logger.error("Error in effective_founders_lacy: %s", e)
+        logger.info("Exited effective_founders_lacy() with failure")
         raise PyPedalError(
             'effective_founders_lacy: unexpected failure: %s' % e
         ) from e
@@ -816,7 +819,7 @@ def a_effective_founders_boichard(pedobj, a: Optional[np.ndarray] = None, gen: O
     """
     routine = 'a_effective_founders_boichard'
     if pedobj.kw.get('debug_messages'):
-        logging.info('Entered a_effective_founders_boichard()')
+        logger.info('Entered a_effective_founders_boichard()')
 
     # Argument-domain checks first, then the pedigree-domain guards in their
     # existing order. Only the SELECTION of R changes here; this routine's
@@ -884,7 +887,7 @@ def a_effective_founders_boichard(pedobj, a: Optional[np.ndarray] = None, gen: O
             aout.write(line)
 
         if pedobj.kw.get('debug_messages'):
-            logging.info('Exited a_effective_founders_boichard()')
+            logger.info('Exited a_effective_founders_boichard()')
 
         # f_e <= k, with k the number of founders the routine actually summed
         # over. That count now includes half-founders, so the bound is no
@@ -902,9 +905,9 @@ def a_effective_founders_boichard(pedobj, a: Optional[np.ndarray] = None, gen: O
         # This returned -999.9, which is not an effective
         # founder number and which a caller storing the result in a report or a
         # database has no way to distinguish from a computed value.
-        logging.error(f"Error in a_effective_founders_boichard: {e}")
+        logger.error(f"Error in a_effective_founders_boichard: {e}")
         if pedobj.kw.get('debug_messages'):
-            logging.info('Exited a_effective_founders_boichard() with failure')
+            logger.info('Exited a_effective_founders_boichard() with failure')
         raise PyPedalError(
             "a_effective_founders_boichard() failed: %s: %s. No effective "
             "founder number was computed." % (type(e).__name__, e)) from e
@@ -1531,7 +1534,7 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
     """
     routine = 'a_effective_ancestors_definite'
     if pedobj.kw.get('debug_messages'):
-        logging.info('Entered a_effective_ancestors_definite()')
+        logger.info('Entered a_effective_ancestors_definite()')
 
     explicit = _boichard_select_reference(pedobj, gen, reference, routine)
     if explicit is None:
@@ -1597,7 +1600,7 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
         aout.write(line)
 
     if pedobj.kw.get('debug_messages'):
-        logging.info('Exited a_effective_ancestors_definite()')
+        logger.info('Exited a_effective_ancestors_definite()')
 
     # p.8: "The number of ancestors with a positive contribution is less than or
     # equal to the total number of founders", so the founder count is the k in
@@ -1695,7 +1698,7 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
     """
     routine = 'a_effective_ancestors_indefinite'
     if pedobj.kw.get('debug_messages'):
-        logging.info('Entered a_effective_ancestors_indefinite()')
+        logger.info('Entered a_effective_ancestors_indefinite()')
 
     if n < 1:
         raise PyPedalUsageError(
@@ -1816,7 +1819,7 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
             % (routine, f_l, f_u))
 
     if pedobj.kw.get('debug_messages'):
-        logging.info('Exited a_effective_ancestors_indefinite()')
+        logger.info('Exited a_effective_ancestors_indefinite()')
 
     return float(f_l), float(f_u)
 
@@ -1842,7 +1845,7 @@ def a_coefficients(pedobj, a: Optional[np.ndarray] = None, method: str = 'nrm') 
         A dictionary of non-zero individual inbreeding coefficients.
     """
     if pedobj.kw.get('debug_messages'):
-        logging.info('Entered a_coefficients()')
+        logger.info('Entered a_coefficients()')
 
     # Validate method
     if method not in ['nrm', 'frm']:
@@ -1923,7 +1926,7 @@ def a_coefficients(pedobj, a: Optional[np.ndarray] = None, method: str = 'nrm') 
             )
 
     if pedobj.kw.get('debug_messages'):
-        logging.info('Exited a_coefficients()')
+        logger.info('Exited a_coefficients()')
 
     return individual_coi
 
@@ -1959,7 +1962,7 @@ def fast_a_coefficients(
         A dictionary of non-zero individual coefficients of inbreeding.
     """
     if debug or pedobj.kw.get('debug_messages', False):
-        logging.info('Entered fast_a_coefficients()')
+        logger.info('Entered fast_a_coefficients()')
 
     # Validate method and storage options
     if method not in ['nrm', 'frm']:
@@ -1974,7 +1977,7 @@ def fast_a_coefficients(
         try:
             a = pyp_nrm.fast_a_matrix(pedobj.pedigree, pedobj.kw, method=storage)
         except Exception:
-            logging.error("Matrix creation failed.")
+            logger.error("Matrix creation failed.")
             return {}
 
     lenped = len(pedobj.pedigree)
@@ -2039,7 +2042,7 @@ def fast_a_coefficients(
                 )
 
     if debug or pedobj.kw.get('debug_messages', False):
-        logging.info('Exited fast_a_coefficients()')
+        logger.info('Exited fast_a_coefficients()')
 
     return individual_coi
 
@@ -2060,7 +2063,7 @@ def theoretical_ne_from_metadata(pedobj) -> bool:
         True on success, False on failure.
     """
     if pedobj.kw.get('debug_messages'):
-        logging.info('Entered theoretical_ne_from_metadata()')
+        logger.info('Entered theoretical_ne_from_metadata()')
 
     try:
         # Retrieve the number of unique sires and dams
@@ -2085,14 +2088,14 @@ def theoretical_ne_from_metadata(pedobj) -> bool:
             aout.write(line)
 
         if pedobj.kw.get('debug_messages'):
-            logging.info('Exited theoretical_ne_from_metadata()')
+            logger.info('Exited theoretical_ne_from_metadata()')
 
         return True
 
     except Exception as e:
-        logging.error(f"Error in theoretical_ne_from_metadata: {e}")
+        logger.error(f"Error in theoretical_ne_from_metadata: {e}")
         if pedobj.kw.get('debug_messages'):
-            logging.info('Exited theoretical_ne_from_metadata() with failure')
+            logger.info('Exited theoretical_ne_from_metadata() with failure')
 
         return False
 
@@ -2116,7 +2119,7 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
         Dictionary of summary statistics.
     """
     if pedobj.kw.get('debug_messages'):
-        logging.info('Entered pedigree_completeness()')
+        logger.info('Entered pedigree_completeness()')
 
     l = len(pedobj.pedigree)
     c_summary = {}
@@ -2136,11 +2139,11 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
 
         # Debug information
         if pedobj.kw.get('debug_messages'):
-            logging.debug(f"Animal: {animalid}")
+            logger.debug(f"Animal: {animalid}")
             if str(sireid) != mp:
-                logging.debug(f"\tSire: {sireid}")
+                logger.debug(f"\tSire: {sireid}")
             if str(damid) != mp:
-                logging.debug(f"\tDam: {damid}")
+                logger.debug(f"\tDam: {damid}")
 
         # Founders and missing parents
         if animal.founder == 'y' or (str(sireid) == mp and str(damid) == mp):
@@ -2206,7 +2209,7 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
         print("\n".join(verbose_summary))
 
     if pedobj.kw.get('debug_messages'):
-        logging.info('Exited pedigree_completeness()')
+        logger.info('Exited pedigree_completeness()')
 
     return c_summary
 
@@ -2230,7 +2233,7 @@ def common_ancestors(anim_a: int, anim_b: int, pedobj) -> List[int]:
         A list of animals related to both anim_a and anim_b.
     """
     if pedobj.kw.get('debug_messages'):
-        logging.info(f'Entered common_ancestors() for animals {anim_a} and {anim_b}')
+        logger.info(f'Entered common_ancestors() for animals {anim_a} and {anim_b}')
 
     try:
         # Get the lists of related animals for both input animals
@@ -2242,14 +2245,14 @@ def common_ancestors(anim_a: int, anim_b: int, pedobj) -> List[int]:
         shared.sort()
 
         if pedobj.kw.get('debug_messages'):
-            logging.debug(f"Ancestors of {anim_a}: {ped_a}")
-            logging.debug(f"Ancestors of {anim_b}: {ped_b}")
-            logging.debug(f"Shared ancestors: {shared}")
+            logger.debug(f"Ancestors of {anim_a}: {ped_a}")
+            logger.debug(f"Ancestors of {anim_b}: {ped_b}")
+            logger.debug(f"Shared ancestors: {shared}")
 
         return shared
 
     except Exception as e:
-        logging.error(f"Error in common_ancestors: {e}")
+        logger.error(f"Error in common_ancestors: {e}")
         return []
 
 
@@ -2270,16 +2273,16 @@ def related_animals(anim: int, pedobj) -> List[int]:
         A list of ancestors of the given animal.
     """
     if pedobj.kw.get('debug_messages'):
-        logging.info(f"Entered related_animals() for animal {anim}")
+        logger.info(f"Entered related_animals() for animal {anim}")
 
     _ped = []
     try:
         _ped = pyp_nrm.recurse_pedigree_idonly(pedobj, anim, _ped)
     except Exception as e:
-        logging.error(f"Error in related_animals: {e}")
+        logger.error(f"Error in related_animals: {e}")
 
     if pedobj.kw.get('debug_messages'):
-        logging.info(f"Exited related_animals() with ancestors: {_ped}")
+        logger.info(f"Exited related_animals() with ancestors: {_ped}")
 
     return _ped
 
@@ -2315,13 +2318,13 @@ def relationship(anim_a, anim_b, pedobj, renumber=False):
         if pedobj.kw['messages'] != 'quiet':
             print('[WARNING]: The pedigree you passed to pyp_metrics/relationship() is not renumbered; '
                   'this may result in incorrect calculations!')
-        logging.warning('The pedigree you passed to pyp_metrics/relationship() is not renumbered; '
+        logger.warning('The pedigree you passed to pyp_metrics/relationship() is not renumbered; '
                         'this may result in incorrect calculations!')
 
     elif not pedobj.kw['pedigree_is_renumbered'] and renumber:
         if pedobj.kw['messages'] != 'quiet':
             print('[INFO]: Renumbering the pedigree in pyp_metrics/relationship().')
-        logging.info('Renumbering the pedigree in pyp_metrics/relationship().')
+        logger.info('Renumbering the pedigree in pyp_metrics/relationship().')
         pedobj.kw['renumber'] = True
         pedobj.renumber()
 
@@ -2403,7 +2406,7 @@ def relationship(anim_a, anim_b, pedobj, renumber=False):
             return 0.0
         _r = pyp_nrm._matrix_value(_a, _map[anim_a] - 1, _map[anim_b] - 1)
     except Exception as e:
-        logging.warning(
+        logger.warning(
             'Could not compute the relationship between animals %s and %s; defaulting to 0.0. Error: %s',
             anim_a, anim_b, str(e)
         )
@@ -3064,7 +3067,7 @@ def effective_founder_genomes(pedobj, rounds=10, chrometype='autosome',
         Empty pedigree, empty population under study, or a computed value
         outside its mathematically possible range.
     """
-    logging.info('Entered effective_founder_genomes()')
+    logger.info('Entered effective_founder_genomes()')
 
     if rounds < 1:
         raise PyPedalUsageError(
@@ -3085,7 +3088,7 @@ def effective_founder_genomes(pedobj, rounds=10, chrometype='autosome',
         )
 
     if heterogametic not in ['m', 'f']:
-        logging.warning(f"Unrecognized heterogametic value '{heterogametic}' in effective_founder_genomes(). Defaulting to 'm'.")
+        logger.warning(f"Unrecognized heterogametic value '{heterogametic}' in effective_founder_genomes(). Defaulting to 'm'.")
         heterogametic = 'm'
 
     gens = [animal.gen for animal in pedobj.pedigree]
@@ -3223,7 +3226,7 @@ def effective_founder_genomes(pedobj, rounds=10, chrometype='autosome',
             'mathematically attainable minimum of 0.5. This is a PyPedal '
             'defect, not a property of the data.' % (summary_stats['n_g'],))
 
-    logging.info('Exited effective_founder_genomes()')
+    logger.info('Exited effective_founder_genomes()')
     return summary_stats['n_g']
 
 
@@ -3259,7 +3262,7 @@ def generation_intervals(pedobj, units='y'):
     dict
         A dictionary containing the five average ages (for each path and overall).
     """
-    logging.info('Entered generation_intervals()')
+    logger.info('Entered generation_intervals()')
 
     sire_son = {}
     sire_dau = {}
@@ -3360,7 +3363,7 @@ def generation_intervals(pedobj, units='y'):
         print(f"\tDam-Dau: {dd_mean}")
         print(f"\tOverall: {overall_mean}")
 
-    logging.info('Exited generation_intervals()')
+    logger.info('Exited generation_intervals()')
     return genlens
 
 
@@ -3383,7 +3386,7 @@ def generation_intervals_all(pedobj, units='y'):
     dict
         A dictionary containing the average ages for each path and overall mean.
     """
-    logging.info('Entered generation_intervals_all')
+    logger.info('Entered generation_intervals_all')
 
     sire_son = {}
     sire_dau = {}
@@ -3502,7 +3505,7 @@ def generation_intervals_all(pedobj, units='y'):
         print(f"\tDam-Dau: {dd_mean}")
         print(f"\tOverall: {overall_mean}")
 
-    logging.info('Exited generation_intervals_all')
+    logger.info('Exited generation_intervals_all')
     return genlens
 
 
@@ -3521,14 +3524,14 @@ def founder_descendants(pedobj):
     dict
         A dictionary containing a list of descendants for each founder in the pedigree.
     """
-    logging.info('Entered founder_descendants()')
+    logger.info('Entered founder_descendants()')
 
     founder_peds = {}
     for f in pedobj.metadata.unique_founder_list:
         _desc = descendants(_current_animal_id(pedobj, f), pedobj, {})
         founder_peds[f] = _desc
 
-    logging.info('Exited founder_descendants()')
+    logger.info('Exited founder_descendants()')
     return founder_peds
 
 
@@ -3551,7 +3554,7 @@ def descendants(anid, pedobj, _desc):
     dict
         A dictionary containing all descendants of the given animal ID.
     """
-    logging.info('Entered descendants()')
+    logger.info('Entered descendants()')
 
     stack = [int(anid)]
     while stack:
@@ -3562,7 +3565,7 @@ def descendants(anid, pedobj, _desc):
                 _desc[child_id] = child_id
                 stack.append(int(child_id))
 
-    logging.info('Exited descendants()')
+    logger.info('Exited descendants()')
     return _desc
 
 
@@ -3606,7 +3609,7 @@ def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, s
     dict
         A dictionary of ancestral inbreeding coefficients keyed to animal IDs.
     """
-    logging.info('Entered dropped_ancestral_inbreeding()')
+    logger.info('Entered dropped_ancestral_inbreeding()')
 
     # NO DOMAIN PRECONDITION. A half-founder used to be refused here under
     # because Suwanlee et al. (2007) p.490 does not define the gene
@@ -3622,10 +3625,10 @@ def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, s
 
     # Validate parameters
     if rounds < 1:
-        logging.error("Rounds must be greater than 0. Defaulting to 100.")
+        logger.error("Rounds must be greater than 0. Defaulting to 100.")
         rounds = 100
     if loci < 1:
-        logging.error("Loci must be greater than 0. Defaulting to 100.")
+        logger.error("Loci must be greater than 0. Defaulting to 100.")
         loci = 100
     # `frequency` is accepted for call compatibility and ignored. Warn only when
     # a caller actually passes one, so that ordinary use produces no noise while
@@ -3642,7 +3645,7 @@ def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, s
     try:
         seed = int(seed)
     except ValueError:
-        logging.error("Seed must be an integer. Defaulting to 5048665.")
+        logger.error("Seed must be an integer. Defaulting to 5048665.")
         seed = 5048665
 
     # Simulation-local RNG. Previously np.random.seed(seed) + np.random.rand(),
@@ -3788,7 +3791,7 @@ def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, s
     for animal_id in id2aic:
         id2aic[animal_id] /= float(rounds)
 
-    logging.info('Exited dropped_ancestral_inbreeding()')
+    logger.info('Exited dropped_ancestral_inbreeding()')
 
     # Postcondition. F_a is the probability of having
     # inherited an allele that was inbred at some point, so it lies in [0, 1].
@@ -3821,7 +3824,7 @@ def ballou_ancestral_inbreeding(pedobj):
     dict
         A dictionary of ancestral inbreeding coefficients keyed to animal IDs.
     """
-    logging.info("Entered ballou_ancestral_inbreeding()")
+    logger.info("Entered ballou_ancestral_inbreeding()")
 
     # Initialize the dictionary mapping animal IDs to ancestral inbreeding coefficients
     id2aic = {p.animalID: 0.0 for p in pedobj.pedigree}
@@ -3857,5 +3860,5 @@ def ballou_ancestral_inbreeding(pedobj):
     pyp_validate.check_ancestral_inbreeding(
         pedobj, id2aic, "ballou_ancestral_inbreeding")
 
-    logging.info("Exited ballou_ancestral_inbreeding()")
+    logger.info("Exited ballou_ancestral_inbreeding()")
     return id2aic

@@ -33,12 +33,10 @@
 ###############################################################################
 
 import copy
-import logging
 import networkx as nx
 
 from .pyp_errors import PyPedalUsageError
 
-logging.basicConfig(level=logging.INFO)
 
 def ped_to_graph(pedobj, oid=False):
     """

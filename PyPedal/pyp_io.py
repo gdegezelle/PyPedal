@@ -12,6 +12,7 @@
 
 from configparser import ConfigParser, Error
 import logging, pickle, time
+
 from typing import Optional, Dict
 import numpy as np
 
@@ -22,24 +23,25 @@ global LINE1, LINE2
 LINE1 = '=' * 80
 LINE2 = '-' * 80
 
-logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 def a_inverse_to_file(pedobj, ainv=''):
     """
     Write the inverse of a relationship matrix to a file using pickle.
     """
     try:
-        logging.info('Entered a_inverse_to_file()')
+        logger.info('Entered a_inverse_to_file()')
         if not ainv:
             ainv = pyp_nrm.a_inverse_df(pedobj)
         filetag = pedobj.kw['filetag']
         output_file = f"{filetag}_a_inverse_pickled.pkl"
         with open(output_file, 'wb') as f:
             pickle.dump(ainv, f)
-        logging.info(f"A-inverse saved to {output_file}")
+        logger.info(f"A-inverse saved to {output_file}")
         return True
     except Exception as e:
-        logging.error(f"Failed to write A-inverse to file: {e}")
+        logger.error(f"Failed to write A-inverse to file: {e}")
         return False
 
 
@@ -48,13 +50,13 @@ def a_inverse_from_file(inputfile):
     Read the inverse of a relationship matrix from a file using pickle.
     """
     try:
-        logging.info('Entered a_inverse_from_file()')
+        logger.info('Entered a_inverse_from_file()')
         with open(inputfile, 'rb') as f:
             a_inv = pickle.load(f)
-        logging.info('Successfully loaded A-inverse')
+        logger.info('Successfully loaded A-inverse')
         return a_inv
     except Exception as e:
-        logging.error(f"Failed to load A-inverse: {e}")
+        logger.error(f"Failed to load A-inverse: {e}")
         return np.zeros((1, 1), dtype=float)
 
 
@@ -63,7 +65,7 @@ def dissertation_pedigree_to_file(pedobj):
     Write a pedigree in 'asdxfg' format to a file.
     """
     try:
-        logging.info('Entered dissertation_pedigree_to_file()')
+        logger.info('Entered dissertation_pedigree_to_file()')
         length = len(pedobj.pedigree)
         outputfile = f"{pedobj.kw['filetag']}_diss.ped"
         with open(outputfile, 'w') as f:
@@ -73,10 +75,10 @@ def dissertation_pedigree_to_file(pedobj):
                 f.write(f"{animal.animalID},{animal.sireID},{animal.damID},"
                         f"{pyp_chronology.format_year_token(animal.by)},"
                         f"{animal.sex},{animal.fa},{animal.gen}\n")
-        logging.info(f"Dissertation pedigree written to {outputfile}")
+        logger.info(f"Dissertation pedigree written to {outputfile}")
         return True
     except Exception as e:
-        logging.error(f"Failed to write dissertation pedigree: {e}")
+        logger.error(f"Failed to write dissertation pedigree: {e}")
         return False
 
 
@@ -85,17 +87,17 @@ def dissertation_pedigree_to_pedig_format(pedobj):
     Format a pedigree for Didier Boichard's 'pedig' suite of programs and write to a file.
     """
     try:
-        logging.info('Entered dissertation_pedigree_to_pedig_format()')
+        logger.info('Entered dissertation_pedigree_to_pedig_format()')
         outputfile = f"{pedobj.kw['filetag']}_pedig.ped"
         with open(outputfile, 'w') as f:
             for animal in pedobj.pedigree:
                 sex = 1 if animal.sex.lower() == 'm' else 2
                 f.write(f"{animal.animalID} {animal.sireID} {animal.damID} "
                         f"{pyp_chronology.format_year_token(animal.by)} {sex} 1 1\n")
-        logging.info(f"Pedigree written to {outputfile}")
+        logger.info(f"Pedigree written to {outputfile}")
         return True
     except Exception as e:
-        logging.error(f"Failed to write pedigree format: {e}")
+        logger.error(f"Failed to write pedigree format: {e}")
         return False
 
 
@@ -104,15 +106,15 @@ def dissertation_pedigree_to_pedig_interest_format(pedobj):
     Format a pedigree for the 'parente' program's studied individuals file.
     """
     try:
-        logging.info('Entered dissertation_pedigree_to_pedig_interest_format()')
+        logger.info('Entered dissertation_pedigree_to_pedig_interest_format()')
         outputfile = f"{pedobj.kw['filetag']}_parente.ped"
         with open(outputfile, 'w') as f:
             for animal in pedobj.pedigree:
                 f.write(f"{animal.animalID} 1\n")
-        logging.info(f"Pedigree interest format written to {outputfile}")
+        logger.info(f"Pedigree interest format written to {outputfile}")
         return True
     except Exception as e:
-        logging.error(f"Failed to write pedigree interest format: {e}")
+        logger.error(f"Failed to write pedigree interest format: {e}")
         return False
 
 
@@ -132,7 +134,7 @@ def dissertation_pedigree_to_pedig_format_mask(pedobj: object) -> bool:
     bool
         True on success, False on failure.
     """
-    logging.info("Entered dissertation_pedigree_to_pedig_format_mask()")
+    logger.info("Entered dissertation_pedigree_to_pedig_format_mask()")
     
     try:
         length = len(pedobj.pedigree)
@@ -182,11 +184,11 @@ def dissertation_pedigree_to_pedig_format_mask(pedobj: object) -> bool:
                 aout.write(f"{pedobj.pedigree[l].animalID} {pedobj.pedigree[l].sireID} "
                            f"{pedobj.pedigree[l].damID} {_maskgen} {sex} 1 1\n")
         
-        logging.info("Exited dissertation_pedigree_to_pedig_format_mask()")
+        logger.info("Exited dissertation_pedigree_to_pedig_format_mask()")
         return True
     
     except Exception as e:
-        logging.error(f"Error in dissertation_pedigree_to_pedig_format_mask: {e}")
+        logger.error(f"Error in dissertation_pedigree_to_pedig_format_mask: {e}")
         return False
 
 
@@ -347,7 +349,7 @@ def read_ini_to_dict(kwfile: str) -> Optional[Dict[str, dict]]:
         return kw
     
     except (Error, ValueError) as e:
-        logging.error(f"Error reading INI file '{kwfile}': {e}")
+        logger.error(f"Error reading INI file '{kwfile}': {e}")
         return None
     
 
@@ -461,7 +463,7 @@ def pickle_pedigree(pedobj, filename: str = "") -> int:
     int
         1 on success, 0 otherwise.
     """
-    logging.info("Entered pickle_pedigree()")
+    logger.info("Entered pickle_pedigree()")
     try:
         # Determine the pickle filename
         if not filename:
@@ -473,15 +475,15 @@ def pickle_pedigree(pedobj, filename: str = "") -> int:
         with open(pfn, "wb") as outfile:
             pickle.dump(pedobj, outfile)
         
-        logging.info("Pickled pedigree %s to file %s", pedobj.kw.get("pedname", "Unknown"), pfn)
+        logger.info("Pickled pedigree %s to file %s", pedobj.kw.get("pedname", "Unknown"), pfn)
         if pedobj.kw.get("messages") == "verbose":
             print(f"Pickled pedigree {pedobj.kw.get('pedname', 'Unknown')} to file {pfn}")
         return 1
     except Exception as e:
-        logging.error("Unable to pickle pedigree %s to file %s: %s", pedobj.kw.get("pedname", "Unknown"), pfn, str(e))
+        logger.error("Unable to pickle pedigree %s to file %s: %s", pedobj.kw.get("pedname", "Unknown"), pfn, str(e))
         return 0
     finally:
-        logging.info("Exited pickle_pedigree()")
+        logger.info("Exited pickle_pedigree()")
 
 
 def unpickle_pedigree(filename: str = ""):
@@ -498,29 +500,29 @@ def unpickle_pedigree(filename: str = ""):
     object
         An instance of a NewPedigree object on success, or 0 if the operation fails.
     """
-    logging.info("Entered unpickle_pedigree()")
+    logger.info("Entered unpickle_pedigree()")
     try:
         if not filename:
-            logging.error("No filename provided for pedigree unpickling!")
+            logger.error("No filename provided for pedigree unpickling!")
             return 0
 
         # Ensure the file has a `.pkl` extension
         if not filename.endswith(".pkl"):
             filename = f"{filename}.pkl"
-            logging.info("No file extension provided for %s. An extension (.pkl) was added.", filename)
+            logger.info("No file extension provided for %s. An extension (.pkl) was added.", filename)
 
         # Load the pickled object
         with open(filename, "rb") as infile:
             my_pedigree = pickle.load(infile)
 
-        logging.info("Unpickled pedigree %s from file %s", my_pedigree.kw.get("pedname", "Unknown"), filename)
+        logger.info("Unpickled pedigree %s from file %s", my_pedigree.kw.get("pedname", "Unknown"), filename)
         return my_pedigree
 
     except Exception as e:
-        logging.error("Unable to unpickle pedigree from file %s: %s", filename, str(e))
+        logger.error("Unable to unpickle pedigree from file %s: %s", filename, str(e))
         return 0
     finally:
-        logging.info("Exited unpickle_pedigree()")
+        logger.info("Exited unpickle_pedigree()")
 
 
 def summary_inbreeding(f_metadata: dict) -> str:
@@ -590,7 +592,7 @@ def save_ijk(pedobj, nrm_filename: str) -> int:
         if pedobj.kw.get('messages') == 'verbose':
             print(f"[INFO]: Saving A-matrix to file {nrm_filename} at {pyp_utils.pyp_nice_time()}.")
 
-        logging.info("Saving A-matrix to file %s", nrm_filename)
+        logger.info("Saving A-matrix to file %s", nrm_filename)
 
         with open(nrm_filename, "w") as file:
             for i in range(pedobj.metadata.num_records):
@@ -603,11 +605,11 @@ def save_ijk(pedobj, nrm_filename: str) -> int:
 
         if pedobj.kw.get('messages') == 'verbose':
             print(f"[INFO]: A-matrix successfully saved to file {nrm_filename} at {pyp_utils.pyp_nice_time()}.")
-        logging.info("A-matrix successfully saved to file %s", nrm_filename)
+        logger.info("A-matrix successfully saved to file %s", nrm_filename)
         return 1
 
     except Exception as e:
-        logging.error("Failed to save A-matrix to file %s. Error: %s", nrm_filename, e)
+        logger.error("Failed to save A-matrix to file %s. Error: %s", nrm_filename, e)
         return 0
 
 
@@ -655,7 +657,7 @@ def load_from_gedcom(
 
     try:
         if standalone == 0:
-            logging.info(f"Opening GEDCOM pedigree file {infilename}.")
+            logger.info(f"Opening GEDCOM pedigree file {infilename}.")
 
         with open(infilename, 'r') as infile:
             inlines = infile.readlines()
@@ -760,19 +762,19 @@ def load_from_gedcom(
         if messages == 'verbose':
             print(f"[INFO]: Successfully imported pedigree from the GEDCOM file {infilename}.")
 
-        logging.info(f"Successfully imported pedigree from the GEDCOM file {infilename}.")
+        logger.info(f"Successfully imported pedigree from the GEDCOM file {infilename}.")
 
     except Exception as e:
         if messages == 'verbose':
             print(f"[ERROR]: Unable to import pedigree from the GEDCOM file {infilename}. Error: {e}")
-        logging.error(f"Unable to import pedigree from the GEDCOM file {infilename}. Error: {e}")
+        logger.error(f"Unable to import pedigree from the GEDCOM file {infilename}. Error: {e}")
         return "xxxx"
 
     try:
         outfilename = f"{infilename}.tmp"
         pedformat = save_from_gedcom(outfilename, assembled)
     except Exception as e:
-        logging.error(f"Error saving GEDCOM file: {e}")
+        logger.error(f"Error saving GEDCOM file: {e}")
         return "xxxx"
 
     return pedformat
@@ -820,9 +822,9 @@ def save_from_gedcom(outfilename: str, assembled: dict) -> str:
                     record['name'],
                 )
                 ofh.write(outstring)
-        logging.info(f"Saved GEDCOM pedigree to the file {outfilename}!")
+        logger.info(f"Saved GEDCOM pedigree to the file {outfilename}!")
     except Exception as e:
-        logging.error(f"Unable to save GEDCOM pedigree to the file {outfilename}! Error: {e}")
+        logger.error(f"Unable to save GEDCOM pedigree to the file {outfilename}! Error: {e}")
     return pedformat
 
 
@@ -940,12 +942,12 @@ def save_to_gedcom(pedobj, outfilename: str) -> int:
 
         if pedobj.kw['messages'] == 'verbose':
             print(f"[INFO]: Successfully exported pedigree to the GEDCOM file {outfilename}!")
-        logging.info(f"Successfully exported pedigree to the GEDCOM file {outfilename}!")
+        logger.info(f"Successfully exported pedigree to the GEDCOM file {outfilename}!")
         return 1
     except Exception as e:
         if pedobj.kw['messages'] == 'verbose':
             print(f"[ERROR]: Unable to save pedigree to the GEDCOM file {outfilename}! Error: {e}")
-        logging.error(f"Unable to export pedigree to the GEDCOM file {outfilename}! Error: {e}")
+        logger.error(f"Unable to export pedigree to the GEDCOM file {outfilename}! Error: {e}")
         return 0
 
 
@@ -972,7 +974,7 @@ def save_newanimals_to_file(animal_list, filename: str, kw: dict, new_animal_att
     if not animal_list:
         if kw.get('messages') == 'verbose':
             print('[WARNING]: There were no animals in the list passed to save_newanimals_to_file()!')
-        logging.warning('There were no animals in the list passed to save_newanimals_to_file()!')
+        logger.warning('There were no animals in the list passed to save_newanimals_to_file()!')
         return False
 
     try:
@@ -1008,5 +1010,5 @@ def save_newanimals_to_file(animal_list, filename: str, kw: dict, new_animal_att
                 ofh.write(f"{sepchar.join(output_line)}\n")
         return True
     except Exception as e:
-        logging.error('Error writing to file %s: %s', filename, e)
+        logger.error('Error writing to file %s: %s', filename, e)
         return False

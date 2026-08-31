@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -76,17 +77,19 @@ class TestFastReorder(unittest.TestCase):
         """
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../PyPedal/examples"))
         pedfile_path = os.path.join(base_dir, "new_graphics.ped")
-        options = {
-            "messages": "verbose",
-            "renumber": 0,
-            "pedfile": pedfile_path,
-            "pedformat": "asdgy",
-            "sepchar": " ",
-        }
-        example = NewPedigree(options)
-        example.load()
+        with chdir_tmp() as tmp:
+            local = os.path.join(tmp, "new_graphics.ped")
+            shutil.copy(pedfile_path, local)
+            options = {
+                "messages": "verbose",
+                "renumber": 0,
+                "pedfile": local,
+                "pedformat": "asdgy",
+                "sepchar": " ",
+            }
+            example = NewPedigree(options)
+            example.load()
 
-        with chdir_tmp():
             # Reorder the pedigree
             reordered_pedigree = fast_reorder(
                 example.pedigree,

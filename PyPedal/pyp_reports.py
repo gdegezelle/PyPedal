@@ -33,6 +33,7 @@ resolved through ``pedigree[-1]``.
 from __future__ import annotations
 
 import logging
+
 import os
 import textwrap
 from collections.abc import Iterable
@@ -60,6 +61,8 @@ _THREE_GEN_SLOTS = (
     'sss', 'ssd', 'sds', 'sdd', 'dss', 'dsd', 'dds', 'ddd',
 )
 
+
+logger = logging.getLogger(__name__)
 
 def _require_reportlab():
     """Import ReportLab or raise PyPedalDependencyError.
@@ -265,7 +268,7 @@ def meanMetricBy(pedobj, metric='fa', byvar='by', createpdf=False, conn=None):
                 result_dict[row[0]] = row[1]
             conn.commit()
         else:
-            logging.error('Table does not exist for pyp_reports/meanMetricBy()')
+            logger.error('Table does not exist for pyp_reports/meanMetricBy()')
 
         if conn_created:
             conn.close()
@@ -274,14 +277,14 @@ def meanMetricBy(pedobj, metric='fa', byvar='by', createpdf=False, conn=None):
             mmbPdfTitle = f"{pedobj.kw['default_report']}_mean_metric_{metric}_{byvar}"
             success = pdfMeanMetricBy(pedobj, result_dict, 1, mmbPdfTitle)
             if success:
-                logging.info('PDF report generated successfully.')
+                logger.info('PDF report generated successfully.')
             else:
-                logging.error('Failed to generate PDF report.')
+                logger.error('Failed to generate PDF report.')
 
     except pyp_errors.PyPedalError:
         raise
     except Exception as e:
-        logging.error(f"Error in meanMetricBy: {e}")
+        logger.error(f"Error in meanMetricBy: {e}")
 
     return result_dict
 
@@ -329,7 +332,7 @@ def pdfMeanMetricBy(pedobj, results, titlepage=0, reporttitle='', reportauthor='
     except pyp_errors.PyPedalError:
         raise
     except Exception as e:
-        logging.error(f"Error in pdfMeanMetricBy: {e}")
+        logger.error(f"Error in pdfMeanMetricBy: {e}")
         return 0
 
 
@@ -366,7 +369,7 @@ def pdf_pedigree_metadata(
     )
     if pedobj.kw.get('messages') == 'verbose':
         print(f'Writing metadata report to {_pdfOutfile}')
-    logging.info('Writing metadata report to %s', _pdfOutfile)
+    logger.info('Writing metadata report to %s', _pdfOutfile)
 
     _pdfSettings = _pdfInitialize(pedobj)
     canv = _new_canvas(_pdfOutfile, _pdfSettings)
@@ -429,7 +432,7 @@ def pdf_three_gen_ped(
     _pdfOutfile = _resolve_output_path(reportfile, _DEFAULT_THREE_GEN_FILENAME)
     if pedobj.kw.get('messages') == 'verbose':
         print(f'Writing 3GenPed to {_pdfOutfile}')
-    logging.info('Writing 3GenPed to %s', _pdfOutfile)
+    logger.info('Writing 3GenPed to %s', _pdfOutfile)
 
     _pdfSettings = _pdfInitialize(pedobj)
     canv = _new_canvas(_pdfOutfile, _pdfSettings)

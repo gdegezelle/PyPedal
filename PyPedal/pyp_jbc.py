@@ -19,6 +19,7 @@
 ##
 
 import logging, math, numpy
+
 from . import pyp_graphics, pyp_network, pyp_utils
 
 
@@ -30,6 +31,8 @@ from . import pyp_graphics, pyp_network, pyp_utils
 # @param cmin Minimum value in array (?).
 # @param cmax Maximum value in array (?).
 # @retval An RGB triplet.
+logger = logging.getLogger(__name__)
+
 def get_color_32(a, cmin, cmax):
     """
     Convert a float value to one of a continuous range of colors.
@@ -498,7 +501,7 @@ def new_draw_colored_pedigree(
             print(
                 "[ERROR]: pyp_graphics/new_draw_pedigree() was unable to import the pygraphviz module!"
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/new_draw_pedigree() was unable to import the pygraphviz module!"
         )
         return 0
@@ -519,7 +522,7 @@ def new_draw_colored_pedigree(
             print(
                 "[GRAPH]: The pedigree that you passed to pyp_graphics/draw_pedigree() is not renumbered. Because of this, there may be errors in the rendered pedigree. In order to insure that the pedigree drawing is accurate, you should renumber the pedigree before calling draw_pedigree()."
             )
-        logging.error(
+        logger.error(
             "The pedigree that you passed to pyp_graphics/draw_pedigree() is not renumbered. Because of this, there may be errors in the rendered pedigree. In order to insure that the pedigree drawing is accurate, you should renumber the pedigree before calling draw_pedigree()."
         )
 
@@ -645,7 +648,7 @@ def new_draw_colored_pedigree(
                     "[ERROR]: pyp_graphics/new_draw_pedigree() was unable to write the dotfile %s."
                     % (dfn)
                 )
-            logging.error(
+            logger.error(
                 "pyp_graphics/new_draw_pedigree() was unable to draw the dotfile %s.",
                 (dfn),
             )
@@ -663,7 +666,7 @@ def new_draw_colored_pedigree(
     # outfile = '%s_color_map.txt' % (gfilename)
     # if pedobj.kw['messages'] == 'verbose':
     # print '[ERROR]: pyp_jbc/new_draw_colored_pedigree() was unable to write the color map %s.' % (outfile)
-    # logging.error('pyp_jbc/new_draw_colored_pedigree() was unable to write the color map %s.', (outfile))
+    # logger.error('pyp_jbc/new_draw_colored_pedigree() was unable to write the color map %s.', (outfile))
     # return 0
 
     # Write the graph to an output file.
@@ -675,5 +678,5 @@ def new_draw_colored_pedigree(
     # outfile = '%s.%s' % (gfilename,gformat)
     # if pedobj.kw['messages'] == 'verbose':
     # print '[ERROR]: pyp_jbc/new_draw_colored_pedigree() was unable to draw the pedigree %s.' % (outfile)
-    # logging.error('pyp_jbc/new_draw_colored_pedigree() was unable to draw the pedigree %s.', (outfile))
+    # logger.error('pyp_jbc/new_draw_colored_pedigree() was unable to draw the pedigree %s.', (outfile))
     # return 0

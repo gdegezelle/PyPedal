@@ -58,6 +58,7 @@
 # PyPedal. Please consult the sites above for licensing and installation information.
 
 import logging
+
 import math
 
 try:
@@ -89,6 +90,8 @@ from . import pyp_demog
 # @param height The height of the image (default 300)
 # @param width The width of the image (default 300)
 # @retval None
+logger = logging.getLogger(__name__)
+
 def rmuller_spy_matrix_pil(
     A, fname="tmp.png", cutoff=0.1, do_outline=0, height=300, width=300
 ):
@@ -312,7 +315,7 @@ def draw_pedigree(
             print(
                 "[GRAPH]: The pedigree that you passed to pyp_graphics/draw_pedigree() is not renumbered. Because of this, there may be errors in the rendered pedigree. In order to insure that the pedigree drawing is accurate, you should renumber the pedigree before calling draw_pedigree()."
             )
-        logging.error(
+        logger.error(
             "The pedigree that you passed to pyp_graphics/draw_pedigree() is not renumbered. Because of this, there may be errors in the rendered pedigree. In order to insure that the pedigree drawing is accurate, you should renumber the pedigree before calling draw_pedigree()."
         )
 
@@ -738,7 +741,7 @@ def draw_pedigree(
                     "[ERROR]: pyp_graphics/draw_pedigree() was unable to write the dotfile %s."
                     % (dfn)
                 )
-            logging.error(
+            logger.error(
                 "pyp_graphics/draw_pedigree() was unable to draw the dotfile %s.", (dfn)
             )
 
@@ -752,7 +755,7 @@ def draw_pedigree(
         if pedobj.kw["messages"] == "verbose":
             print(
                 f"[ERROR]: pyp_graphics/draw_pedigree() was unable to draw the pedigree {outfile}.")
-        logging.error("[ERROR]: pyp_graphics/draw_pedigree() was unable to draw the pedigree %s." % (outfile))
+        logger.error("[ERROR]: pyp_graphics/draw_pedigree() was unable to draw the pedigree %s." % (outfile))
         return 0
 
 
@@ -780,7 +783,7 @@ def plot_founders_by_year(
             print(
                 "[ERROR]: pyp_graphics/plot_founders_by_year() was unable to import the matplotlib module!"
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/plot_founders_by_year() was unable to import the matplotlib module!"
         )
         return 0
@@ -807,7 +810,7 @@ def plot_founders_by_year(
                 % (gtitle, gfilename)
             )
         # print gtitle, gfilename
-        logging.error(
+        logger.error(
             "pyp_graphics/plot_founders_by_year() was unable to create the plot '%s' (%s.png).",
             gtitle,
             gfilename,
@@ -839,7 +842,7 @@ def plot_founders_pct_by_year(
             print(
                 "[ERROR]: pyp_graphics/plot_founders_pct_by_year() was unable to import the matplotlib module!"
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/plot_founders_pct_by_year() was unable to import the matplotlib module!"
         )
         return 0
@@ -871,7 +874,7 @@ def plot_founders_pct_by_year(
                 "[ERROR]: pyp_graphics/plot_pct_founders_by_year() was unable to create the plot '%s' (%s.png)."
                 % (gtitle, gfilename)
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/plot_pct_founders_by_year() was unable to create the plot '%s' (%s.png)."
             % (gtitle, gfilename)
         )
@@ -901,7 +904,7 @@ def pcolor_matrix_pylab(A, fname="pcolor_matrix_matplotlib", debug=False):
             print(
                 "[ERROR]: pyp_graphics/pcolor_matrix_pylab() was unable to import the matplotlib module!"
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/pcolor_matrix_pylab() was unable to import the matplotlib module!"
         )
         return 0
@@ -934,7 +937,7 @@ def pcolor_matrix_pylab(A, fname="pcolor_matrix_matplotlib", debug=False):
                 "[ERROR]: pyp_graphics/pcolor_matrix_pylab() was unable to create the plot %s."
                 % (plotfile)
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/pcolor_matrix_pylab() was unable to create the plot %s.",
             (plotfile),
         )
@@ -964,7 +967,7 @@ def spy_matrix_pylab(A, fname="spy_matrix_matplotlib", debug=False):
             print(
                 "[ERROR]: pyp_graphics/spy_matrix_pylab() was unable to import the matplotlib module!"
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/spy_matrix_pylab() was unable to import the matplotlib module!"
         )
         return 0
@@ -985,7 +988,7 @@ def spy_matrix_pylab(A, fname="spy_matrix_matplotlib", debug=False):
                 "[ERROR]: pyp_graphics/spy_matrix_pylab() was unable to create the plot %s."
                 % (plotfile)
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/spy_matrix_pylab() was unable to create the plot %s.",
             (plotfile),
         )
@@ -1025,7 +1028,7 @@ def plot_line_xy(
             print(
                 "[ERROR]: pyp_graphics/plot_line_xy() was unable to import the matplotlib module!"
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/plot_line_xy() was unable to import the matplotlib module!"
         )
         return 0
@@ -1056,7 +1059,7 @@ def plot_line_xy(
                 "[ERROR]: pyp_graphics/plot_line_xy() was unable to create the plot '%s' (%s.%s)."
                 % (gtitle, gfilename, gformat)
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/plot_line_xy() was unable to create the plot '%s' (%s.%s)."
             % (gtitle, gfilename, gformat)
         )
@@ -1131,7 +1134,7 @@ def new_draw_pedigree(
             print(
                 "[ERROR]: pyp_graphics/new_draw_pedigree() was unable to import the pygraphviz module!"
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/new_draw_pedigree() was unable to import the pygraphviz module!"
         )
         return 0
@@ -1149,7 +1152,7 @@ def new_draw_pedigree(
                 "[ERROR]: pyp_graphics/new_draw_pedigree() was provided an invalid value of gname (%s), defaulting to a value of 'id'!"
                 % (gname)
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/new_draw_pedigree() was provided an invalid value of gname (%s), "
             "defaulting to a value of 'id'!",
             gname,
@@ -1163,7 +1166,7 @@ def new_draw_pedigree(
                 print(
                     "[WARNING]: pyp_graphics/new_draw_pedigree() cannot honor the colorByUser argument because the pedigree does not include userField information!"
                 )
-            logging.error(
+            logger.error(
                 "pyp_graphics/new_draw_pedigree() cannot honor the colorByUser argument because the pedigree "
                 "does not include userField information!"
             )
@@ -1203,7 +1206,7 @@ def new_draw_pedigree(
             print(
                 "[GRAPH]: The pedigree that you passed to pyp_graphics/new_draw_pedigree() is not renumbered. Because of this, there may be errors in the rendered pedigree. In order to insure that the pedigree drawing is accurate, you should renumber the pedigree before calling new_draw_pedigree()."
             )
-        logging.error(
+        logger.error(
             "The pedigree that you passed to pyp_graphics/new_draw_pedigree() is not renumbered. Because of this, there may be errors in the rendered pedigree. In order to insure that the pedigree drawing is accurate, you should renumber the pedigree before calling new_draw_pedigree()."
         )
 
@@ -1415,7 +1418,7 @@ def new_draw_pedigree(
                     "[ERROR]: pyp_graphics/new_draw_pedigree() was unable to write the dotfile %s."
                     % (dfn)
                 )
-            logging.error(
+            logger.error(
                 "pyp_graphics/new_draw_pedigree() was unable to draw the dotfile %s.",
                 (dfn),
             )
@@ -1432,7 +1435,7 @@ def new_draw_pedigree(
                 "[ERROR]: pyp_graphics/new_draw_pedigree() was unable to draw the pedigree %s."
                 % (outfile)
             )
-        logging.error(
+        logger.error(
             "pyp_graphics/new_draw_pedigree() was unable to draw the pedigree %s.",
             (outfile),
         )

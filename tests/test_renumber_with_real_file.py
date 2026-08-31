@@ -23,9 +23,11 @@ class TestRenumberWithRealPedFile(unittest.TestCase):
         self._cwd = os.getcwd()
         os.chdir(self._tmp)
         self.output_dir = self._tmp
+        local_ped = os.path.join(self._tmp, "new_graphics.ped")
+        shutil.copy(self.pedfile_path, local_ped)
 
         self.options = {
-            "pedfile": self.pedfile_path,
+            "pedfile": local_ped,
             "pedformat": "asdxy",
             "sepchar": " ",
             "messages": "verbose",

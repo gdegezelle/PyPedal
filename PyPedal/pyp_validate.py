@@ -50,10 +50,13 @@ to do.
 """
 
 import logging
+
 import math
 
 from .pyp_errors import PyPedalError, PyPedalValidationError  # noqa: F401
 
+
+logger = logging.getLogger(__name__)
 
 def _enabled(pedobj, key="validate", default=True):
     """Read a validation flag off a pedigree, tolerating a bare options dict."""
@@ -67,7 +70,7 @@ def _enabled(pedobj, key="validate", default=True):
 
 
 def _fail(pedobj, message):
-    logging.error(message)
+    logger.error(message)
     raise PyPedalValidationError(message)
 
 
