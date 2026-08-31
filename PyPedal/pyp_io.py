@@ -525,10 +525,37 @@ def unpickle_pedigree(filename: str = ""):
         logger.info("Exited unpickle_pedigree()")
 
 
+DISPLAY_COEFFICIENT_DIGITS = 6
+
+
+def format_display_coefficient(value, digits=DISPLAY_COEFFICIENT_DIGITS) -> str:
+    """Format a stored coefficient for user-facing display.
+
+    Stored values are not modified. A few ULP of residue around zero is
+    shown as ``0.000000``, never ``-0.000000``.
+    """
+    rounded = round(float(value), digits)
+    if rounded == 0.0:
+        rounded = 0.0
+    return f"{rounded:.{digits}f}"
+
+
+def _format_inbreeding_stat(key, value) -> str:
+    if key == "f_count":
+        return f"\t{key}\t{int(value)}"
+    try:
+        return f"\t{key}\t{format_display_coefficient(value)}"
+    except (TypeError, ValueError):
+        return f"\t{key}\t{value}"
+
+
 def summary_inbreeding(f_metadata: dict) -> str:
     """
     Returns a string representation of the data contained in the 'metadata' dictionary 
     from the output of pyp_nrm/pyp_inbreeding().
+
+    Counts are shown as integers. Coefficient statistics are rounded for
+    readability; the stored metadata dictionary is not changed.
 
     Parameters
     ----------
@@ -551,17 +578,15 @@ def summary_inbreeding(f_metadata: dict) -> str:
         summary.append("All animals:")
         summary.append(line2)
 
-        # Process all animals
         for k, v in f_metadata.get("all", {}).items():
-            summary.append(f"\t{k}\t{v}")
+            summary.append(_format_inbreeding_stat(k, v))
 
         summary.append(line1)
-        summary.append("Animals with non-zero CoI:")
+        summary.append("Animals with computed F > 0:")
         summary.append(line2)
 
-        # Process animals with non-zero CoI
         for k, v in f_metadata.get("nonzero", {}).items():
-            summary.append(f"\t{k}\t{v}")
+            summary.append(_format_inbreeding_stat(k, v))
 
         summary.append(line1)
 

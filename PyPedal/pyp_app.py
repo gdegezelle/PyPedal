@@ -126,7 +126,7 @@ def _format_inbreeding(result: Any) -> str:
         lines.append("Coefficients by animal")
         lines.append("-" * 40)
         for animal_id, coef in sorted(fx.items(), key=lambda item: item[0]):
-            lines.append(f"  {animal_id}: {float(coef):.6f}")
+            lines.append(f"  {animal_id}: {pyp_io.format_display_coefficient(coef)}")
         if all(float(coef) == 0.0 for coef in fx.values()):
             lines.append("")
             lines.append(
