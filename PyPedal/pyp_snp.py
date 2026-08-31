@@ -498,12 +498,12 @@ def renumber_snp_ids(pedobj):
     """
     # Check if SNP data is available and valid
     if pedobj.snp is False or pedobj.snp is None:
-        logger.error(
+        logger.debug(
             "pyp_snp/renumber_snp_ids(): SNP data is not available. No IDs need to be renumbered."
         )
         if pedobj.kw.get('debug_messages', False):
             print(
-                "[ERROR]: pyp_snp/renumber_snp_ids(): SNP data is not available. No IDs need to be renumbered."
+                "[DEBUG]: pyp_snp/renumber_snp_ids(): SNP data is not available. No IDs need to be renumbered."
             )
         return
 

@@ -96,6 +96,7 @@ def test_quiet_does_not_emit_root_info_on_stderr(tmp_path):
     assert "ok" in result.stdout
     assert "INFO:root:" not in result.stderr
     assert "INFO:PyPedal" not in result.stderr
+    assert "SNP data is not available" not in result.stderr
 
 
 def test_host_root_handlers_are_not_removed(tmp_path):
