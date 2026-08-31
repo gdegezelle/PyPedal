@@ -19,6 +19,7 @@ Modified for the PyPedal 4.0 Python 3 release by Geert Degezelle, 2025-2026. See
 
 import hashlib
 import logging
+import os
 import sys
 import warnings
 from typing import Any, Optional, List, Dict, Tuple
@@ -100,7 +101,9 @@ class NewPedigree:
         # Pedigree file handling
         if kw["simulate_pedigree"]:
             kw["pedfile"] = "simulated_pedigree"
-        kw["filetag"] = str(kw["pedfile"]).split(".")[0]
+        # Strip only the final extension so dotted directories stay intact
+        # and "./mrode.ped" does not collapse to untitled_pedigree.
+        kw["filetag"] = os.path.splitext(str(kw["pedfile"]))[0]
         if len(kw["filetag"]) == 0:
             kw["filetag"] = "untitled_pedigree"
 
