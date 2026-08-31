@@ -154,6 +154,37 @@ def _list_animals(pedigree) -> str:
     return "\n".join(lines)
 
 
+def apply_pedigree_load(session, attempted_path, pedigree=None, error=None):
+    """Install a loaded pedigree, or leave the previous one active.
+
+    Call this on the UI thread. A worker must not assign ``session.pedigree``
+    or ``session.filename``. On failure the previous pedigree is left in
+    place; if there was none, the session stays empty.
+    """
+    attempted = os.path.basename(attempted_path) or attempted_path
+    if error is None and pedigree is not None:
+        session.pedigree = pedigree
+        session.filename = attempted_path
+        return {
+            "ok": True,
+            "output": None,
+            "status": f"Loaded {attempted}",
+        }
+    if session.filename:
+        active = os.path.basename(session.filename)
+        note = f"{active} remains the active pedigree."
+        status = f"Load of {attempted} failed — {active} remains active"
+    else:
+        note = "No pedigree is active."
+        status = f"Load of {attempted} failed — no pedigree is active"
+    body = error if error else "Unknown error"
+    return {
+        "ok": False,
+        "output": f"Load of {attempted} failed.\n{note}\n\n{body}",
+        "status": status,
+    }
+
+
 class PyPedalApp:
     """Main window: load a pedigree and run the analyses the old GUI offered."""
 
@@ -268,13 +299,16 @@ class PyPedalApp:
             return False
         return True
 
-    def _run_background(self, work, title: str) -> None:
+    def _run_background(self, work, title: str, finish=None) -> None:
         if self._busy:
             return
         self._busy = True
         self._set_status(f"{title}…")
+        complete = finish or self._finish_background
 
         def runner():
+            result = None
+            error = None
             try:
                 result = work()
             except pyp_errors.PyPedalError as exc:
@@ -282,19 +316,35 @@ class PyPedalApp:
                 # a malformed record, a missing option, an absent dependency --
                 # so show the message, not a traceback. These paths must not
                 # call sys.exit(0) and take the GUI down while reporting success.
-                result = f"{type(exc).__name__}\n\n{exc}"
+                error = f"{type(exc).__name__}\n\n{exc}"
             except Exception:
                 # Anything else is unexpected and the traceback is the useful
                 # part; it is still caught, so the GUI survives.
-                result = traceback.format_exc()
-            self.root.after(0, lambda: self._finish_background(title, result))
+                error = traceback.format_exc()
+            self.root.after(0, lambda: complete(title, result, error))
 
         threading.Thread(target=runner, daemon=True).start()
 
-    def _finish_background(self, title: str, result: str) -> None:
+    def _finish_background(self, title: str, result, error=None) -> None:
         self._busy = False
-        self._write(result)
+        text = error if error is not None else result
+        self._write(text)
         self._set_status(f"{title} finished — {os.path.basename(self.filename)}" if self.filename else title)
+
+    def _finish_load(self, attempted_path: str, title: str, result, error=None) -> None:
+        self._busy = False
+        outcome = apply_pedigree_load(
+            self,
+            attempted_path,
+            pedigree=None if error else result,
+            error=error,
+        )
+        if outcome["ok"]:
+            self._write(result.metadata.stringme())
+            self._set_status(outcome["status"])
+            return
+        self._write(outcome["output"])
+        self._set_status(outcome["status"])
 
     def open_pedigree(self) -> None:
         path = self.filedialog.askopenfilename(
@@ -314,11 +364,13 @@ class PyPedalApp:
         def work():
             ped = pyp_newclasses.NewPedigree(options)
             ped.load()
-            self.pedigree = ped
-            self.filename = path
-            return ped.metadata.stringme()
+            return ped
 
-        self._run_background(work, "Loading pedigree")
+        self._run_background(
+            work,
+            "Loading pedigree",
+            finish=lambda title, result, error: self._finish_load(path, title, result, error),
+        )
 
     def show_metadata(self) -> None:
         if not self._need_pedigree():
