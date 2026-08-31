@@ -26,7 +26,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-          python -m pip install "setuptools>=64" wheel
 
       # Two explicit invocations. `pytest -m <expr>` does NOT validate the
       # expression -- a typo deselects everything and exits 0 -- so both

@@ -74,6 +74,8 @@ dev = [
     "ruff",
     "mypy",
     "pre-commit",
+    "setuptools>=64",
+    "wheel",
 ]
 # Living user manual (MkDocs). Not a runtime extra and not part of `all`.
 docs = [
