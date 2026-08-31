@@ -1,4 +1,4 @@
-# PyPedal 4.0.0
+# PyPedal 4.0.1
 
 PyPedal is a Python package for **pedigree analysis**. It loads a recorded
 animal pedigree, checks common data problems, and computes inbreeding,
@@ -11,7 +11,7 @@ summaries.
 **Python:** Python 3.12 or newer (3.12, 3.13, and 3.14)
 
 This repository is a standalone Python 3 port of Cole’s PyPedal 2.0.4.
-This is **PyPedal 4.0.0**. It **has not been published** to PyPI.
+This is **PyPedal 4.0.1**. It **has not been published** to PyPI.
 
 ## What you can compute
 

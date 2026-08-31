@@ -58,7 +58,7 @@ def test_lic6_adodb_is_not_the_project_license():
 
 def test_lic8_readme_is_current_candidate_and_not_published_final():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert text.startswith("# PyPedal 4.0.0\n")
+    assert text.startswith("# PyPedal 4.0.1\n")
     assert "LGPL-2.1-or-later" in text or "GNU LGPL 2.1 or later" in text
     assert "Python 3.12" in text
     assert "John B. Cole" in text

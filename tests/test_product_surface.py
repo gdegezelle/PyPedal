@@ -134,7 +134,7 @@ def test_restored_capabilities_are_not_called_unsupported_in_current_docs():
     )
     readme_text = (Path(REPO) / "README.md").read_text(encoding="utf-8")
     assert "4.0.0-rc8" not in readme_text
-    assert readme_text.splitlines()[0] == "# PyPedal 4.0.0"
+    assert readme_text.splitlines()[0] == "# PyPedal 4.0.1"
     assert "not been published" in readme_text.lower() or "not published" in readme_text.lower()
     prod = Path(REPO) / "PyPedal"
     hits = []

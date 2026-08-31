@@ -4,7 +4,29 @@ All notable changes to PyPedal are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 where practical. Version identifiers follow [Semantic Versioning](https://semver.org/)
-and PEP 440 (`4.0.0`).
+and PEP 440 (`4.0.1`).
+
+## [4.0.1] — 2026-08-31
+
+Patch release. It has not been published to PyPI.
+
+### Fixed
+
+- Derive `filetag` from `os.path.splitext` so `./mrode.ped` and directories
+  that contain dots keep a usable prefix beside the pedigree.
+- Pedigree logging uses the `PyPedal` package logger with a PyPedal-owned
+  FileHandler. Importing PyPedal does not configure the root logger.
+- Missing SNP data is logged at DEBUG, not ERROR.
+- Inbreeding summaries round for display and never print `-0.000000`.
+  Stored coefficients are unchanged.
+- The desktop app installs a loaded pedigree on the UI thread, keeps the
+  previous pedigree active after a failed load, caps large previews, shows
+  a busy state, and uses a single neutral zero-inbreeding sentence.
+
+### Changed
+
+- The `dev` extra includes setuptools and wheel so packaging tests run
+  after `pip install -e ".[dev]"`.
 
 ## [4.0.0] — 2026-08-30
 

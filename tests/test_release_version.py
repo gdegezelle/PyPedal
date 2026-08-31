@@ -1,6 +1,6 @@
 """Release identity: package metadata and runtime version must agree.
 
-The PEP 440 identity of this release is ``4.0.0``. Human-readable docs
+The PEP 440 identity of this release is ``4.0.1``. Human-readable docs
 use the same spelling.
 """
 import tomllib
@@ -12,7 +12,7 @@ from PyPedal.__version__ import version as module_version
 
 from _pedhelpers import REPO
 
-EXPECTED = "4.0.0"
+EXPECTED = "4.0.1"
 
 
 def _project():
