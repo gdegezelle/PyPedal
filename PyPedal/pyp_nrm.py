@@ -1376,11 +1376,28 @@ def inbreeding_modified_meuwissen_luo(pedobj, gens=0, **kw):
     return fx
 
 
-def a_decompose(pedobj):
+def _write_comma_matrix_dat(path, matrix, n):
+    """Write an n-by-n numeric matrix as comma-separated ``:7.5f`` rows."""
+    with open(path, 'w') as aout:
+        for row in range(n):
+            line = ",".join(f"{matrix[row, col]:7.5f}" for col in range(n))
+            aout.write(f"{line}\n")
+
+
+def a_decompose(pedobj, output=True):
     """
     Form the decomposed form of A, TDT', directly from a pedigree (after
     Henderson, 1976; Thompson, 1977; Mrode, 1996).  Return D, a diagonal
     matrix, and T, a lower triangular matrix such that A = TDT'.
+
+    Parameters
+    ----------
+    pedobj : object
+        A PyPedal pedigree object.
+    output : bool, optional
+        If True (the default), write ``{filetag}_a_decompose_d_.dat`` and
+        ``{filetag}_a_decompose_t_.dat``. If False, return D and T without
+        writing those analysis files.
     """
     logger.info("Entered a_decompose()")
 
@@ -1456,19 +1473,11 @@ def a_decompose(pedobj):
         D = np.identity(1, dtype=float)
         T = np.identity(1, dtype=float)
 
-    # Save D matrix to file
-    outputfile = f"{pedobj.kw['filetag']}_a_decompose_d_.dat"
-    with open(outputfile, 'w') as aout:
-        for row in range(l):
-            line = ",".join(f"{D[row, col]:7.5f}" for col in range(l))
-            aout.write(f"{line}\n")
-
-    # Save T matrix to file
-    outputfile = f"{pedobj.kw['filetag']}_a_decompose_t_.dat"
-    with open(outputfile, 'w') as aout:
-        for row in range(l):
-            line = ",".join(f"{T[row, col]:7.5f}" for col in range(l))
-            aout.write(f"{line}\n")
+    if output:
+        _write_comma_matrix_dat(
+            f"{pedobj.kw['filetag']}_a_decompose_d_.dat", D, l)
+        _write_comma_matrix_dat(
+            f"{pedobj.kw['filetag']}_a_decompose_t_.dat", T, l)
 
     logger.info("Exited a_decompose()")
     return D, T
@@ -1533,10 +1542,21 @@ def form_d_nof(pedobj):
     return D
 
 
-def a_inverse_dnf(pedobj, filetag='_a_inverse_dnf_'):
+def a_inverse_dnf(pedobj, filetag='_a_inverse_dnf_', output=True):
     """
     Form the inverse of A directly using the method of Henderson (1976) which
     does not account for inbreeding.
+
+    Parameters
+    ----------
+    pedobj : object
+        A PyPedal pedigree object.
+    filetag : str, optional
+        Historical unused parameter retained for signature compatibility.
+    output : bool, optional
+        If True (the default), write ``{filetag}_a_inverse_dnf_a_inv.dat`` and
+        ``{filetag}_a_inverse_dnf_d_inv.dat`` using ``pedobj.kw['filetag']``.
+        If False, return the inverse without writing those analysis files.
     """
     try:
         logger.info('Entered a_inverse_dnf()')
@@ -1594,28 +1614,28 @@ def a_inverse_dnf(pedobj, filetag='_a_inverse_dnf_'):
         logger.error(f"An error occurred in a_inverse_dnf: {e}")
         a_inv = np.zeros((1, 1), dtype=float)
 
-    # Write the inverse matrix to a file
-    outputfile = f"{pedobj.kw['filetag']}_a_inverse_dnf_a_inv.dat"
-    with open(outputfile, 'w') as aout:
-        for row in range(l):
-            line = ','.join(f"{a_inv[row, col]:7.5f}" for col in range(l)) + '\n'
-            aout.write(line)
-
-    # Write the inverse of D to a file
-    outputfile = f"{pedobj.kw['filetag']}_a_inverse_dnf_d_inv.dat"
-    with open(outputfile, 'w') as aout:
-        for row in range(l):
-            line = ','.join(f"{d_inv[row, col]:7.5f}" for col in range(l)) + '\n'
-            aout.write(line)
+    if output:
+        _write_comma_matrix_dat(
+            f"{pedobj.kw['filetag']}_a_inverse_dnf_a_inv.dat", a_inv, l)
+        _write_comma_matrix_dat(
+            f"{pedobj.kw['filetag']}_a_inverse_dnf_d_inv.dat", d_inv, l)
 
     logger.info('Exited a_inverse_dnf()')
     return a_inv
 
 
-def a_inverse_df(pedobj):
+def a_inverse_df(pedobj, output=True):
     """
     Directly form the inverse of A from the pedigree file - accounts for
     inbreeding - using the method of Quaas (1976).
+
+    Parameters
+    ----------
+    pedobj : object
+        A PyPedal pedigree object.
+    output : bool, optional
+        If True (the default), write the inverse, L, and D-inverse analysis
+        files. If False, return the inverse without writing those files.
     """
     try:
         logger.info('Entered a_inverse_df()')
@@ -1689,26 +1709,13 @@ def a_inverse_df(pedobj):
         logger.error(f"An error occurred in a_inverse_df: {e}")
         a_inv = np.zeros((1, 1), dtype=float)
 
-    # Write the inverse matrix to a file
-    outputfile = f"{pedobj.kw['filetag']}_a_inverse_df_a_inv.dat"
-    with open(outputfile, 'w') as aout:
-        for row in range(l):
-            line = ','.join(f"{a_inv[row, col]:7.5f}" for col in range(l)) + '\n'
-            aout.write(line)
-
-    # Write LL matrix to a file
-    outputfile = f"{pedobj.kw['filetag']}_a_inverse_df_l.dat"
-    with open(outputfile, 'w') as aout:
-        for row in range(l):
-            line = ','.join(f"{LL[row, col]:7.5f}" for col in range(l)) + '\n'
-            aout.write(line)
-
-    # Write D-inverse matrix to a file
-    outputfile = f"{pedobj.kw['filetag']}_a_inverse_df_d_inv.dat"
-    with open(outputfile, 'w') as aout:
-        for row in range(l):
-            line = ','.join(f"{d_inv[row, col]:7.5f}" for col in range(l)) + '\n'
-            aout.write(line)
+    if output:
+        _write_comma_matrix_dat(
+            f"{pedobj.kw['filetag']}_a_inverse_df_a_inv.dat", a_inv, l)
+        _write_comma_matrix_dat(
+            f"{pedobj.kw['filetag']}_a_inverse_df_l.dat", LL, l)
+        _write_comma_matrix_dat(
+            f"{pedobj.kw['filetag']}_a_inverse_df_d_inv.dat", d_inv, l)
 
     logger.info('Exited a_inverse_df()')
     return a_inv

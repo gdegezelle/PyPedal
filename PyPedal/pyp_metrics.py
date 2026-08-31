@@ -420,11 +420,206 @@ def _lacy_family_contributions(pedobj, mode):
     return contributions, len(sources), len(descendants)
 
 
+def _write_a_effective_founders_lacy(
+    pedobj, lenped, n_f, fs, phantom_slots, n_d, ds, f_e
+):
+    """Write ``{filetag}_fe_lacy_.dat`` for :func:`a_effective_founders_lacy`."""
+    outputfile = f"{pedobj.kw['filetag']}_fe_lacy_.dat"
+    with open(outputfile, 'w', encoding = 'utf-8') as aout:
+        line = "=" * 60
+        aout.write(f"{line}\n")
+        aout.write(f"{lenped} animals\n")
+        aout.write(f"{n_f} founder sources: {fs} plus phantoms {phantom_slots}\n")
+        aout.write(f"{n_d} descendants: {ds}\n")
+        aout.write(f"effective number of founders: {f_e}\n")
+        aout.write(f"{line}\n")
+
+
+def _write_effective_founders_lacy(
+    pedobj, caller, mode, n_sources, f_contribs, f_contribs_weighted,
+    f_contribs_sum, f_contribs_weighted_sum_sq, f_e,
+):
+    """Write ``{filetag}_fe_lacy.dat`` for :func:`effective_founders_lacy`."""
+    outputfile = f"{pedobj.kw['filetag']}_fe_lacy.dat"
+    with open(outputfile, "w", encoding = "utf-8") as aout:
+        pyp_io.pyp_file_header(aout, caller)
+        aout.write(f"{len(pedobj.pedigree)} animals in pedigree\n")
+        aout.write(f"{n_sources} founder sources (mode={mode!r})\n")
+        aout.write(f"Founder contributions: {f_contribs}\n")
+        aout.write(f"Proportional founder contributions: {f_contribs_weighted}\n")
+        aout.write(f"Sum of founder contributions: {f_contribs_sum}\n")
+        aout.write(f"Sum of squared proportional contributions: {f_contribs_weighted_sum_sq}\n")
+        aout.write(f"Effective founder number: {f_e}\n")
+        pyp_io.pyp_file_footer(aout, caller)
+
+
+def _write_boichard_founders_output(
+    pedobj, q, n_f, founders, n_d, explicit, gens, gen, ngen, population, f_e
+):
+    """Write ``{filetag}_fe_boichard_.dat``."""
+    outputfile = f"{pedobj.kw['filetag']}_fe_boichard_.dat"
+    with open(outputfile, 'w', encoding='utf-8') as aout:
+        line = '=' * 60 + '\n'
+        aout.write(line)
+        aout.write(f'q: {[q[i] for i in sorted(q)]}\n')
+        aout.write(f'{n_f} founders: {sorted(founders)}\n')
+        aout.write(f'{n_d} descendants\n')
+        # On the explicit path there IS no generation, so none is
+        # fabricated to keep the legacy wording usable. Reporting a
+        # generation label here would be the same lie the `gen` coupling
+        # already tells: it would name a selector that played no part.
+        if explicit is None:
+            aout.write(f'generations: {gens}\n')
+            aout.write(f'{ngen} animals in generation {gen}\n')
+        else:
+            aout.write(f'{ngen} animals in the explicit reference '
+                       f'population: {sorted(population)}\n')
+        aout.write(f'effective number of founders: {f_e}\n')
+        aout.write(line)
+
+
+def _write_boichard_definite_output(
+    pedobj, n_f, n_d, population, explicit, gens, gen, f_a, ancestors,
+    phantoms, order,
+):
+    """Write ``{filetag}_fa_boichard_definite_.dat``."""
+    outputfile = f"{pedobj.kw['filetag']}_fa_boichard_definite_.dat"
+    with open(outputfile, 'w', encoding='utf-8') as aout:
+        line = '=' * 60 + '\n'
+        aout.write(line)
+        aout.write(f'{n_f} candidate ancestors\n')
+        aout.write(f'{n_d} animals in the population under study: {sorted(population)}\n')
+        # The line above is already truthful on both paths and is kept. Only
+        # the generation provenance below it changes: on the explicit path
+        # there is no generation to report, and inventing one would misdescribe
+        # how the population was chosen.
+        if explicit is None:
+            aout.write(f'generations: {gens}\n')
+            aout.write(f'{n_d} animals in generation {gen}\n')
+        else:
+            aout.write('reference population supplied explicitly '
+                       '(no generation selector)\n')
+        aout.write(f'effective number of ancestors: {f_a}\n')
+        aout.write(f'ancestors: {_boichard_label_ancestors(ancestors, phantoms)}\n')
+        aout.write('ancestor contributions: '
+                   f'{_boichard_label_contributions(order, phantoms)}\n')
+        if phantoms:
+            aout.write(_boichard_phantom_note(phantoms))
+        aout.write(line)
+
+
+def _write_boichard_indefinite_output(
+    pedobj, n_taken, order, n_founders, c, taken, phantoms, f_l, f_u
+):
+    """Write ``{filetag}_fa_boichard_indefinite_.dat``."""
+    outputfile = f"{pedobj.kw['filetag']}_fa_boichard_indefinite_.dat"
+    with open(outputfile, 'w', encoding='utf-8') as aout:
+        line = '=' * 60 + '\n'
+        aout.write(line)
+        aout.write(f'{n_taken} ancestors taken of {len(order)} with positive contribution\n')
+        aout.write(f'{n_founders} founders\n')
+        aout.write(f'cumulated contribution c: {c}\n')
+        aout.write('ancestors taken: '
+                   f'{_boichard_label_contributions(taken, phantoms)}\n')
+        aout.write(f'lower bound f_l: {f_l}\n')
+        aout.write(f'upper bound f_u: {f_u}\n')
+        if phantoms:
+            aout.write(_boichard_phantom_note(phantoms))
+        aout.write(line)
+
+
+def _write_a_coefficients_output(
+    pedobj, a, lenped, f_n, f_sum, f_avg, fnz_n, fnz_sum, fnz_avg,
+    r_n, r_sum, r_avg, rnz_n, rnz_sum, rnz_avg,
+):
+    """Write the three ``a_coefficients`` analysis files."""
+    outputfile2 = f"{pedobj.kw['filetag']}_rel_to_pop_.dat"
+    with open(outputfile2, 'w', encoding = 'utf-8') as aout2:
+        aout2.write("# Average relationship to population (renumbered ID, r)\n")
+        for row in range(lenped):
+            r_pop_avg = sum(
+                pyp_nrm._matrix_value(a, row, col) for col in range(lenped) if row != col
+            ) / lenped
+            aout2.write(f"{pedobj.pedigree[row].animalID} {r_pop_avg:.6f}\n")
+
+    outputfile = f"{pedobj.kw['filetag']}_population_coefficients_.dat"
+    with open(outputfile, 'w') as aout:
+        line = "=" * 60
+        aout.write(f"{line}\n")
+        aout.write("# Population average coefficients of inbreeding and relationship\n")
+        aout.write("f_n: {}\nf_sum: {:.6f}\nf_avg: {:.6f}\n".format(f_n, f_sum, f_avg))
+        aout.write("fnz_n: {}\nfnz_sum: {:.6f}\nfnz_avg: {:.6f}\n".format(fnz_n, fnz_sum, fnz_avg))
+        aout.write("r_n: {}\nr_sum: {:.6f}\nr_avg: {:.6f}\n".format(r_n, r_sum, r_avg))
+        aout.write("rnz_n: {}\nrnz_sum: {:.6f}\nrnz_avg: {:.6f}\n".format(rnz_n, rnz_sum, rnz_avg))
+        aout.write(f"{line}\n")
+
+    outputfile = f"{pedobj.kw['filetag']}_individual_coefficients_.dat"
+    with open(outputfile, 'w', encoding = 'utf-8') as aout:
+        aout.write("# Individual coefficients of inbreeding\n")
+        aout.write("# animalID f_a\n")
+        for row in range(lenped):
+            aout.write(
+                f"{pedobj.pedigree[row].animalID}\t{pyp_nrm._coi_from_matrix(a, row):.4f}\n"
+            )
+
+
+def _write_fast_a_coefficients_output(
+    pedobj, a, lenped, f_n, f_sum, f_avg, fnz_n, fnz_sum, fnz_avg,
+    r_n, r_sum, r_avg, rnz_n, rnz_sum, rnz_avg,
+):
+    """Write the three ``fast_a_coefficients`` analysis files when ``file_io`` is on."""
+    outputfile2 = f"{pedobj.kw['filetag']}_rel_to_pop_.dat"
+    with open(outputfile2, 'w') as aout2:
+        aout2.write("# Average relationship to population (renumbered ID, r)\n")
+        for row in range(lenped):
+            r_pop_avg = sum(
+                pyp_nrm._matrix_value(a, row, col) for col in range(lenped) if col != row
+            ) / lenped
+            aout2.write(f"{pedobj.pedigree[row].animalID} {r_pop_avg:.6f}\n")
+
+    outputfile = f"{pedobj.kw['filetag']}_population_coefficients_.dat"
+    with open(outputfile, 'w') as aout:
+        line = "=" * 60
+        aout.write(f"{line}\n")
+        aout.write("# Population average coefficients of inbreeding and relationship (fast_a_coefficients)\n")
+        aout.write(f"f_n: {f_n}\nf_sum: {f_sum:.6f}\nf_avg: {f_avg:.6f}\n")
+        aout.write(f"fnz_n: {fnz_n}\nfnz_sum: {fnz_sum:.6f}\nfnz_avg: {fnz_avg:.6f}\n")
+        aout.write(f"r_n: {r_n}\nr_sum: {r_sum:.6f}\nr_avg: {r_avg:.6f}\n")
+        aout.write(f"rnz_n: {rnz_n}\nrnz_sum: {rnz_sum:.6f}\nrnz_avg: {rnz_avg:.6f}\n")
+        aout.write(f"{line}\n")
+
+    outputfile = f"{pedobj.kw['filetag']}_individual_coefficients_.dat"
+    with open(outputfile, 'w') as aout:
+        aout.write("# Individual coefficients of inbreeding\n")
+        aout.write("# animalID f_a\n")
+        for row in range(lenped):
+            aout.write(
+                f"{pedobj.pedigree[row].animalID}\t{pyp_nrm._coi_from_matrix(a, row):.4f}\n"
+            )
+
+
+def _write_theoretical_ne_output(pedobj, ns, nd, ne):
+    """Write ``{filetag}_ne_from_metadata_.dat``."""
+    outputfile = f"{pedobj.kw['filetag']}_ne_from_metadata_.dat"
+    with open(outputfile, 'w') as aout:
+        line = "=" * 60 + '\n'
+        aout.write(line)
+        aout.write("# Theoretical effective population size (N_e)\n")
+        aout.write("#   n_sires = number of sires\n")
+        aout.write("#   n_dams = number of dams\n")
+        aout.write("#   n_e = effective population size\n")
+        aout.write(f"n_sires: {ns}\n")
+        aout.write(f"n_dams: {nd}\n")
+        aout.write(f"n_e: {ne}\n")
+        aout.write(line)
+
+
 def a_effective_founders_lacy(
     pedobj,
     a=None,
     mode=_UNSET,
     half=_UNSET,
+    output=True,
 ) -> Dict[str, float]:
     """
     Calculate the number of effective founders in a pedigree using the exact method of Lacy.
@@ -443,6 +638,10 @@ def a_effective_founders_lacy(
     half : bool, optional
         Not supported. Historical ``half=True`` / ``half=False`` raise
         ``PyPedalUsageError``. Use the default ``mode='phantom'``.
+    output : bool, optional
+        If True (the default), write ``{filetag}_fe_lacy_.dat``. If False,
+        perform the calculation and return the same dictionary without
+        writing that analysis file.
 
     Returns
     -------
@@ -535,16 +734,9 @@ def a_effective_founders_lacy(
             "fa_effective_founders": f_e,
         }
 
-        # Write results to output file
-        outputfile = f"{pedobj.kw['filetag']}_fe_lacy_.dat"
-        with open(outputfile, 'w', encoding = 'utf-8') as aout:
-            line = "=" * 60
-            aout.write(f"{line}\n")
-            aout.write(f"{lenped} animals\n")
-            aout.write(f"{n_f} founder sources: {fs} plus phantoms {phantom_slots}\n")
-            aout.write(f"{n_d} descendants: {ds}\n")
-            aout.write(f"effective number of founders: {f_e}\n")
-            aout.write(f"{line}\n")
+        if output:
+            _write_a_effective_founders_lacy(
+                pedobj, lenped, n_f, fs, phantom_slots, n_d, ds, f_e)
 
         if pedobj.kw.get('debug_messages'):
             logger.info('Exited a_effective_founders_lacy()')
@@ -562,7 +754,7 @@ def a_effective_founders_lacy(
         ) from e
 
 
-def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET) -> Dict[str, Union[int, float]]:
+def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET, output=True) -> Dict[str, Union[int, float]]:
     """
     Calculate the number of effective founders in a pedigree using the exact method of Lacy.
 
@@ -580,6 +772,10 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET) -> Dict[str, Union
     half : bool, optional
         Not supported. Historical ``half=True`` / ``half=False`` raise
         ``PyPedalUsageError``. Use the default ``mode='phantom'``.
+    output : bool, optional
+        If True (the default), write ``{filetag}_fe_lacy.dat``. If False,
+        perform the calculation and return the same dictionary without
+        writing that analysis file.
 
     Returns
     -------
@@ -645,18 +841,10 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET) -> Dict[str, Union
             print(f"\tSum of squared proportional contributions: {_f_contribs_weighted_sum_sq}")
             print(f"Effective founder number (f_e): {_f_e}")
 
-        # Write results to a file
-        outputfile = f"{pedobj.kw['filetag']}_fe_lacy.dat"
-        with open(outputfile, "w", encoding = "utf-8") as aout:
-            pyp_io.pyp_file_header(aout, caller)
-            aout.write(f"{len(pedobj.pedigree)} animals in pedigree\n")
-            aout.write(f"{_n_sources} founder sources (mode={mode!r})\n")
-            aout.write(f"Founder contributions: {_f_contribs}\n")
-            aout.write(f"Proportional founder contributions: {_f_contribs_weighted}\n")
-            aout.write(f"Sum of founder contributions: {_f_contribs_sum}\n")
-            aout.write(f"Sum of squared proportional contributions: {_f_contribs_weighted_sum_sq}\n")
-            aout.write(f"Effective founder number: {_f_e}\n")
-            pyp_io.pyp_file_footer(aout, caller)
+        if output:
+            _write_effective_founders_lacy(
+                pedobj, caller, mode, _n_sources, _f_contribs, _f_contribs_weighted,
+                _f_contribs_sum, _f_contribs_weighted_sum_sq, _f_e)
 
         # Populate the output dictionary
         out_dict = {
@@ -761,7 +949,7 @@ def boichard_probabilities_of_gene_origin(pedobj, reference):
 
 
 def a_effective_founders_boichard(pedobj, a: Optional[np.ndarray] = None, gen: Optional[int] = None,
-                                  *, reference: Optional[Iterable[int]] = None) -> float:
+                                  *, reference: Optional[Iterable[int]] = None, output: bool = True) -> float:
     """
     Effective number of founders, ``f_e = 1 / sum(q_k^2)`` over founders.
 
@@ -811,6 +999,10 @@ def a_effective_founders_boichard(pedobj, a: Optional[np.ndarray] = None, gen: O
         guard would have nothing scientifically relevant to validate. R is
         never inferred: not from ``igen``, pedigree depth, terminal status,
         birth year, sex or parent completeness.
+    output : bool, optional, keyword-only
+        If True (the default), write ``{filetag}_fe_boichard_.dat``. If False,
+        perform the calculation and return the same ``f_e`` without writing
+        that analysis file.
 
     Returns
     -------
@@ -866,25 +1058,10 @@ def a_effective_founders_boichard(pedobj, a: Optional[np.ndarray] = None, gen: O
             print(f'f_e:\t\t{f_e:.3f}')
             print('=' * 60)
 
-        outputfile = f"{pedobj.kw['filetag']}_fe_boichard_.dat"
-        with open(outputfile, 'w', encoding='utf-8') as aout:
-            line = '=' * 60 + '\n'
-            aout.write(line)
-            aout.write(f'q: {[q[i] for i in sorted(q)]}\n')
-            aout.write(f'{n_f} founders: {sorted(founders)}\n')
-            aout.write(f'{n_d} descendants\n')
-            # On the explicit path there IS no generation, so none is
-            # fabricated to keep the legacy wording usable. Reporting a
-            # generation label here would be the same lie the `gen` coupling
-            # already tells: it would name a selector that played no part.
-            if explicit is None:
-                aout.write(f'generations: {gens}\n')
-                aout.write(f'{ngen} animals in generation {gen}\n')
-            else:
-                aout.write(f'{ngen} animals in the explicit reference '
-                           f'population: {sorted(population)}\n')
-            aout.write(f'effective number of founders: {f_e}\n')
-            aout.write(line)
+        if output:
+            _write_boichard_founders_output(
+                pedobj, q, n_f, founders, n_d, explicit, gens if explicit is None else None,
+                gen if explicit is None else None, ngen, population, f_e)
 
         if pedobj.kw.get('debug_messages'):
             logger.info('Exited a_effective_founders_boichard()')
@@ -1484,7 +1661,7 @@ def boichard_marginal_contributions(pedobj, reference, tie_break=BOICHARD_TIE_BR
 
 
 def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: Optional[int] = None,
-                                   *, reference: Optional[Iterable[int]] = None) -> float:
+                                   *, reference: Optional[Iterable[int]] = None, output: bool = True) -> float:
     """
     Effective number of ancestors, f_a = 1 / sum(p_k^2).
 
@@ -1526,6 +1703,10 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
         This routine's validation domain is unchanged, so an explicitly
         supplied R must still be an antichain. How R is supplied is independent
         of which R is structurally admissible.
+    output : bool, optional, keyword-only
+        If True (the default), write ``{filetag}_fa_boichard_definite_.dat``.
+        If False, perform the calculation and return the same ``f_a`` without
+        writing that analysis file.
 
     Returns
     -------
@@ -1575,29 +1756,11 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
         print(f'f_a:\t\t{f_a:.3f}')
         print('=' * 60)
 
-    outputfile = f"{pedobj.kw['filetag']}_fa_boichard_definite_.dat"
-    with open(outputfile, 'w', encoding='utf-8') as aout:
-        line = '=' * 60 + '\n'
-        aout.write(line)
-        aout.write(f'{n_f} candidate ancestors\n')
-        aout.write(f'{n_d} animals in the population under study: {sorted(population)}\n')
-        # The line above is already truthful on both paths and is kept. Only
-        # the generation provenance below it changes: on the explicit path
-        # there is no generation to report, and inventing one would misdescribe
-        # how the population was chosen.
-        if explicit is None:
-            aout.write(f'generations: {gens}\n')
-            aout.write(f'{n_d} animals in generation {gen}\n')
-        else:
-            aout.write('reference population supplied explicitly '
-                       '(no generation selector)\n')
-        aout.write(f'effective number of ancestors: {f_a}\n')
-        aout.write(f'ancestors: {_boichard_label_ancestors(ancestors, phantoms)}\n')
-        aout.write('ancestor contributions: '
-                   f'{_boichard_label_contributions(order, phantoms)}\n')
-        if phantoms:
-            aout.write(_boichard_phantom_note(phantoms))
-        aout.write(line)
+    if output:
+        _write_boichard_definite_output(
+            pedobj, n_f, n_d, population, explicit,
+            gens if explicit is None else None, gen if explicit is None else None,
+            f_a, ancestors, phantoms, order)
 
     if pedobj.kw.get('debug_messages'):
         logger.info('Exited a_effective_ancestors_definite()')
@@ -1614,7 +1777,7 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
 
 
 def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen: Optional[int] = None, n: int = 25,
-                                     *, reference: Optional[Iterable[int]] = None) -> Tuple[float, float]:
+                                     *, reference: Optional[Iterable[int]] = None, output: bool = True) -> Tuple[float, float]:
     """
     Lower and upper bounds on the effective number of ancestors, ``(f_l, f_u)``.
 
@@ -1690,6 +1853,10 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
         shares the Appendix-B engine and must refuse precisely where
         :func:`a_effective_ancestors_definite` refuses -- an explicitly
         supplied R is still subject to the antichain requirement.
+    output : bool, optional, keyword-only
+        If True (the default), write ``{filetag}_fa_boichard_indefinite_.dat``.
+        If False, perform the calculation and return the same ``(f_l, f_u)``
+        without writing that analysis file.
 
     Returns
     -------
@@ -1790,20 +1957,9 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
         print(f'f_u:\t\t{f_u:.3f}')
         print('=' * 60)
 
-    outputfile = f"{pedobj.kw['filetag']}_fa_boichard_indefinite_.dat"
-    with open(outputfile, 'w', encoding='utf-8') as aout:
-        line = '=' * 60 + '\n'
-        aout.write(line)
-        aout.write(f'{n_taken} ancestors taken of {len(order)} with positive contribution\n')
-        aout.write(f'{n_founders} founders\n')
-        aout.write(f'cumulated contribution c: {c}\n')
-        aout.write('ancestors taken: '
-                   f'{_boichard_label_contributions(taken, phantoms)}\n')
-        aout.write(f'lower bound f_l: {f_l}\n')
-        aout.write(f'upper bound f_u: {f_u}\n')
-        if phantoms:
-            aout.write(_boichard_phantom_note(phantoms))
-        aout.write(line)
+    if output:
+        _write_boichard_indefinite_output(
+            pedobj, n_taken, order, n_founders, c, taken, phantoms, f_l, f_u)
 
     # Both bounds are effective numbers of ancestors and obey the same
     # invariant; and the interval must not be inverted.
@@ -1824,7 +1980,7 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
     return float(f_l), float(f_u)
 
 
-def a_coefficients(pedobj, a: Optional[np.ndarray] = None, method: str = 'nrm') -> Dict[str, float]:
+def a_coefficients(pedobj, a: Optional[np.ndarray] = None, method: str = 'nrm', output: bool = True) -> Dict[str, float]:
     """
     Write population average coefficients of inbreeding and relationship to a file, 
     as well as individual animal IDs and coefficients of inbreeding. For large pedigrees 
@@ -1838,6 +1994,10 @@ def a_coefficients(pedobj, a: Optional[np.ndarray] = None, method: str = 'nrm') 
         A numerator relationship matrix.
     method : str, optional
         Determines which procedure should be called to build a relationship matrix (nrm|frm). Default is 'nrm'.
+    output : bool, optional
+        If True (the default), write the historical coefficient ``.dat`` files.
+        If False, perform the calculation and return the same dictionary
+        without writing those analysis files.
 
     Returns
     -------
@@ -1893,37 +2053,10 @@ def a_coefficients(pedobj, a: Optional[np.ndarray] = None, method: str = 'nrm') 
     r_avg = r_sum / r_n
     rnz_avg = rnz_sum / rnz_n if rnz_n > 0 else 0.0
 
-    # Write average relationship coefficients to a file
-    outputfile2 = f"{pedobj.kw['filetag']}_rel_to_pop_.dat"
-    with open(outputfile2, 'w', encoding = 'utf-8') as aout2:
-        aout2.write("# Average relationship to population (renumbered ID, r)\n")
-        for row in range(lenped):
-            r_pop_avg = sum(
-                pyp_nrm._matrix_value(a, row, col) for col in range(lenped) if row != col
-            ) / lenped
-            aout2.write(f"{pedobj.pedigree[row].animalID} {r_pop_avg:.6f}\n")
-
-    # Write population average coefficients to a file
-    outputfile = f"{pedobj.kw['filetag']}_population_coefficients_.dat"
-    with open(outputfile, 'w') as aout:
-        line = "=" * 60
-        aout.write(f"{line}\n")
-        aout.write("# Population average coefficients of inbreeding and relationship\n")
-        aout.write("f_n: {}\nf_sum: {:.6f}\nf_avg: {:.6f}\n".format(f_n, f_sum, f_avg))
-        aout.write("fnz_n: {}\nfnz_sum: {:.6f}\nfnz_avg: {:.6f}\n".format(fnz_n, fnz_sum, fnz_avg))
-        aout.write("r_n: {}\nr_sum: {:.6f}\nr_avg: {:.6f}\n".format(r_n, r_sum, r_avg))
-        aout.write("rnz_n: {}\nrnz_sum: {:.6f}\nrnz_avg: {:.6f}\n".format(rnz_n, rnz_sum, rnz_avg))
-        aout.write(f"{line}\n")
-
-    # Write individual coefficients of inbreeding to a file
-    outputfile = f"{pedobj.kw['filetag']}_individual_coefficients_.dat"
-    with open(outputfile, 'w', encoding = 'utf-8') as aout:
-        aout.write("# Individual coefficients of inbreeding\n")
-        aout.write("# animalID f_a\n")
-        for row in range(lenped):
-            aout.write(
-                f"{pedobj.pedigree[row].animalID}\t{pyp_nrm._coi_from_matrix(a, row):.4f}\n"
-            )
+    if output:
+        _write_a_coefficients_output(
+            pedobj, a, lenped, f_n, f_sum, f_avg, fnz_n, fnz_sum, fnz_avg,
+            r_n, r_sum, r_avg, rnz_n, rnz_sum, rnz_avg)
 
     if pedobj.kw.get('debug_messages'):
         logger.info('Exited a_coefficients()')
@@ -1936,7 +2069,8 @@ def fast_a_coefficients(
     a: Optional[np.ndarray] = None, 
     method: str = 'nrm', 
     debug: bool = False, 
-    storage: str = 'dense'
+    storage: str = 'dense',
+    output: bool = True,
 ) -> Dict[str, float]:
     """
     Writes population average coefficients of inbreeding and relationship to a file, 
@@ -1955,6 +2089,13 @@ def fast_a_coefficients(
         Print debugging messages if True, don't print otherwise. Default is False.
     storage : str, optional
         Use dense or sparse matrix storage. Default is 'dense'.
+    output : bool, optional
+        Combined with ``pedobj.kw['file_io']``. Files are written only when
+        both ``output`` is True (the default) and ``file_io`` is True
+        (``file_io`` itself defaults to True on a loaded pedigree).
+        ``output=False`` suppresses the files even when ``file_io`` is True.
+        Setting ``file_io`` to False still suppresses them even when
+        ``output`` is True.
 
     Returns
     -------
@@ -2007,39 +2148,10 @@ def fast_a_coefficients(
     r_avg = r_sum / r_n if r_n > 0 else 0.0
     rnz_avg = rnz_sum / rnz_n if rnz_n > 0 else 0.0
 
-    # Write outputs to files if file I/O is enabled
-    if pedobj.kw.get('file_io', False):
-        # Write average relationships to population
-        outputfile2 = f"{pedobj.kw['filetag']}_rel_to_pop_.dat"
-        with open(outputfile2, 'w') as aout2:
-            aout2.write("# Average relationship to population (renumbered ID, r)\n")
-            for row in range(lenped):
-                r_pop_avg = sum(
-                    pyp_nrm._matrix_value(a, row, col) for col in range(lenped) if col != row
-                ) / lenped
-                aout2.write(f"{pedobj.pedigree[row].animalID} {r_pop_avg:.6f}\n")
-
-        # Write population average coefficients
-        outputfile = f"{pedobj.kw['filetag']}_population_coefficients_.dat"
-        with open(outputfile, 'w') as aout:
-            line = "=" * 60
-            aout.write(f"{line}\n")
-            aout.write("# Population average coefficients of inbreeding and relationship (fast_a_coefficients)\n")
-            aout.write(f"f_n: {f_n}\nf_sum: {f_sum:.6f}\nf_avg: {f_avg:.6f}\n")
-            aout.write(f"fnz_n: {fnz_n}\nfnz_sum: {fnz_sum:.6f}\nfnz_avg: {fnz_avg:.6f}\n")
-            aout.write(f"r_n: {r_n}\nr_sum: {r_sum:.6f}\nr_avg: {r_avg:.6f}\n")
-            aout.write(f"rnz_n: {rnz_n}\nrnz_sum: {rnz_sum:.6f}\nrnz_avg: {rnz_avg:.6f}\n")
-            aout.write(f"{line}\n")
-
-        # Write individual coefficients of inbreeding
-        outputfile = f"{pedobj.kw['filetag']}_individual_coefficients_.dat"
-        with open(outputfile, 'w') as aout:
-            aout.write("# Individual coefficients of inbreeding\n")
-            aout.write("# animalID f_a\n")
-            for row in range(lenped):
-                aout.write(
-                    f"{pedobj.pedigree[row].animalID}\t{pyp_nrm._coi_from_matrix(a, row):.4f}\n"
-                )
+    if output and pedobj.kw.get('file_io', False):
+        _write_fast_a_coefficients_output(
+            pedobj, a, lenped, f_n, f_sum, f_avg, fnz_n, fnz_sum, fnz_avg,
+            r_n, r_sum, r_avg, rnz_n, rnz_sum, rnz_avg)
 
     if debug or pedobj.kw.get('debug_messages', False):
         logger.info('Exited fast_a_coefficients()')
@@ -2047,15 +2159,20 @@ def fast_a_coefficients(
     return individual_coi
 
 
-def theoretical_ne_from_metadata(pedobj) -> bool:
+def theoretical_ne_from_metadata(pedobj, output: bool = True) -> bool:
     """
     Computes the theoretical effective population size (N_e) based on the number 
-    of sires and dams in a pedigree metadata object. Writes results to an output file.
+    of sires and dams in a pedigree metadata object. Writes results to an output file
+    when ``output`` is True.
 
     Parameters
     ----------
     pedobj : object
         A PyPedal pedigree object.
+    output : bool, optional
+        If True (the default), write ``{filetag}_ne_from_metadata_.dat``. If
+        False, perform the calculation without writing that analysis file.
+        The return value remains True on success and False on failure.
 
     Returns
     -------
@@ -2073,19 +2190,8 @@ def theoretical_ne_from_metadata(pedobj) -> bool:
         # Calculate the theoretical effective population size
         ne = 1.0 / ((1.0 / (4.0 * ns)) + (1.0 / (4.0 * nd)))
 
-        # Write results to an output file
-        outputfile = f"{pedobj.kw['filetag']}_ne_from_metadata_.dat"
-        with open(outputfile, 'w') as aout:
-            line = "=" * 60 + '\n'
-            aout.write(line)
-            aout.write("# Theoretical effective population size (N_e)\n")
-            aout.write("#   n_sires = number of sires\n")
-            aout.write("#   n_dams = number of dams\n")
-            aout.write("#   n_e = effective population size\n")
-            aout.write(f"n_sires: {ns}\n")
-            aout.write(f"n_dams: {nd}\n")
-            aout.write(f"n_e: {ne}\n")
-            aout.write(line)
+        if output:
+            _write_theoretical_ne_output(pedobj, ns, nd, ne)
 
         if pedobj.kw.get('debug_messages'):
             logger.info('Exited theoretical_ne_from_metadata()')
@@ -3831,7 +3937,7 @@ def ballou_ancestral_inbreeding(pedobj):
 
     # Calculate coefficients of inbreeding if they are not already in the pedigree
     if not pedobj.kw.get("f_computed", False):
-        pyp_nrm.inbreeding(pedobj)
+        pyp_nrm.inbreeding(pedobj, output=False)
 
     # Calculate ancestral inbreeding
     for p in pedobj.pedigree:
