@@ -1,0 +1,9 @@
+============================================================
+# Theoretical effective population size (N_e)
+#   n_sires = number of sires
+#   n_dams = number of dams
+#   n_e = effective population size
+n_sires: 3.0
+n_dams: 2.0
+n_e: 4.800000000000001
+============================================================
