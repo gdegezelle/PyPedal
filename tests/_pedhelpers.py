@@ -2,9 +2,9 @@
 Shared fixtures for the remediation test suite.
 
 Loading a pedigree has two side effects that make naive tests hostile to the
-working tree: ``NewPedigree.__init__`` reconfigures root logging process-wide,
-and the analysis routines write ``<filetag>_*.dat`` files derived from the
-pedfile path.
+working tree: ``NewPedigree.__init__`` installs a PyPedal-owned logfile
+handler, and the analysis routines write ``<filetag>_*.dat`` files derived
+from the pedfile path.
 
 ``filetag`` is overwritten unconditionally from ``kw['pedfile']``
 (``pyp_newclasses.py:86``), so passing a ``filetag`` option does not redirect
@@ -88,7 +88,7 @@ def _load(local, pedformat, sepchar, tmp, overrides):
         ped = load_pedigree(options)
     finally:
         os.chdir(cwd)
-    # Constructing a pedigree reconfigures root logging; keep test output clean.
+    # FileHandler is on the PyPedal logger; keep pytest output clean.
     logging.disable(logging.CRITICAL)
     return ped
 

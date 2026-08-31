@@ -81,11 +81,12 @@ On this example the file already used 1…6, so `animalID` and `originalID`
 happen to match. That is a convenience of Mrode’s table, not a general
 rule. See [IDs and missing parents](ids-and-missing-parents.md).
 
-Constructing a pedigree opens a logfile next to the file stem. The example
+Constructing a pedigree opens a logfile next to the pedigree path. The example
 uses a temporary directory so that log stays out of your project tree.
 
-`messages="quiet"` and `pedigree_summary=0` keep the console quiet. The
-defaults are verbose.
+`messages="quiet"` and `pedigree_summary=0` keep the console quiet when
+the host application has not configured Python logging. The defaults are
+verbose.
 
 ## Next
 

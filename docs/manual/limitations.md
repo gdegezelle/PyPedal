@@ -113,10 +113,13 @@ See [Saving, pickle, and SQLite](saving-and-exporting.md).
 `plot_line_xy` and related wrappers are not a reliable PNG export path.
 Supported pedigree drawing is `draw_pedigree`. See [Graphics](graphics.md).
 
-### Logging side effect
+### Logging
 
-Constructing a `NewPedigree` configures process-wide `logging` and
-truncates `<filetag>.log`.
+Importing PyPedal does not configure the root logger. Constructing a
+`NewPedigree` attaches a PyPedal-owned logfile handler to the `PyPedal`
+package logger and truncates `<filetag>.log`. Host-application handlers
+are not removed. `messages="quiet"` does not override logging the host
+has already configured.
 
 ### `a_coefficients` / `fast_a_coefficients`
 

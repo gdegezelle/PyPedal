@@ -51,12 +51,22 @@ Inbreeding **method** is an argument to `pyp_nrm.inbreeding()`, not a
 
 ## Output and logging
 
-Constructing a pedigree **reconfigures process-wide logging** and
-truncates `{filetag}.log`. Analysis functions such as `inbreeding` take
-their own `output=False` so they do not write `.dat` files.
+Importing PyPedal does not configure the process root logger and does not
+add a root `StreamHandler`. Pedigree logging uses the `PyPedal` package
+logger. Constructing a pedigree attaches a PyPedal-owned `FileHandler` to
+that logger and truncates `{filetag}.log` (`filemode="w"`). A later
+pedigree replaces the previous PyPedal-owned handler; handlers installed
+by the host application are left in place.
 
-`filetag` is derived from the `pedfile` stem and prefixes generated
-names.
+`messages="quiet"` suppresses PyPedal’s own console chatter. It does not
+override logging the host application has already configured. Without
+host logging configuration, a quiet load produces no PyPedal stderr spam.
+
+Analysis functions such as `inbreeding` take their own `output=False` so
+they do not write `.dat` files.
+
+`filetag` is `os.path.splitext(pedfile)[0]`, so the directory prefix is
+kept and generated names land beside the pedigree.
 
 ## INI files
 

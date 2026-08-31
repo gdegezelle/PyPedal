@@ -10,7 +10,7 @@ method. A population of tens of thousands of animals cannot.
 | Inbreeding *F* | `method="tabular"` | `method="meu_luo"` |
 | One pairwise relationship | `relationship()` | `relationship()` (do not form a full NRM) |
 | Test mating | `mating_coi` | `mating_coi` (still read-only; still no dense NRM) |
-| Lacy *f<sub>e</sub>* | `effective_founders_lacy` | same function; work in a temp directory |
+| Lacy *f<sub>e</sub>* | `effective_founders_lacy` | same function; work in a temp directory. Do not use `a_effective_founders_lacy` (dense NRM) |
 | Gene-drop N<sub>g</sub> | modest `rounds` | more RAM/time; do not also form a dense NRM |
 
 There is **no automatic switch** at 10,000 animals. If you leave
@@ -108,9 +108,10 @@ result.
 
 ## Performance notes
 
-- Load from a working copy; constructing a pedigree writes a logfile.
+- Load from a working copy; constructing a pedigree writes a logfile on
+  the PyPedal logger (not the process root logger).
 - Use `messages="quiet"` and `pedigree_summary=0` if you do not need
-  console dumps.
+  console dumps. Quiet does not override logging configured by the host.
 - Pass `output=False` on inbreeding and gene dropping unless you want
   side-effect files.
 - Drawings of 98,000 nodes are not a practical Graphviz workflow.

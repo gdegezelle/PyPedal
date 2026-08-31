@@ -6,7 +6,7 @@ calculation. Neither is gene-drop N<sub>g</sub>.
 
 | Method | Typical question | PyPedal functions |
 |---|---|---|
-| Lacy *f<sub>e</sub>* | Equal-founder equivalent from proportional contributions of descendants | `effective_founders_lacy`, `a_effective_founders_lacy` |
+| Lacy *f<sub>e</sub>* | Equal-founder equivalent from proportional contributions of descendants | `effective_founders_lacy` (default/scalable); `a_effective_founders_lacy` (dense NRM, small pedigrees only) |
 | Boichard *f<sub>e</sub>* | Expected contributions to a named reference population | `a_effective_founders_boichard` |
 | Boichard *f<sub>a</sub>* | Marginal ancestors after accounting for bottlenecks | `a_effective_ancestors_definite`, `a_effective_ancestors_indefinite` |
 | Boichard N<sub>g</sub> | Simulated founder-gene frequencies | `effective_founder_genomes` |
@@ -14,8 +14,11 @@ calculation. Neither is gene-drop N<sub>g</sub>.
 ## When to use which
 
 - You have a small complete pedigree and want Lacy’s published
-  Appendix A check: use `effective_founders_lacy`. Expected *f<sub>e</sub>*
+  Appendix A check: use `effective_founders_lacy` (or
+  `a_effective_founders_lacy` on that small file). Expected *f<sub>e</sub>*
   on `new_lacy.ped` is about **2.91**.
+  `a_effective_founders_lacy` forms a dense NRM and is not the large-file
+  path.
 - You are describing a **defined living group** (a birth-year cohort, a
   generation label, or an explicit ID list): use the Boichard routines
   and pass `reference=` or a numeric `gen` column.

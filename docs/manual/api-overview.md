@@ -25,7 +25,7 @@ internal helper.
 
 | Call | Module | Role |
 |---|---|---|
-| `effective_founders_lacy` / `a_effective_founders_lacy` | `pyp_metrics` | Lacy *f<sub>e</sub>* |
+| `effective_founders_lacy` / `a_effective_founders_lacy` | `pyp_metrics` | Lacy *f<sub>e</sub>* (scalable default / dense-NRM small-pedigree form) |
 | `a_effective_founders_boichard` | `pyp_metrics` | Boichard *f<sub>e</sub>* |
 | `a_effective_ancestors_definite` | `pyp_metrics` | Boichard *f<sub>a</sub>* |
 | `a_effective_ancestors_indefinite` | `pyp_metrics` | Approximate *f<sub>a</sub>* |
@@ -51,8 +51,9 @@ internal helper.
 
 ## Desktop
 
-`python -m PyPedal` or `pypedal` launches `PyPedal.pyp_app:main`
-(`gui` extra).
+`python -m PyPedal`, `pypedal`, and `pypedal-gui` launch the CustomTkinter
+desktop application (`gui` extra). PyPedal 4.0.1 does not provide a
+command-oriented CLI and has no analysis subcommands.
 
 ## Genomic note
 

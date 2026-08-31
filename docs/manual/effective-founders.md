@@ -25,12 +25,14 @@ where *p<sub>k</sub>* is founder *k*’s proportional contribution to the
 descendants (animals that are not themselves founders).
 
 PyPedal implements that with explicit phantom founders for unknown
-parental genome contributions. Two entry points compute the same
-quantity:
+parental genome contributions. Two entry points exist:
 
-- `pyp_metrics.a_effective_founders_lacy(pedobj)`
-- `pyp_metrics.effective_founders_lacy(pedobj)` (family-wise form for
-  larger pedigrees)
+- `pyp_metrics.effective_founders_lacy(pedobj)` — the scalable default
+  supported path. It walks founder-row contributions and does not form a
+  dense numerator relationship matrix.
+- `pyp_metrics.a_effective_founders_lacy(pedobj)` — the dense-NRM form,
+  for small pedigrees and published-reference checks only. Do not use it
+  on a large pedigree.
 
 On Lacy’s Appendix A pedigree (`new_lacy.ped` in a **checkout or sdist**):
 

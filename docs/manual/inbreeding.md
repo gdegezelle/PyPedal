@@ -86,9 +86,15 @@ There is **no automatic switch** at 10,000 animals. The default remains
 ## Reading the metadata
 
 `metadata["all"]` summarises every animal. `metadata["nonzero"]`
-summarises only animals with *F* > 0. On Mrode the all-animal mean is
-small because five of six animals are not inbred; the nonzero mean is
-0.125.
+summarises animals with computed *F* > 0 (the exact stored sign, not a
+tolerance). On Mrode the all-animal mean is small because five of six
+animals are not inbred; the nonzero mean is 0.125.
+
+Stored coefficients in `fx` and in the metadata dictionary are left
+unrounded. On a deep or large pedigree, a few units in the last place of
+floating-point residue around zero can occur. Displayed summaries round
+those values for readability (six decimal places; a few-ULP negative
+residue prints as `0.000000`, not `-0.000000`).
 
 For prospective matings see [Test mating](mating.md). For pairwise
 *a<sub>ij</sub>* see [Relationships](relationships.md).

@@ -54,7 +54,8 @@ chapter documents the file path.
 | `messages` | `'verbose'` | Use `'quiet'` to suppress console chatter |
 | `pedigree_summary` | `1` | Set `0` to skip the metadata dump |
 
-Constructing a pedigree opens a logfile named from the `pedfile` stem.
+Constructing a pedigree opens a logfile named from the pedigree path
+(`os.path.splitext(pedfile)[0]`, keeping the directory prefix).
 Load from a working copy, not from a file you cannot overwrite beside.
 
 Example files live in a **repository checkout** or **sdist** under

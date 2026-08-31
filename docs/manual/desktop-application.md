@@ -16,7 +16,9 @@ python -m PyPedal
 pypedal
 ```
 
-`pypedal-gui` is registered as the same entry point.
+`pypedal` and `pypedal-gui` are registered as the same entry point. They
+launch this desktop application. PyPedal 4.0.1 does not provide a
+command-oriented CLI and has no analysis subcommands.
 
 CustomTkinter is imported lazily. The library remains importable without
 the GUI extra. Starting the app without CustomTkinter prints a message to

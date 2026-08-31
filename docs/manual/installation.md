@@ -37,7 +37,7 @@ extras.
 
 | Extra | What it adds |
 |---|---|
-| `gui` | CustomTkinter desktop app (`python -m PyPedal` or `pypedal`) |
+| `gui` | CustomTkinter desktop app (`python -m PyPedal` or `pypedal`; not a command-line analysis CLI) |
 | `graphics` | matplotlib, pydot, Graphviz Python bindings, Pillow |
 | `graphviz-extra` | pygraphviz (needed by some drawing functions) |
 | `reports` | ReportLab; headless PDF pedigree reports |
