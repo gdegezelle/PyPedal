@@ -112,8 +112,8 @@ result.
   the PyPedal logger (not the process root logger).
 - Use `messages="quiet"` and `pedigree_summary=0` if you do not need
   console dumps. Quiet does not override logging configured by the host.
-- Pass `output=False` on inbreeding and gene dropping unless you want
-  side-effect files.
+- Pass `output=False` on inbreeding, gene dropping, Lacy and Boichard
+  metrics, and coefficient dumps unless you want side-effect files.
 - Drawings of 98,000 nodes are not a practical Graphviz workflow.
 - The GUI inbreeding path already uses `meu_luo`.
 - Load time is dominated by topological reordering when many offspring

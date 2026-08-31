@@ -37,6 +37,9 @@ analyse it with an explicit `reference=` list.
 - `pyp_metrics.a_effective_ancestors_indefinite` — the approximate
   form that stops after the largest remaining contributions
 
+Both write a `.dat` summary when `output=True` (the default). Pass
+`output=False` to compute *f<sub>a</sub>* without that analysis file.
+
 If an approximate contribution sequence is internally inconsistent,
 PyPedal **refuses** the calculation rather than quietly repairing the
 numbers. That is a data or algorithm-domain problem, not a number you

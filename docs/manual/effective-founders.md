@@ -66,8 +66,9 @@ That prints `3` and `2.91`. Three founders do not contribute equally, so
 the effective number is a little under 3. Extra floating-point digits are
 not biological precision.
 
-These functions write a `*_fe_lacy*.dat` file next to the pedigree stem.
-Work in a temporary directory.
+These functions write a `*_fe_lacy*.dat` file next to the pedigree stem
+when `output=True` (the default). Pass `output=False` to run the same
+calculation without that analysis file. Work in a temporary directory.
 
 ## Boichard’s *f<sub>e</sub>*
 

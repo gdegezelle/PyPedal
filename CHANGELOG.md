@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 where practical. Version identifiers follow [Semantic Versioning](https://semver.org/)
 and PEP 440 (`4.0.1`).
 
+## [Unreleased]
+
+### Added
+
+- Analysis metrics that historically always wrote `.dat` files now accept
+  `output=True` (the default) to keep that behaviour, or `output=False` to
+  compute the same result without those analysis files.
+
 ## [4.0.1] — 2026-08-31
 
 Patch release. It has not been published to PyPI.

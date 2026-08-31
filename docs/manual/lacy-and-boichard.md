@@ -38,8 +38,10 @@ recent generation” from `igen`. See
 ## Files these functions write
 
 Lacy and Boichard metrics write `.dat` summaries next to the pedigree
-stem. Run them in a temporary directory, or set the file tag, if you do
-not want those files in your project tree.
+stem when `output=True` (the default, historical behaviour). Pass
+`output=False` to perform the same calculation without writing that
+analysis file. Run them in a temporary directory, or set the file tag,
+if you do not want those files in your project tree.
 
 [Effective founders](effective-founders.md),
 [Effective ancestors](effective-ancestors.md), and

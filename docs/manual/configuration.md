@@ -62,8 +62,12 @@ by the host application are left in place.
 override logging the host application has already configured. Without
 host logging configuration, a quiet load produces no PyPedal stderr spam.
 
-Analysis functions such as `inbreeding` take their own `output=False` so
-they do not write `.dat` files.
+Analysis functions such as `inbreeding`, Lacy and Boichard metrics,
+`a_coefficients`, `theoretical_ne_from_metadata`, and the NRM decompose
+and inverse helpers take their own `output=False` so they do not write
+`.dat` files. The default remains `output=True`. `fast_a_coefficients`
+writes only when both `output=True` and `kw['file_io']` is true
+(`file_io` defaults to true).
 
 `filetag` is `os.path.splitext(pedfile)[0]`, so the directory prefix is
 kept and generated names land beside the pedigree.
