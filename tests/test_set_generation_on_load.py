@@ -344,14 +344,11 @@ class TestTheReproducerNoLongerReproduces(unittest.TestCase):
         """Was: ERROR ... 'dict' object has no attribute 'num_records'."""
         logging.disable(logging.NOTSET)
         try:
-            with self.assertLogs(level="ERROR") as captured:
+            with self.assertNoLogs(level="ERROR"):
                 ped = chain(set_generations=True)
         finally:
             logging.disable(logging.CRITICAL)
         self.assertIsInstance(ped, pyp_newclasses.NewPedigree)
-        text = "\n".join(captured.output)
-        self.assertNotIn("unable to assign inferred generations", text)
-        self.assertNotIn("num_records", text)
 
     def test_explicit_post_load_call_is_still_the_working_oracle(self):
         ped = chain(set_generations=False)

@@ -104,11 +104,16 @@ def test_basic_functionality():
     try:
         from PyPedal.pyp_newclasses import NewPedigree
         from PyPedal import pyp_utils
-        
+        import shutil
+        import tempfile
+
         print("  - Creating a pedigree object...")
-        # Test with minimal options
+        src = REPO / "PyPedal" / "examples" / "boichard2.ped"
+        work = Path(tempfile.mkdtemp())
+        pedfile = work / "boichard2.ped"
+        shutil.copy(src, pedfile)
         options = {
-            'pedfile': 'PyPedal/examples/boichard2.ped',
+            'pedfile': str(pedfile),
             'pedformat': 'asdx',
             'messages': 'quiet'
         }
