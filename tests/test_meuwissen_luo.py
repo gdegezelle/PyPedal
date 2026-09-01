@@ -5,11 +5,10 @@ tabular / Meuwissen-Luo oracle. They do not embed a previous-release snapshot.
 """
 import os
 import random
-import tempfile
 import unittest
 from types import SimpleNamespace
 
-from _pedhelpers import chdir_tmp, corpus, load_corpus, load_corpus_from_path
+from _pedhelpers import chdir_tmp, corpus, load_corpus, load_corpus_from_path, write_temp_pedigree
 from oracles import (
     inbreeding_meuwissen_luo as oracle_ml,
     inbreeding_tabular as oracle_tabular,
@@ -31,10 +30,7 @@ def _fx(ped):
 
 
 def _write_rows(rows):
-    tmp = tempfile.mkstemp(suffix=".ped")[1]
-    with open(tmp, "w", encoding="utf-8") as handle:
-        handle.write("\n".join(rows) + "\n")
-    return tmp
+    return write_temp_pedigree(rows)
 
 
 def _load_asd(rows, **overrides):

@@ -5,11 +5,10 @@ Permanent tests compare production ``effective_founders_lacy`` with
 strict/absorb modes are refused.
 """
 import os
-import tempfile
 import unittest
 import warnings
 
-from _pedhelpers import chdir_tmp, corpus, load_corpus, load_corpus_from_path
+from _pedhelpers import chdir_tmp, corpus, load_corpus, load_corpus_from_path, write_temp_pedigree
 from oracles import lacy_f_e
 
 from PyPedal import pyp_metrics
@@ -17,10 +16,7 @@ from PyPedal.pyp_errors import PyPedalUsageError
 
 
 def _write_rows(rows):
-    tmp = tempfile.mkstemp(suffix=".ped")[1]
-    with open(tmp, "w", encoding="utf-8") as handle:
-        handle.write("\n".join(rows) + "\n")
-    return tmp
+    return write_temp_pedigree(rows)
 
 
 def _load(rows):

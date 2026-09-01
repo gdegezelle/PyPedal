@@ -1,4 +1,9 @@
 """Direct tests of the private parse helpers. Not a public API."""
+import os
+
+import pytest
+
+from _pedhelpers import close_owned_pypedal_log_handlers
 from PyPedal._pyp_parse import (
     PEDFORMAT_ABSENT,
     PedigreeRecordSource,
@@ -7,6 +12,8 @@ from PyPedal._pyp_parse import (
     implicit_parent_locations,
     iter_implicit_parent_tokens,
 )
+from PyPedal.pyp_errors import PyPedalPedigreeFormatError
+from PyPedal.pyp_newclasses import load_pedigree
 
 CODES = [
     "a", "s", "d", "g", "x", "b", "f", "r", "n",
@@ -228,3 +235,140 @@ def test_implicit_parent_locations_zero_sire_dam():
     assert null["dam"] == 2
     assert null["sex"] == PEDFORMAT_ABSENT
     assert locations["sex"] == 3
+
+
+class _Log:
+    def warning(self, *args, **kwargs):
+        pass
+
+    def info(self, *args, **kwargs):
+        pass
+
+
+def _capturing_source(monkeypatch):
+    from PyPedal import _pyp_parse
+
+    captured = {}
+    real = _pyp_parse.PedigreeRecordSource
+
+    class Capturing(real):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            captured["source"] = self
+
+    monkeypatch.setattr(_pyp_parse, "PedigreeRecordSource", Capturing)
+    return captured
+
+
+def _quiet_load_options(path):
+    return {
+        "pedfile": str(path),
+        "pedformat": "asd",
+        "messages": "quiet",
+        "pedigree_summary": 0,
+        "renumber": True,
+    }
+
+
+def _cleanup_temp_pedigree_log(path):
+    close_owned_pypedal_log_handlers()
+    log = os.path.splitext(str(path))[0] + ".log"
+    if os.path.exists(log):
+        os.remove(log)
+
+
+def test_file_source_context_manager_closes_on_success(tmp_path):
+    path = tmp_path / "tiny.ped"
+    path.write_text("1 0 0\n2 0 0\n", encoding="utf-8")
+    with PedigreeRecordSource(str(path)) as source:
+        handle = source._file
+        assert handle is not None
+        assert not handle.closed
+        assert source.readline(0, _Log()).strip() == "1 0 0"
+    assert handle.closed
+    assert source._file is None
+
+
+def test_file_source_context_manager_closes_on_exception(tmp_path):
+    path = tmp_path / "tiny.ped"
+    path.write_text("1 0 0\n", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="boom"):
+        with PedigreeRecordSource(str(path)) as source:
+            handle = source._file
+            assert handle is not None
+            assert not handle.closed
+            raise RuntimeError("boom")
+    assert handle.closed
+    assert source._file is None
+
+
+def test_file_source_close_is_idempotent(tmp_path):
+    path = tmp_path / "tiny.ped"
+    path.write_text("1 0 0\n", encoding="utf-8")
+    source = PedigreeRecordSource(str(path))
+    handle = source._file
+    source.close()
+    source.close()
+    assert handle.closed
+    assert source._file is None
+
+
+def test_close_does_not_close_caller_owned_dbstream():
+    class Rows(list):
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    rows = Rows([("1", "0", "0")])
+    source = PedigreeRecordSource("ignored.ped", dbstream=rows)
+    source.close()
+    source.close()
+    assert rows.closed is False
+    assert source._file is None
+
+
+def test_load_closes_owned_file_and_allows_unlink(tmp_path, monkeypatch):
+    path = tmp_path / "tiny.ped"
+    path.write_text("1 0 0\n2 0 0\n3 1 2\n", encoding="utf-8")
+    captured = _capturing_source(monkeypatch)
+    try:
+        load_pedigree(options=_quiet_load_options(path))
+        source = captured["source"]
+        assert source._file is None
+        os.remove(path)
+        assert not os.path.exists(path)
+    finally:
+        _cleanup_temp_pedigree_log(path)
+
+
+def test_load_closes_owned_file_after_format_error(tmp_path, monkeypatch):
+    path = tmp_path / "bad.ped"
+    path.write_text("1 0 0 extra extra extra extra\n", encoding="utf-8")
+    captured = _capturing_source(monkeypatch)
+    try:
+        with pytest.raises(PyPedalPedigreeFormatError):
+            load_pedigree(options=_quiet_load_options(path))
+        assert captured["source"]._file is None
+        os.remove(path)
+        assert not os.path.exists(path)
+    finally:
+        _cleanup_temp_pedigree_log(path)
+
+
+def test_load_closes_owned_file_after_progress_callback_error(tmp_path, monkeypatch):
+    path = tmp_path / "tiny.ped"
+    path.write_text("1 0 0\n2 0 0\n", encoding="utf-8")
+    captured = _capturing_source(monkeypatch)
+
+    def boom(done, total):
+        raise RuntimeError("abort load")
+
+    try:
+        with pytest.raises(RuntimeError, match="abort load"):
+            load_pedigree(options=_quiet_load_options(path), progress=boom)
+        assert captured["source"]._file is None
+        os.remove(path)
+        assert not os.path.exists(path)
+    finally:
+        _cleanup_temp_pedigree_log(path)

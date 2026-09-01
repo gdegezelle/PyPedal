@@ -68,6 +68,8 @@ Minor release. It has not been published to PyPI.
   `inbreeding_aguilar` amethod, `find_ancestors_g` gens). Configuration
   and presentation fallbacks (INI values, paper size, `NewPedigree`
   defaults) are unchanged.
+- Improved Windows compatibility for pedigree resource cleanup and
+  canonical dataset checkout.
 
 ## [4.0.1] — 2026-08-31
 

@@ -19,7 +19,11 @@ import os
 import shutil
 import tempfile
 
-from PyPedal.pyp_newclasses import load_pedigree
+from PyPedal.pyp_newclasses import (
+    PYPEDAL_LOGGER_NAME,
+    _PYPEDAL_OWNED_HANDLER,
+    load_pedigree,
+)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 EXAMPLES = os.path.join(REPO, "PyPedal", "examples")
@@ -91,6 +95,34 @@ def _load(local, pedformat, sepchar, tmp, overrides):
     # FileHandler is on the PyPedal logger; keep pytest output clean.
     logging.disable(logging.CRITICAL)
     return ped
+
+
+def close_owned_pypedal_log_handlers():
+    """Close PyPedal-owned logfile handlers so tests can delete temp logs.
+
+    Only handlers marked with the production ``_pypedal_owned`` flag are
+    removed. Host application handlers and the root logger are untouched.
+    Does not call ``logging.shutdown()``.
+    """
+    package = logging.getLogger(PYPEDAL_LOGGER_NAME)
+    for handler in list(package.handlers):
+        if getattr(handler, _PYPEDAL_OWNED_HANDLER, False):
+            package.removeHandler(handler)
+            handler.close()
+
+
+def write_temp_pedigree(rows, suffix=".ped"):
+    """Write pedigree rows to a new temp file whose handle is already closed.
+
+    ``tempfile.mkstemp`` leaves an open fd; Windows cannot delete that
+    path until the fd is closed. Tests that later ``os.remove`` the file
+    must not keep that descriptor.
+    """
+    fd, path = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write("\n".join(rows) + "\n")
+    return path
 
 
 @contextlib.contextmanager

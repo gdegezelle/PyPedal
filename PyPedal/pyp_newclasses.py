@@ -1523,6 +1523,7 @@ class NewPedigree:
         animal_counter = 0  # Count the number of animal records in the pedigree file
         critical_count = 0  # Number of critical errors encountered
         pedformat_locations: dict[str, int] = {}
+        source = None
 
         # We need to track the sires and dams read from the pedigree
         # file in order to insert records for any parents that do not
@@ -1551,8 +1552,6 @@ class NewPedigree:
                 if self.kw['messages'] == 'verbose':
                     print(f"[ERROR]: Null pedigree format string assigned a default value of {self.kw['pedformat']}.")
                 raise ValueError("pedformat is not set in self.kw")
-
-            source = None
 
             # pedformat interpretation is a one-shot map. load() still owns
             # reorder, SNP, renumbering, metadata, and chronology.
@@ -1861,11 +1860,11 @@ class NewPedigree:
                         print(f'[NOTE]: Added pedigree entry for {_role} {_token}')
                     self._implicit_parents.append(an.animalID)
 
-            # Finish up
-            #
+            # Finish up. The owned file handle is closed in ``finally`` so
+            # callers can rename, move, or delete the source pedigree after
+            # load returns — including on Windows, and including when a
+            # parser/validation/progress exception is raised.
             logger.info('Closing pedigree file')
-            if source is not None:
-                source.close()
             _retval = True
 
         except _ProgressCallbackError as wrapped:
@@ -1887,6 +1886,9 @@ class NewPedigree:
                 "(kw['pedformat']) against the file's columns."
                 % (self.kw.get('pedfile'), animal_counter,
                    type(e).__name__, e)) from e
+        finally:
+            if source is not None:
+                source.close()
 
         return _retval
 

@@ -285,6 +285,18 @@ class PedigreeRecordSource:
             return False
 
     def close(self) -> None:
+        """Close an owned file handle. Text and DB sources own nothing.
+
+        Idempotent. Does not close ``dbstream`` or other caller-owned
+        objects; those were never opened by this class.
+        """
         if self._file is not None:
             self._file.close()
             self._file = None
+
+    def __enter__(self) -> PedigreeRecordSource:
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> Literal[False]:
+        self.close()
+        return False
