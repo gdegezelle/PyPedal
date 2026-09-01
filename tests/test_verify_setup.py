@@ -105,11 +105,22 @@ class TestVerificationOutcome(unittest.TestCase):
         finally:
             verify_setup._importable = real_import
 
+    def test_script_source_is_ascii(self):
+        """Status output must be printable on Windows cp1252/ascii consoles."""
+        with open(VERIFY, "rb") as handle:
+            handle.read().decode("ascii")
+
     def test_script_exits_zero_end_to_end(self):
         proc = subprocess.run([sys.executable, VERIFY], cwd=REPO,
                               capture_output=True, text=True, timeout=300)
-        self.assertEqual(0, proc.returncode,
-                         f"verify_setup.py failed:\n{proc.stdout[-1500:]}")
+        self.assertEqual(
+            0,
+            proc.returncode,
+            "verify_setup.py failed (returncode=%s)\n"
+            "--- stdout ---\n%s\n"
+            "--- stderr ---\n%s"
+            % (proc.returncode, proc.stdout[-1500:], proc.stderr[-1500:]),
+        )
 
 
 if __name__ == "__main__":

@@ -45,27 +45,27 @@ def check_public_tree():
     for rel in REQUIRED_PUBLIC_FILES:
         path = REPO / rel
         if path.is_file() and path.stat().st_size > 0:
-            print(f"    ✓ {rel}")
+            print(f"    [OK] {rel}")
         else:
-            print(f"    ✗ missing {rel}")
+            print(f"    [FAIL] missing {rel}")
             ok = False
     manual = REPO / "docs" / "manual"
     if manual.is_dir() and any(manual.glob("*.md")):
-        print("    ✓ docs/manual/")
+        print("    [OK] docs/manual/")
     else:
-        print("    ✗ docs/manual/ is missing")
+        print("    [FAIL] docs/manual/ is missing")
         ok = False
     for rel in FORBIDDEN_PUBLIC_PATHS:
         path = REPO / rel
         if path.exists():
-            print(f"    ✗ leftover {rel}")
+            print(f"    [FAIL] leftover {rel}")
             ok = False
         else:
-            print(f"    ✓ no {rel}")
+            print(f"    [OK] no {rel}")
     if ok:
-        print("\n✓ Public tree looks current.\n")
+        print("\n[OK] Public tree looks current.\n")
     else:
-        print("\n✗ Public tree check failed.\n")
+        print("\n[FAIL] Public tree check failed.\n")
     return ok
 
 
@@ -78,20 +78,20 @@ def test_imports():
     try:
         print("  - Importing PyPedal core modules...")
         from PyPedal import pyp_newclasses, pyp_nrm, pyp_metrics, pyp_utils
-        print("    ✓ Core modules imported")
+        print("    [OK] Core modules imported")
         
         print("  - Testing NewPedigree class...")
         from PyPedal.pyp_newclasses import NewPedigree
-        print("    ✓ NewPedigree class available")
+        print("    [OK] NewPedigree class available")
         
         print("  - Testing NRM functions...")
         from PyPedal.pyp_nrm import fast_a_matrix, inbreeding
-        print("    ✓ NRM functions available")
+        print("    [OK] NRM functions available")
         
-        print("\n✓ All imports successful!\n")
+        print("\n[OK] All imports successful!\n")
         return True
     except ImportError as e:
-        print(f"\n✗ Import error: {e}\n")
+        print(f"\n[FAIL] Import error: {e}\n")
         traceback.print_exc()
         return False
 
@@ -122,24 +122,24 @@ def test_basic_functionality():
         ped = NewPedigree(options)
         ped.load()
         
-        print(f"    ✓ Loaded {len(ped.pedigree)} animals")
+        print(f"    [OK] Loaded {len(ped.pedigree)} animals")
         
         # Test that we can access basic attributes
         if len(ped.pedigree) > 0:
             first_animal = ped.pedigree[0]
-            print(f"    ✓ First animal ID: {first_animal.animalID}")
-            print(f"    ✓ First animal name: {first_animal.name}")
+            print(f"    [OK] First animal ID: {first_animal.animalID}")
+            print(f"    [OK] First animal name: {first_animal.name}")
         
-        print("\n✓ Basic functionality works!\n")
+        print("\n[OK] Basic functionality works!\n")
         return True
         
     except FileNotFoundError as e:
-        print(f"\n⚠ File not found: {e}")
+        print(f"\n[WARN] File not found: {e}")
         print("   This is okay if test data files are missing.")
         print("   Try running examples from PyPedal/examples/ instead.\n")
         return False
     except Exception as e:
-        print(f"\n✗ Error: {e}\n")
+        print(f"\n[FAIL] Error: {e}\n")
         traceback.print_exc()
         return False
 
@@ -197,9 +197,9 @@ def check_dependencies():
     print("\n  Core (required):")
     for module, name in CORE_DEPENDENCIES.items():
         if _importable(module):
-            print(f"    ✓ {name} installed")
+            print(f"    [OK] {name} installed")
         else:
-            print(f"    ✗ {name} NOT installed")
+            print(f"    [FAIL] {name} NOT installed")
             all_ok = False
 
     for extra, modules in OPTIONAL_DEPENDENCIES.items():
@@ -213,17 +213,17 @@ def check_dependencies():
             status = "not installed"
         print(f"\n  Optional feature '{extra}' -- {status}:")
         for name in available:
-            print(f"    ✓ {name}")
+            print(f"    [OK] {name}")
         for name in missing:
-            print(f"    ⚠ {name} not installed"
+            print(f"    [WARN] {name} not installed"
                   f"  (install with: pip install 'PyPedal[{extra}]')")
 
     if all_ok:
-        print("\n✓ Core dependencies installed. PyPedal is usable.")
+        print("\n[OK] Core dependencies installed. PyPedal is usable.")
         print("  Any feature listed above as not installed is optional; it")
         print("  disables that feature only.\n")
     else:
-        print("\n✗ A CORE dependency is missing -- PyPedal will not work.")
+        print("\n[FAIL] A CORE dependency is missing -- PyPedal will not work.")
         print("   Run: pip install -e .\n")
 
     return all_ok
@@ -251,19 +251,19 @@ def main():
     print("=" * 60)
     
     for test, passed in results.items():
-        status = "✓ PASS" if passed else "✗ FAIL"
+        status = "[OK] PASS" if passed else "[FAIL] FAIL"
         print(f"  {status}: {test}")
     
     all_passed = all(results.values())
     
     if all_passed:
-        print("\n🎉 All tests passed! PyPedal is ready to use.")
+        print("\n[OK] All tests passed! PyPedal is ready to use.")
         print("\nNext steps:")
         print("  1. Try running: python -m pytest tests/ -m \"not integration\" -q")
         print("  2. Try examples: cd PyPedal/examples && python new_methods.py")
         print("  3. Read: docs/manual/index.md")
     else:
-        print("\n⚠ Some tests failed. See errors above.")
+        print("\n[WARN] Some tests failed. See errors above.")
         print("\nTroubleshooting:")
         print("  1. Make sure conda environment is activated: conda activate pypedal3_env")
         print("  2. Reinstall: pip install -e .")
