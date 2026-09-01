@@ -25,7 +25,7 @@ import logging
 import os
 import sys
 import warnings
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, cast
 
 from . import _pyp_parse
 from networkx import DiGraph
@@ -226,14 +226,14 @@ class NewPedigree:
         self.kw = kw
 
         # Initialize the Big Main Data Structures to null values
-        self.pedigree: list[NewAnimal | LightAnimal] = []
+        self.pedigree: list[NewAnimal] = []
         # Animals PyPedal created itself because they appeared as a sire or dam
         # but had no record of their own. The post-load count is then larger
         # than the number of input rows, which used to be discoverable only by
         # reading thousands of [NOTE] lines. Surfaced in
         # PedigreeMetadata.num_implicit_parents.
         self._implicit_parents: list[int | str] = []
-        self.metadata = {}
+        self.metadata: PedigreeMetadata | dict[str, Any] = {}
         self.idmap: dict[int | str, int | str] = {}
         self.backmap: dict[int | str, int | str] = {}
         self.namemap: dict[str, int | str] = {}
@@ -457,8 +457,8 @@ class NewPedigree:
             # harness measures on every corpus pedigree without a 'u' column.
             "missing_userfield": "Unknown"
         }
-        for key, value in defaults.items():
-            kw.setdefault(key, value)
+        for option, value in defaults.items():
+            kw.setdefault(option, value)
 
 
     def __add__(self, other, filename=None, debugLoad=False):
@@ -1488,7 +1488,7 @@ class NewPedigree:
         line_counter = 0  # Count the number of lines in the pedigree file
         animal_counter = 0  # Count the number of animal records in the pedigree file
         critical_count = 0  # Number of critical errors encountered
-        pedformat_locations = {}  # Stores columns numbers for input data
+        pedformat_locations: dict[str, int] = {}
 
         # We need to track the sires and dams read from the pedigree
         # file in order to insert records for any parents that do not
@@ -1695,9 +1695,12 @@ class NewPedigree:
                                     # Process and validate animal records
                                     if lfields[0] != self.kw['missing_parent']:
                                         if self.kw['animal_type'] == 'light':
-                                            an = LightAnimal(pedformat_locations, lfields, self.kw) 
+                                            an = cast(
+                                                NewAnimal,
+                                                LightAnimal(pedformat_locations, lfields, self.kw),
+                                            )
                                         else:
-                                             an = NewAnimal(pedformat_locations, lfields, self.kw)
+                                            an = NewAnimal(pedformat_locations, lfields, self.kw)
                                     else:
                                         error_msg = (f"The record on line {line_counter} of file {self.kw['pedfile']} has an animal ID that "
                                                      f"is the same as the missing value code specified for the pedigree. This animal is being "

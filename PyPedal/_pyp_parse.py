@@ -257,6 +257,7 @@ class PedigreeRecordSource:
                     line_counter,
                 )
                 return False
+        assert self._db is not None
         try:
             dbline = self._db[self._db_index]
             line = ",".join(map(str, dbline))

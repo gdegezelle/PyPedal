@@ -64,9 +64,10 @@ def test_ph5_4_format_codes_agree_with_loader():
         assert code in ped.pedformat_codes, code
         assert ped.new_animal_attr[code] == attr, (code, attr)
     src = Path(REPO) / "PyPedal" / "pyp_newclasses.py"
-    loader = src.read_text(encoding="utf-8")
-    assert "pedformat_locations['birthyear'] = _pedformat.index('y')" in loader
-    assert "pedformat_locations['birthdate'] = _pedformat.index('b')" in loader
+    parse_src = Path(REPO) / "PyPedal" / "_pyp_parse.py"
+    loader = src.read_text(encoding="utf-8") + "\n" + parse_src.read_text(encoding="utf-8")
+    assert '("birthyear", "y"' in loader
+    assert '("birthdate", "b"' in loader
     assert "index('T')" not in loader
     assert "pedformat_locations['traits']" not in loader
     txt = FORMAT_CODES.read_text(encoding="utf-8")
