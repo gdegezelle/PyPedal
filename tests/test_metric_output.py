@@ -112,7 +112,8 @@ class TestOutputFalseSuppressesFiles(unittest.TestCase):
             ped = load_corpus("mrode.ped")
             before = _dat_names(ped)
             ok = pyp_metrics.theoretical_ne_from_metadata(ped, output=False)
-            self.assertIs(True, ok)
+            self.assertAlmostEqual(ok, 4.8)
+            self.assertIsInstance(ok, float)
             self.assertEqual(before, _dat_names(ped))
             self.assertFalse(
                 os.path.exists(ped.kw["filetag"] + "_ne_from_metadata_.dat"))
@@ -230,15 +231,16 @@ class TestOutputTrueMatchesDefaultAndGoldens(unittest.TestCase):
                 self.assertEqual(payload, _bytes(default_ped, suffix))
                 self.assertEqual(_golden(golden), payload)
 
-    def test_theoretical_ne_matches_golden_and_keeps_bool_return(self):
+    def test_theoretical_ne_matches_golden_and_returns_float(self):
         with chdir_tmp():
             default_ped = load_corpus("mrode.ped")
             default = pyp_metrics.theoretical_ne_from_metadata(default_ped)
             explicit_ped = load_corpus("mrode.ped")
             explicit = pyp_metrics.theoretical_ne_from_metadata(
                 explicit_ped, output=True)
-            self.assertIs(True, default)
-            self.assertIs(True, explicit)
+            self.assertAlmostEqual(default, 4.8)
+            self.assertAlmostEqual(explicit, 4.8)
+            self.assertEqual(default, explicit)
             payload = _bytes(explicit_ped, "_ne_from_metadata_.dat")
             self.assertEqual(
                 payload, _bytes(default_ped, "_ne_from_metadata_.dat"))
