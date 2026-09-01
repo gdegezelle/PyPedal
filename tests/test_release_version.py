@@ -7,10 +7,14 @@ import tomllib
 from importlib.metadata import version as distribution_version
 from pathlib import Path
 
+import pytest
+
 import PyPedal
 from PyPedal.__version__ import version as module_version
 
 from _pedhelpers import REPO
+
+pytestmark = pytest.mark.packaging
 
 EXPECTED = "4.0.1"
 

@@ -20,6 +20,15 @@ and PEP 440 (`4.0.1`).
 - The object-model manual page documents factual, derived, and cached
   pedigree data, including that `animal.fa` can hold a loaded coefficient
   and later be overwritten by a computed one.
+- Selected long-running operations accept an optional `progress(done,
+  total)` callback (Meuwissen–Luo, gene-drop rounds, Boichard ancestor
+  selection, pedigree record reading). The default `progress=None` keeps
+  existing results. Callback exceptions propagate unchanged.
+- CI runs the non-integration suite on macOS and Windows with Python 3.12,
+  in addition to the Ubuntu 3.12/3.13/3.14 matrix.
+- `tests/README.md` classifies the suite (oracles, regression, product,
+  docs, packaging, static policy, integration, archaeology). Optional
+  `docs` and `packaging` pytest markers are selectors only.
 
 ### Changed
 

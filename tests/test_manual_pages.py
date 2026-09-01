@@ -11,6 +11,8 @@ import tomllib
 from _pedhelpers import REPO
 from test_user_manual import REQUIRED_PAGES
 
+pytestmark = pytest.mark.docs
+
 MANUAL = Path(REPO) / "docs" / "manual"
 USER = MANUAL
 MKDOCS = Path(REPO) / "mkdocs.yml"

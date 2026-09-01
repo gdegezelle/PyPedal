@@ -28,6 +28,8 @@ python -c "import PyPedal; print(PyPedal.__version__)"
 ## Tests
 
 pytest collects only `tests/` (`testpaths` in `pyproject.toml`).
+See [`tests/README.md`](tests/README.md) for categories (oracles,
+regression, product, docs, packaging, integration, archaeology).
 
 ```bash
 # Default suite (skips slow example/large-pedigree jobs)

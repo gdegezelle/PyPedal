@@ -39,6 +39,10 @@ the number of animals and returns coefficients only (no relationship
 summaries). `mod_meu_luo` is the Quaas (1995) / Mrode Appendix B.2
 variant. The desktop app uses `meu_luo` for its inbreeding button.
 
+Pass `progress=` on `meu_luo` / `mod_meu_luo` if you want per-animal
+completion events. The calculation with `progress=None` is unchanged.
+See [Inbreeding](inbreeding.md).
+
 The method requires contiguous 1-based `animalID` values with parents
 before offspring. Default `renumber=True` establishes that. Calling
 `inbreeding_meuwissen_luo` (or `inbreeding(..., method="meu_luo")`) on a

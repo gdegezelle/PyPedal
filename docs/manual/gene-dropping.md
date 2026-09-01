@@ -53,6 +53,13 @@ replicates for analysis.
 `chrometype='autosome'` is the supported domain. Other values, including
 `'sex'`, raise `PyPedalUsageError`.
 
+An optional keyword-only `progress` callback, `progress(done, total)`,
+is invoked after each completed replicate. `total` is `rounds`. The same
+contract exists on `dropped_ancestral_inbreeding`. The default is
+`progress=None`. Callback exceptions propagate unchanged. The callback
+does not consume random numbers; the same `seed` with and without a
+callback yields the same result. There is no cancellation API.
+
 ## Population under study
 
 The group whose allele frequencies are scored is the set of animals

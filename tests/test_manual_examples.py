@@ -3,11 +3,15 @@ import inspect
 import re
 from pathlib import Path
 
+import pytest
+
 from PyPedal.pyp_newclasses import NewPedigree, loadPedigree
 
 from _pedhelpers import REPO, EXAMPLES, chdir_tmp
 from test_examples_integration import KNOWN_FAILING, NOT_EXAMPLES, SCRIPTS
 from test_manual_pages import USER, _mkdocs_nav_files, _user_markdown
+
+pytestmark = pytest.mark.docs
 
 FORMAT_CODES = Path(REPO) / "PyPedal" / "PEDIGREE_FORMAT_CODES.txt"
 INI = Path(REPO) / "PyPedal" / "PyPedal.ini"

@@ -2,9 +2,12 @@
 import re
 from pathlib import Path
 
+import pytest
 import tomllib
 
 from _pedhelpers import REPO
+
+pytestmark = pytest.mark.packaging
 
 RELEASE = Path(REPO) / "tools" / "release"
 HELPER = RELEASE / "build_pristine_wheel.sh"

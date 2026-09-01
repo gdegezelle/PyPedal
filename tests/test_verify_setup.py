@@ -19,8 +19,12 @@ import subprocess
 import sys
 import unittest
 
+import pytest
+
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 VERIFY = os.path.join(REPO, "verify_setup.py")
+
+pytestmark = pytest.mark.packaging
 
 _spec = importlib.util.spec_from_file_location("verify_setup_under_test", VERIFY)
 verify_setup = importlib.util.module_from_spec(_spec)

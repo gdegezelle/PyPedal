@@ -14,6 +14,8 @@ from PyPedal.pyp_errors import PyPedalUsageError
 
 from _pedhelpers import REPO
 
+pytestmark = pytest.mark.docs
+
 MANUAL = Path(REPO) / "docs" / "manual"
 MKDOCS = Path(REPO) / "mkdocs.yml"
 

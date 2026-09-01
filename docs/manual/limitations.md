@@ -73,6 +73,14 @@ Default `pyp_nrm.inbreeding(method='tabular')` builds a full NRM.
 There is **no automatic switch** at 10,000 animals. For large files use
 `method="meu_luo"`. See [Inbreeding](inbreeding.md).
 
+### Progress reporting
+
+Optional `progress(done, total)` callbacks exist on selected long-running
+operations (Meuwissen–Luo, gene-drop rounds, Boichard ancestor
+selection, pedigree record reading). They are not present on every
+function. There is no cancellation token; a callback that raises
+propagates that exception. See [Inbreeding](inbreeding.md).
+
 ### Effective founder genomes
 
 `chrometype='autosome'` is the supported domain. Other values, including

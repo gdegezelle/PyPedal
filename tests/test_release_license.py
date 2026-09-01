@@ -5,7 +5,11 @@ LIC-8/LIC-9 live in this file as well (README and authors/maintainers).
 import tomllib
 from pathlib import Path
 
+import pytest
+
 from _pedhelpers import REPO
+
+pytestmark = pytest.mark.packaging
 
 ROOT = Path(REPO)
 LICENSE = ROOT / "LICENSE"

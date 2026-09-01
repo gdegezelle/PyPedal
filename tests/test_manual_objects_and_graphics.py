@@ -18,6 +18,8 @@ from PyPedal.pyp_newclasses import load_pedigree
 
 from test_manual_pages import REQUIRED_PAGES, USER, _mkdocs_nav_files, _user_markdown
 
+pytestmark = pytest.mark.docs
+
 PHASE4_PAGES = (
     "object-model.md",
     "ids-and-missing-parents.md",

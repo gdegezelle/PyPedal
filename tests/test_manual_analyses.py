@@ -14,6 +14,8 @@ from PyPedal.pyp_newclasses import load_pedigree
 
 from test_manual_pages import REQUIRED_PAGES, USER, _user_markdown
 
+pytestmark = pytest.mark.docs
+
 PHASE3_PAGES = (
     "inbreeding.md",
     "relationships.md",

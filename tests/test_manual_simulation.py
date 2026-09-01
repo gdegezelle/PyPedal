@@ -1,6 +1,10 @@
 """Simulation and example-script product checks."""
+import pytest
+
 from test_examples_integration import KNOWN_FAILING
 from test_manual_pages import USER
+
+pytestmark = pytest.mark.docs
 
 OPTIONS = USER / "configuration.md"
 EXAMPLES = USER / "recipes.md"

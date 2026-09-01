@@ -40,6 +40,13 @@ analyse it with an explicit `reference=` list.
 Both write a `.dat` summary when `output=True` (the default). Pass
 `output=False` to compute *f<sub>a</sub>* without that analysis file.
 
+Both accept an optional keyword-only `progress` callback,
+`progress(done, total)`, after each selected ancestor. `total` is
+`None` because the number of positive-contribution ancestors is not
+known cheaply in advance. `done` still increases by one per completed
+selection. The default is `progress=None`. Callback exceptions
+propagate unchanged. There is no cancellation API.
+
 If an approximate contribution sequence is internally inconsistent,
 PyPedal **refuses** the calculation rather than quietly repairing the
 numbers. That is a data or algorithm-domain problem, not a number you

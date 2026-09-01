@@ -37,6 +37,13 @@ print(ped.metadata.num_records)
 `load_pedigree()` is the one-step wrapper used by examples and the
 desktop app.
 
+`load()` and `preprocess()` accept an optional keyword-only `progress`
+callback, `progress(done, total)`, after each completed input record.
+File sources use `total=None` so the file is not read twice merely to
+count lines. In-memory text and database records may supply a cheap
+total. The default is `progress=None`. Callback exceptions propagate
+unchanged. Blank-line and text-stream behaviour is unchanged.
+
 `pedsource` defaults to `'file'`. Other sources exist (`db`, `graph`,
 `graphfile`, `null`, `animallist`, `gedcomfile`, `textstream`). This
 chapter documents the file path.

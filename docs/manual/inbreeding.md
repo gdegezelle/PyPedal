@@ -93,6 +93,30 @@ pedigree).
 There is **no automatic switch** at 10,000 animals. The default remains
 `tabular`. See [Large pedigrees](large-pedigrees.md).
 
+## Progress reporting
+
+Long-running Meuwissen–Luo calls accept an optional keyword-only
+`progress` callback:
+
+```python
+def report(done, total):
+    print(done, "of", total)
+
+result = pyp_nrm.inbreeding(
+    ped, method="meu_luo", output=False, progress=report
+)
+```
+
+`progress(done, total)` is called after each completed animal.
+`total` is the pedigree size. The last event is `progress(n, n)`.
+The default `progress=None` is the 4.0.1 calculation with no callbacks.
+A callback exception propagates unchanged; it is not turned into a
+`PyPedalError`. That is how a caller can stop the run. There is no
+cancellation token.
+
+`mod_meu_luo` uses the same contract. `tabular`, `vanraden`, and
+`aguilar` do not report progress.
+
 ## Reading the metadata
 
 `metadata["all"]` summarises every animal. `metadata["nonzero"]`

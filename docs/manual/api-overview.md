@@ -7,7 +7,7 @@ internal helper.
 
 | Call | Module | Role |
 |---|---|---|
-| `load_pedigree` | `pyp_newclasses` | Construct and load |
+| `load_pedigree` | `pyp_newclasses` | Construct and load; optional `progress=` on record reading |
 | `loadPedigree` | `pyp_newclasses` | Same function, older name |
 | `NewPedigree.save` | `pyp_newclasses` | Write a text pedigree |
 | `NewPedigree.savedb` | `pyp_newclasses` | Write SQLite |
@@ -16,7 +16,7 @@ internal helper.
 
 | Call | Module | Role |
 |---|---|---|
-| `inbreeding` | `pyp_nrm` | *F* by method (`tabular`, `vanraden`, `meu_luo`, …); returns an `InbreedingResult` dict |
+| `inbreeding` | `pyp_nrm` | *F* by method (`tabular`, `vanraden`, `meu_luo`, …); returns an `InbreedingResult` dict; `meu_luo` / `mod_meu_luo` accept `progress=` |
 | `relationship` | `pyp_metrics` | Pairwise *a<sub>ij</sub>* |
 | `mating_coi` | `pyp_metrics` | One prospective offspring *F* |
 | `mating_coi_group` | `pyp_metrics` | Explicit list of pairs; returns a `MatingCoIGroupResult` dict |
@@ -27,9 +27,10 @@ internal helper.
 |---|---|---|
 | `effective_founders_lacy` / `a_effective_founders_lacy` | `pyp_metrics` | Lacy *f<sub>e</sub>* (scalable default / dense-NRM small-pedigree form); both return `EffectiveFoundersResult` |
 | `a_effective_founders_boichard` | `pyp_metrics` | Boichard *f<sub>e</sub>* |
-| `a_effective_ancestors_definite` | `pyp_metrics` | Boichard *f<sub>a</sub>* |
-| `a_effective_ancestors_indefinite` | `pyp_metrics` | Approximate *f<sub>a</sub>* |
-| `effective_founder_genomes` | `pyp_metrics` | Gene-drop N<sub>g</sub> |
+| `a_effective_ancestors_definite` | `pyp_metrics` | Boichard *f<sub>a</sub>*; optional `progress=` |
+| `a_effective_ancestors_indefinite` | `pyp_metrics` | Approximate *f<sub>a</sub>*; optional `progress=` |
+| `effective_founder_genomes` | `pyp_metrics` | Gene-drop N<sub>g</sub>; optional `progress=` after each round |
+| `dropped_ancestral_inbreeding` | `pyp_metrics` | Ancestral *F* by gene dropping; optional `progress=` after each round |
 
 ## Generations and utilities
 
@@ -54,6 +55,10 @@ internal helper.
 `python -m PyPedal`, `pypedal`, and `pypedal-gui` launch the CustomTkinter
 desktop application (`gui` extra). PyPedal 4.0.1 does not provide a
 command-oriented CLI and has no analysis subcommands.
+
+The type alias `ProgressCallback` lives in `pyp_results`. It is
+`Callable[[int, int | None], None]`. Not every analysis accepts
+`progress=`. There is no cancellation API.
 
 ## Genomic note
 

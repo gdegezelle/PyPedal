@@ -121,6 +121,8 @@ python_files = ["test_*.py"]
 addopts = "--strict-markers"
 markers = [
     "integration: runs example scripts or large pedigrees as subprocesses; slow, deselected by default and run explicitly in CI",
+    "docs: user-manual existence and example-contract tests; optional selector, not a separate release gate",
+    "packaging: version, license, wheel, and verify_setup identity tests; optional selector, not a separate release gate",
 ]
 
 [tool.ruff]

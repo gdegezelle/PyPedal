@@ -46,6 +46,12 @@ Analyses that can take a while run on a background thread. Typed errors
 are shown as messages; they do not shut the process down with a zero
 exit status.
 
+While a load or Meuwissen–Luo inbreeding run reports a known total, the
+busy bar becomes determinate. File loads keep an indeterminate bar
+because the line count is not taken by scanning the file twice. Worker
+threads do not configure Tk widgets; the UI thread reads the latest
+progress snapshot. There is no cancel button.
+
 ## What it does not do
 
 There is no GUI for genomic matrices, gene dropping, Boichard *f<sub>a</sub>*,
