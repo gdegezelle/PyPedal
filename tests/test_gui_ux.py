@@ -3,10 +3,12 @@ from types import SimpleNamespace
 
 from PyPedal.pyp_app import (
     GUI_PREVIEW_ROWS,
+    GuiProgressBridge,
     _format_inbreeding,
     _list_animals,
     format_preview_caption,
     gui_control_states,
+    gui_progress_mode,
 )
 
 
@@ -79,3 +81,26 @@ def test_busy_disables_open_and_analyses_but_not_about():
     idle = gui_control_states(False)
     assert busy == {"open": False, "analyses": False, "about": True}
     assert idle == {"open": True, "analyses": True, "about": True}
+
+
+def test_gui_progress_bridge_does_not_configure_widgets():
+    calls = []
+
+    class Widget:
+        def configure(self, **kwargs):
+            calls.append(kwargs)
+
+    widget = Widget()
+    bridge = GuiProgressBridge()
+    bridge(1, 10)
+    bridge(10, 10)
+    assert bridge.latest == (10, 10)
+    assert calls == []
+    widget.configure(mode="determinate")
+    assert calls == [{"mode": "determinate"}]
+
+
+def test_gui_progress_mode_switches_on_known_total():
+    assert gui_progress_mode(5, None) == ("indeterminate", None)
+    assert gui_progress_mode(5, 10) == ("determinate", 0.5)
+

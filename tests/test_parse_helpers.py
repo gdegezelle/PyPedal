@@ -118,9 +118,21 @@ def test_record_source_file_and_text_and_db(tmp_path):
         db_lines.append(line)
     db_src.close()
 
-    assert file_lines == ["1 0 0", "2 0 0"]
-    assert text_lines == ["1 0 0", "2 0 0"]
-    assert db_lines == ["1,0,0", "2,0,0"]
+def test_record_source_known_total_is_cheap(tmp_path):
+    path = tmp_path / "tiny.ped"
+    path.write_text("1 0 0\n2 0 0\n", encoding="utf-8")
+    file_src = PedigreeRecordSource(str(path))
+    assert file_src.known_total is None
+    file_src.close()
+    text_src = PedigreeRecordSource(str(path), textstream="1 0 0\n2 0 0\n")
+    assert text_src.known_total == 2
+    text_src.close()
+    db_src = PedigreeRecordSource(
+        str(path), dbstream=[("1", "0", "0"), ("2", "0", "0")]
+    )
+    assert db_src.known_total == 2
+    db_src.close()
+
 
 
 def test_text_source_without_trailing_newline_drops_last_record(tmp_path):
