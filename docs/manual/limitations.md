@@ -123,8 +123,15 @@ has already configured.
 
 ### `a_coefficients` / `fast_a_coefficients`
 
-Return `{}` can mean “nobody has *F* > 0” **or** “matrix construction
-failed.” Use `pyp_nrm.inbreeding(..., output=False)` and inspect `fx`.
+A returned `{}` means nobody in the pedigree has *F* > 0. Matrix
+construction failure raises `PyPedalError`. It does not return `{}`.
+
+### Direct API versus configuration
+
+Invalid arguments to analysis functions raise `PyPedalUsageError`.
+Configuration and presentation values (INI coercion, paper size,
+`NewPedigree` defaults, unknown pedformat codes on save) may still warn
+and fall back. That distinction is intentional.
 
 ### `pyp_nrm.inbreeding(method="aguilar")`
 

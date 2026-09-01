@@ -74,6 +74,13 @@ These functions write a `*_fe_lacy*.dat` file next to the pedigree stem
 when `output=True` (the default). Pass `output=False` to run the same
 calculation without that analysis file. Work in a temporary directory.
 
+`effective_founders_lacy` still renumbers the pedigree automatically
+when `pedigree_is_renumbered` is false. That automatic renumbering is
+deprecated: the call emits `DeprecationWarning` when it actually
+renumbers. Renumber first to silence the warning. A future major version
+may require an already-renumbered pedigree. The calculated *f<sub>e</sub>*
+is unchanged.
+
 ## Boichard’s *f<sub>e</sub>*
 
 Boichard, Maignel and Verrier (1997) estimate a related but distinct

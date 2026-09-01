@@ -79,6 +79,10 @@ animal 5 *F* = 0.125.
 `'aguilar'` requires the `inbupgf90` program on `PATH`. That is an
 external tool, not a native PyPedal implementation.
 
+An unsupported `method` raises `PyPedalUsageError`. It does not silently
+become `'tabular'`. `gens` must be an integer ≥ 0 (`0` means the complete
+pedigree).
+
 ## Choosing a method
 
 - **Small pedigrees** (hundreds to a few thousand animals): `tabular` is

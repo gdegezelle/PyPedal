@@ -50,7 +50,9 @@ On Mrode that prints `0.25` then `0.0`.
 
 **Zero is a valid result.** It means these two existing animals are
 unrelated in this pedigree. It does not mean “an ID could not be
-resolved.”
+resolved,” and it does not mean “the relationship matrix could not be
+formed.” Missing IDs raise `PyPedalUsageError`. A computational or
+allocation failure raises `PyPedalError`.
 
 An ID that is missing, non-integral, or an original file ID that is not
 also a current ID raises `PyPedalUsageError`.

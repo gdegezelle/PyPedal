@@ -69,6 +69,14 @@ and inverse helpers take their own `output=False` so they do not write
 writes only when both `output=True` and `kw['file_io']` is true
 (`file_io` defaults to true).
 
+`theoretical_ne_from_metadata` returns the calculated Ne float. The
+historical `.dat` file is written only when `output=True`.
+
+Invalid arguments to those analysis functions raise `PyPedalUsageError`.
+INI files and `NewPedigree` presentation defaults may still warn and
+fall back; that is configuration normalisation, not a silent change of
+the requested analysis.
+
 `filetag` is `os.path.splitext(pedfile)[0]`, so the directory prefix is
 kept and generated names land beside the pedigree.
 

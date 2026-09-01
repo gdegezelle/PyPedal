@@ -28,6 +28,10 @@ For the curated Griffon sample, *n* = 98,001:
 before Python and library overhead — on the order of **80 GB**. Do **not**
 form a dense NRM for this sample. Use `meu_luo` for inbreeding.
 
+If a required float64 allocation fails, PyPedal raises `PyPedalError`.
+It does not silently continue in float32 or write a `*.bin` memmap in
+the current directory.
+
 ## Meuwissen–Luo
 
 `pyp_nrm.inbreeding(ped, method="meu_luo", output=False)` is linear in

@@ -18,6 +18,30 @@ and PEP 440 (`4.0.1`).
   `EffectiveFoundersResult`, `MatingCoIGroupResult`). Existing key access
   is unchanged; named properties are convenience accessors.
 
+### Changed
+
+- `theoretical_ne_from_metadata` returns the calculated Ne float. It no
+  longer returns `True`/`False`. `output=True` still writes the historical
+  `.dat` file; `output=False` still writes nothing. The Ne formula is
+  unchanged.
+- Direct Python analysis arguments that used to be silently coerced now
+  raise `PyPedalUsageError` (`inbreeding` method/`gens`, `foundercoi`,
+  `dropped_ancestral_inbreeding` rounds/loci/seed, `fast_a_matrix` method,
+  `inbreeding_aguilar` amethod, `find_ancestors_g` gens). Configuration
+  and presentation fallbacks (INI values, paper size, `NewPedigree`
+  defaults) are unchanged.
+- `effective_founders_lacy` still auto-renumbers an unnumbered pedigree,
+  but emits `DeprecationWarning` when it actually does so.
+
+### Fixed
+
+- Computational failures in relationship, inbreeding, `a_coefficients`,
+  NRM construction, `summary_inbreeding`, and `min_max_f` raise a typed
+  PyPedal error instead of returning a plausible scientific sentinel
+  (`0.0`, `{}`, a 1×1 zero matrix, `"0"`, or `False`).
+- Exhausted memory while forming a float64 relationship matrix raises
+  instead of silently falling back to a float32 memory-mapped file.
+
 ## [4.0.1] — 2026-08-31
 
 Patch release. It has not been published to PyPI.

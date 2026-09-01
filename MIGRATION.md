@@ -195,6 +195,25 @@ records, 6,689 founders, 915 half-founders, 3,997 unknown chronology
 dates, `igen` 1…70. Use `meu_luo` for inbreeding. See the
 [large pedigrees](docs/manual/large-pedigrees.md) chapter.
 
+## PyPedal 4.1 (unreleased) API contracts
+
+These are behaviour changes on the 4.1 line; they are not a 4.1.0
+release. Scientific values that succeed are unchanged.
+
+- Invalid arguments to analysis functions raise `PyPedalUsageError`
+  instead of silently choosing another calculation. Configuration
+  fallbacks (INI, paper size, `NewPedigree` defaults) still warn and
+  coerce.
+- `relationship` computational failure raises; `0.0` remains the
+  coefficient for a genuinely unrelated existing pair.
+- `a_coefficients` failure raises; `{}` means nobody has *F* > 0.
+- Matrix allocation failure raises rather than returning a 1×1 zero
+  matrix, `False`, or silently dropping to float32.
+- `theoretical_ne_from_metadata` returns the calculated Ne float, not
+  `True`/`False`. Compare against the number, not `is True`.
+- `effective_founders_lacy` still auto-renumbers; it warns with
+  `DeprecationWarning` when it actually does so.
+
 ## Where to read next
 
 - [User manual](docs/manual/index.md)
