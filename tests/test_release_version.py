@@ -1,6 +1,6 @@
 """Release identity: package metadata and runtime version must agree.
 
-The PEP 440 identity of this release is ``4.0.1``. Human-readable docs
+The PEP 440 identity of this release is ``4.1.0``. Human-readable docs
 use the same spelling.
 """
 import tomllib
@@ -16,7 +16,7 @@ from _pedhelpers import REPO
 
 pytestmark = pytest.mark.packaging
 
-EXPECTED = "4.0.1"
+EXPECTED = "4.1.0"
 
 
 def _project():

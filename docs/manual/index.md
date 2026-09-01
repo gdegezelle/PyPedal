@@ -9,7 +9,7 @@ a small desktop application.
 
 The original program was written by **John B. Cole**. PyPedal 4 is a
 Python 3 reimplementation of PyPedal 2.0.4, maintained by Geert Degezelle.
-This manual describes **PyPedal 4.0**. This is **PyPedal 4.0.1**. It has
+This manual describes **PyPedal 4.1**. This is **PyPedal 4.1.0**. It has
 not been published to PyPI.
 
 PyPedal is a research tool. It works from pedigree structure, not from
@@ -24,7 +24,7 @@ loading a pedigree and calculating inbreeding. Later chapters cover data
 preparation, common analyses, reports, and large files. Reference pages at
 the end list options, format codes, and scientific citations.
 
-## What you can do with PyPedal 4.0
+## What you can do with PyPedal 4.1
 
 - Load a pedigree from a text file (integer IDs or unique string identities)
 - Check missing parents, duplicate IDs, and inconsistent chronology
@@ -37,7 +37,7 @@ the end list options, format codes, and scientific citations.
 - Write PDF reports and Graphviz drawings (optional extras)
 - Open a pedigree in a CustomTkinter desktop app (optional extra)
 
-PyPedal 4.0 requires **Python 3.12 or newer**. See
+PyPedal 4.1 requires **Python 3.12 or newer**. See
 [Installation](installation.md).
 
 ## A first look

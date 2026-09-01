@@ -53,7 +53,7 @@ internal helper.
 ## Desktop
 
 `python -m PyPedal`, `pypedal`, and `pypedal-gui` launch the CustomTkinter
-desktop application (`gui` extra). PyPedal 4.0.1 does not provide a
+desktop application (`gui` extra). PyPedal 4.1.0 does not provide a
 command-oriented CLI and has no analysis subcommands.
 
 The type alias `ProgressCallback` lives in `pyp_results`. It is

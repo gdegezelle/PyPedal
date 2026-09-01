@@ -4,26 +4,25 @@ All notable changes to PyPedal are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 where practical. Version identifiers follow [Semantic Versioning](https://semver.org/)
-and PEP 440 (`4.0.1`).
+and PEP 440 (`4.1.0`).
 
 ## [Unreleased]
 
+## [4.1.0] — 2026-09-01
+
+Minor release. It has not been published to PyPI.
+
 ### Added
 
-- Analysis metrics that historically always wrote `.dat` files now accept
-  `output=True` (the default) to keep that behaviour, or `output=False` to
-  compute the same result without those analysis files.
 - Successful `inbreeding`, Lacy effective-founder, and `mating_coi_group`
   results are dict subclasses (`InbreedingResult`,
   `EffectiveFoundersResult`, `MatingCoIGroupResult`). Existing key access
   is unchanged; named properties are convenience accessors.
-- The object-model manual page documents factual, derived, and cached
-  pedigree data, including that `animal.fa` can hold a loaded coefficient
-  and later be overwritten by a computed one.
 - Selected long-running operations accept an optional `progress(done,
   total)` callback (Meuwissen–Luo, gene-drop rounds, Boichard ancestor
   selection, pedigree record reading). The default `progress=None` keeps
-  existing results. Callback exceptions propagate unchanged.
+  existing results. Callback exceptions propagate unchanged. There is no
+  cancellation API, and not every function reports progress.
 - CI runs the non-integration suite on macOS and Windows with Python 3.12,
   in addition to the Ubuntu 3.12/3.13/3.14 matrix.
 - `tests/README.md` classifies the suite (oracles, regression, product,
@@ -32,24 +31,28 @@ and PEP 440 (`4.0.1`).
 
 ### Changed
 
-- Pedigree file parsing still goes through `NewPedigree.preprocess` /
-  `load()`. Column mapping, record iteration, and implicit-parent
-  detection now live in private helpers with no public behaviour change.
+- Analysis metrics that historically always wrote `.dat` files now accept
+  `output=False` to compute the same result without those analysis files.
+  `output=True` remains the default and keeps historical file contents.
 - `theoretical_ne_from_metadata` returns the calculated Ne float. It no
   longer returns `True`/`False`. `output=True` still writes the historical
   `.dat` file; `output=False` still writes nothing. The Ne formula is
   unchanged.
-- Direct Python analysis arguments that used to be silently coerced now
-  raise `PyPedalUsageError` (`inbreeding` method/`gens`, `foundercoi`,
-  `dropped_ancestral_inbreeding` rounds/loci/seed, `fast_a_matrix` method,
-  `inbreeding_aguilar` amethod, `find_ancestors_g` gens). Configuration
-  and presentation fallbacks (INI values, paper size, `NewPedigree`
-  defaults) are unchanged.
+- Pedigree file parsing still goes through `NewPedigree.preprocess` /
+  `load()`. Column mapping, record iteration, and implicit-parent
+  detection now live in private helpers with no public parser API.
 - `inbreeding` method names and dense/sparse matrix storage are documented
   as `Literal` aliases. Callers still pass strings; invalid values still
   raise `PyPedalUsageError`.
-- `effective_founders_lacy` still auto-renumbers an unnumbered pedigree,
-  but emits `DeprecationWarning` when it actually does so.
+- The object-model manual page documents factual, derived, and cached
+  pedigree data, including that `animal.fa` can hold a loaded coefficient
+  and later be overwritten by a computed one.
+
+### Deprecated
+
+- `effective_founders_lacy` still auto-renumbers an unnumbered pedigree
+  in 4.1, but emits `DeprecationWarning` when that automatic renumbering
+  actually happens. Implicit Lacy renumbering has not been removed.
 
 ### Fixed
 
@@ -59,6 +62,12 @@ and PEP 440 (`4.0.1`).
   (`0.0`, `{}`, a 1×1 zero matrix, `"0"`, or `False`).
 - Exhausted memory while forming a float64 relationship matrix raises
   instead of silently falling back to a float32 memory-mapped file.
+- Direct Python analysis arguments that used to be silently coerced now
+  raise `PyPedalUsageError` (`inbreeding` method/`gens`, `foundercoi`,
+  `dropped_ancestral_inbreeding` rounds/loci/seed, `fast_a_matrix` method,
+  `inbreeding_aguilar` amethod, `find_ancestors_g` gens). Configuration
+  and presentation fallbacks (INI values, paper size, `NewPedigree`
+  defaults) are unchanged.
 
 ## [4.0.1] — 2026-08-31
 

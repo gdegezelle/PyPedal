@@ -1,7 +1,9 @@
 # Migrating from PyPedal 2.0.4 to PyPedal 4
 
 This guide is for users of PyPedal 2.0.4 who are moving to PyPedal 4.0.
-It describes user-facing differences, not an engineering history.
+It describes user-facing differences, not an engineering history. Callers
+already on PyPedal 4.0.x should skip to
+[PyPedal 4.0.x to PyPedal 4.1.0](#pypedal-40x-to-pypedal-410).
 
 PyPedal 4 is a Python 3 reimplementation of Cole’s 2.0.4 library. Some
 results match 2.0.4 exactly. Some differ because the 4.0 behaviour is the
@@ -195,24 +197,61 @@ records, 6,689 founders, 915 half-founders, 3,997 unknown chronology
 dates, `igen` 1…70. Use `meu_luo` for inbreeding. See the
 [large pedigrees](docs/manual/large-pedigrees.md) chapter.
 
-## PyPedal 4.1 (unreleased) API contracts
+## PyPedal 4.0.x to PyPedal 4.1.0
 
-These are behaviour changes on the 4.1 line; they are not a 4.1.0
-release. Scientific values that succeed are unchanged.
+This section is for callers already on PyPedal 4.0.x. Scientific values
+on successful inputs are unchanged. No migration step is required if you
+only pass valid arguments and keep using existing result keys.
 
-- Invalid arguments to analysis functions raise `PyPedalUsageError`
-  instead of silently choosing another calculation. Configuration
-  fallbacks (INI, paper size, `NewPedigree` defaults) still warn and
-  coerce.
-- `relationship` computational failure raises; `0.0` remains the
-  coefficient for a genuinely unrelated existing pair.
-- `a_coefficients` failure raises; `{}` means nobody has *F* > 0.
-- Matrix allocation failure raises rather than returning a 1×1 zero
-  matrix, `False`, or silently dropping to float32.
-- `theoretical_ne_from_metadata` returns the calculated Ne float, not
-  `True`/`False`. Compare against the number, not `is True`.
-- `effective_founders_lacy` still auto-renumbers; it warns with
-  `DeprecationWarning` when it actually does so.
+### Dict-compatible result objects
+
+Successful `inbreeding`, Lacy effective-founder, and `mating_coi_group`
+results remain mappings. Existing key access still works:
+
+```python
+result["fx"]
+```
+
+The new types (`InbreedingResult`, `EffectiveFoundersResult`,
+`MatingCoIGroupResult`) are `dict` subclasses. Named properties are
+convenience accessors; they do not replace the mapping.
+
+### Optional analysis files
+
+Additional analysis writers accept `output=False`. The default remains
+`output=True`, so historical `.dat` writing is unchanged unless you opt
+out.
+
+### Stricter analysis arguments
+
+Invalid direct analysis arguments that 4.0.x coerced may now raise
+`PyPedalUsageError`. Configuration and presentation fallbacks (INI
+values, paper size, `NewPedigree` defaults) still warn and coerce.
+
+### Computation and resource failures
+
+Scientific computation or resource failures that previously returned
+plausible sentinels (`0.0`, `{}`, a zero matrix, `False`) now raise
+typed PyPedal errors. A genuine unrelated pair still has relationship
+`0.0`. An empty `a_coefficients` mapping still means nobody has *F* > 0.
+
+### Theoretical Ne
+
+`theoretical_ne_from_metadata` returns the calculated Ne float, not
+`True`/`False`. Compare against the number, not `is True`.
+
+### Implicit Lacy renumbering
+
+`effective_founders_lacy` still auto-renumbers an unnumbered pedigree in
+4.1. When that automatic renumbering actually happens it emits
+`DeprecationWarning`. Renumber explicitly to avoid the warning.
+Automatic Lacy renumbering has not been removed.
+
+### Optional progress callbacks
+
+Selected long-running operations accept an optional `progress=`
+callback. The default is `None` and preserves 4.0.x results. Not every
+function reports progress. There is no cancellation API.
 
 ## Where to read next
 
