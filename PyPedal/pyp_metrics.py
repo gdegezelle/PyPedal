@@ -32,6 +32,7 @@ from . import pyp_chronology, pyp_io, pyp_network, pyp_nrm, pyp_utils, pyp_valid
 from .pyp_errors import (
     PyPedalError, PyPedalInternalError,
     PyPedalPedigreeStructureError, PyPedalUsageError, PyPedalValidationError)
+from .pyp_results import EffectiveFoundersResult, MatingCoIGroupResult
 
 
 logger = logging.getLogger(__name__)
@@ -620,7 +621,7 @@ def a_effective_founders_lacy(
     mode=_UNSET,
     half=_UNSET,
     output=True,
-) -> Dict[str, float]:
+) -> EffectiveFoundersResult:
     """
     Calculate the number of effective founders in a pedigree using the exact method of Lacy.
 
@@ -645,8 +646,10 @@ def a_effective_founders_lacy(
 
     Returns
     -------
-    dict
-        A dictionary of results, including the effective founder number.
+    EffectiveFoundersResult
+        A dict subclass with the historical Lacy keys, including
+        ``fa_effective_founders``. ``result["fa_effective_founders"]``
+        remains the supported 4.x access.
 
     Raises
     ------
@@ -726,13 +729,12 @@ def a_effective_founders_lacy(
             print(f"f_e:\t\t{f_e:.3f}")
             print("=" * 60)
 
-        # Prepare output dictionary
-        out_dict = {
+        out_dict = EffectiveFoundersResult({
             "fa_animal_count": len(fs) + len(ds),
             "fa_founder_count": n_f,
             "fa_descendant_count": n_d,
             "fa_effective_founders": f_e,
-        }
+        })
 
         if output:
             _write_a_effective_founders_lacy(
@@ -754,7 +756,7 @@ def a_effective_founders_lacy(
         ) from e
 
 
-def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET, output=True) -> Dict[str, Union[int, float]]:
+def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET, output=True) -> EffectiveFoundersResult:
     """
     Calculate the number of effective founders in a pedigree using the exact method of Lacy.
 
@@ -779,8 +781,10 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET, output=True) -> Di
 
     Returns
     -------
-    dict
-        A dictionary of results, including the effective founder number.
+    EffectiveFoundersResult
+        A dict subclass with the historical Lacy keys, including
+        ``fa_effective_founders``. ``result["fa_effective_founders"]``
+        remains the supported 4.x access.
 
     Raises
     ------
@@ -797,7 +801,6 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET, output=True) -> Di
     logger.info("Entered effective_founders_lacy()")
 
     caller = "pyp_metrics.effective_founders_lacy"
-    out_dict = {}
 
     try:
         # Ensure the pedigree is renumbered
@@ -846,13 +849,12 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET, output=True) -> Di
                 pedobj, caller, mode, _n_sources, _f_contribs, _f_contribs_weighted,
                 _f_contribs_sum, _f_contribs_weighted_sum_sq, _f_e)
 
-        # Populate the output dictionary
-        out_dict = {
+        out_dict = EffectiveFoundersResult({
             "fa_animal_count": len(pedobj.pedigree),
             "fa_founder_count": _n_sources,
             "fa_descendant_count": _n_desc,
             "fa_effective_founders": _f_e,
-        }
+        })
 
         # Postcondition. f_e is the reciprocal of a sum of
         # squared founder contributions and cannot be below 1.
@@ -2820,7 +2822,7 @@ def _resolve_string_identity(token, pedobj, current_ids, routine, label):
     )
 
 
-def mating_coi_group(matings, pedobj, names=0, gens=0):
+def mating_coi_group(matings, pedobj, names=0, gens=0) -> MatingCoIGroupResult:
     """
     Prospective offspring inbreeding for an explicit list of matings.
 
@@ -2856,11 +2858,13 @@ def mating_coi_group(matings, pedobj, names=0, gens=0):
 
     Returns
     -------
-    dict
+    MatingCoIGroupResult
+        A dict subclass with keys ``matings`` and ``metadata``.
         ``{'matings': {(a, b): F, ...}, 'metadata': {'all': ..., 'nonzero': ...}}``
         Metadata fields are count, sum, min, max, range, and mean. An empty
         set (including no nonzero matings) uses count=0, sum=0.0, and None
-        for min, max, range, and mean.
+        for min, max, range, and mean. ``result["matings"]`` remains the
+        supported 4.x access.
 
     Raises
     ------
@@ -2935,13 +2939,13 @@ def mating_coi_group(matings, pedobj, names=0, gens=0):
 
     values = list(results.values())
     nonzero = [value for value in values if value != 0.0]
-    return {
+    return MatingCoIGroupResult({
         'matings': results,
         'metadata': {
             'all': _mating_group_stats(values),
             'nonzero': _mating_group_stats(nonzero),
         },
-    }
+    })
 
 
 class _GeneDropPlan:

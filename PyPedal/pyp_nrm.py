@@ -27,6 +27,7 @@ import time
 from math import sqrt
 from . import pyp_errors, pyp_network, pyp_utils
 from . import pyp_validate
+from .pyp_results import InbreedingResult
 from typing import List
 
 
@@ -344,7 +345,7 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
         return np.array(a, dtype=float) if not use_sparse else np.array(a.toarray(), dtype=float)
 
 
-def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=False, amethod=3):
+def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=False, amethod=3) -> InbreedingResult:
     """
     Dispatch pedigrees to the appropriate function for computing CoI.
 
@@ -362,7 +363,9 @@ def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=Fals
     :param output: Flag to write output files (True: yes, False: no).
     :param force: Override use of NRM for CoI (0: use NRM, 1: ignore NRM).
     :param amethod: Method parameter for Aguilar's INBUPGF90 program.
-    :return: Dictionary of CoI keyed to renumbered animal IDs.
+    :return: ``InbreedingResult`` (a ``dict`` subclass) with keys ``fx``,
+        ``metadata``, and optionally ``rel_dict``. ``result["fx"]`` remains
+        the supported 4.x access; ``result.fx`` is the same mapping.
     """
     logger.info('Entered inbreeding()')
     
@@ -431,7 +434,9 @@ def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=Fals
 
     update_pedigree_metadata(fx, pedobj)
 
-    out_dict = {'metadata': compute_inbreeding_stats(fx), 'fx': fx}
+    out_dict = InbreedingResult()
+    out_dict['metadata'] = compute_inbreeding_stats(fx)
+    out_dict['fx'] = fx
     if rels:
         out_dict['rel_dict'] = reldict if reldict is not None else rel_dict
     return out_dict
