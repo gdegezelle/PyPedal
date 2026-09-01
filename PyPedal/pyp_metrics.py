@@ -96,7 +96,7 @@ def min_max_f(
     a: Optional[np.ndarray] = None,
     n: int = 10,
     forma: str = 'dense'
-) -> Union[Tuple[List[Tuple[str, float]], List[Tuple[str, float]]], bool]:
+) -> Tuple[List[Tuple[str, float]], List[Tuple[str, float]]]:
     """
     Given a pedigree or relationship matrix, return a list of individuals
     with the n largest and n smallest coefficients of inbreeding.
@@ -115,61 +115,53 @@ def min_max_f(
     Returns
     -------
     tuple
-        Lists of the n largest and the n smallest CoI in the pedigree, or False on failure.
+        Lists of the n largest and the n smallest CoI in the pedigree.
     """
     logger.info('Entered min_max_f()')
 
     # Validate 'forma'
     if forma not in ['dense', 'sparse']:
-        logger.warning(f"Invalid 'forma' value: {forma}. Defaulting to 'dense'.")
-        forma = 'dense'
-
-    try:
-        # Generate or validate relationship matrix `a`
-        if not pedobj.kw['form_nrm'] and a is None:
-            a = pyp_nrm.fast_a_matrix(pedobj.pedigree, pedobj.kw, method=forma)
-            if pedobj.kw.get('debug_messages'):
-                logger.debug("Matrix `a` created in min_max_f():")
-                logger.debug(a)
-
-        # Calculate individual coefficients of inbreeding
-        individual_coi = fast_a_coefficients(pedobj, a=a)
-        if not individual_coi:
-            logger.error("Failed to compute individual CoI in min_max_f()")
-            return False
-        
-        # Convert dictionary to sorted list
-        # Cast coefficients to native Python floats
-        sorted_coi = sorted(
-            [(str(k), float(v)) for k, v in individual_coi.items()],
-            key=lambda x: x[1]
+        raise PyPedalUsageError(
+            "min_max_f: forma=%r is not supported. Use 'dense' or 'sparse'."
+            % (forma,)
         )
 
-        # Adjust `n` if there are not enough individuals
-        total_individuals = len(sorted_coi)
-        if n > total_individuals:
-            old_n = n
-            n = max(1, total_individuals // 2)  # Ensure at least one result
-            logger.info(
-                f"Requested {old_n} high/low CoI values, but only {total_individuals} available. "
-                f"Adjusted `n` to {n}."
-            )
-
-        # Extract the n smallest and n largest CoI values
-        low_coi = sorted_coi[:n]
-        high_coi = sorted_coi[-n:]
-
+    if not pedobj.kw['form_nrm'] and a is None:
+        a = pyp_nrm.fast_a_matrix(pedobj.pedigree, pedobj.kw, method=forma)
         if pedobj.kw.get('debug_messages'):
-            logger.debug(f"Low CoI: {low_coi}")
-            logger.debug(f"High CoI: {high_coi}")
+            logger.debug("Matrix `a` created in min_max_f():")
+            logger.debug(a)
 
-        logger.info('Exited min_max_f()')
-        return high_coi, low_coi
-    
-    except Exception as e:
-        logger.error(f"Error in min_max_f: {e}")
-        logger.info('Exited min_max_f() with failure')
-        return False
+    # Calculate individual coefficients of inbreeding
+    individual_coi = fast_a_coefficients(pedobj, a=a)
+
+    # Convert dictionary to sorted list
+    # Cast coefficients to native Python floats
+    sorted_coi = sorted(
+        [(str(k), float(v)) for k, v in individual_coi.items()],
+        key=lambda x: x[1]
+    )
+
+    # Adjust `n` if there are not enough individuals
+    total_individuals = len(sorted_coi)
+    if n > total_individuals:
+        old_n = n
+        n = max(1, total_individuals // 2) if total_individuals else 0
+        logger.info(
+            f"Requested {old_n} high/low CoI values, but only {total_individuals} available. "
+            f"Adjusted `n` to {n}."
+        )
+
+    # Extract the n smallest and n largest CoI values
+    low_coi = sorted_coi[:n]
+    high_coi = sorted_coi[-n:] if n else []
+
+    if pedobj.kw.get('debug_messages'):
+        logger.debug(f"Low CoI: {low_coi}")
+        logger.debug(f"High CoI: {high_coi}")
+
+    logger.info('Exited min_max_f()')
+    return high_coi, low_coi
 
 
 # ---------------------------------------------------------------------------
@@ -805,6 +797,14 @@ def effective_founders_lacy(pedobj, mode=_UNSET, half=_UNSET, output=True) -> Ef
     try:
         # Ensure the pedigree is renumbered
         if not pedobj.kw.get("pedigree_is_renumbered", False):
+            warnings.warn(
+                "effective_founders_lacy automatically renumbers the pedigree "
+                "when pedigree_is_renumbered is false. A future major version "
+                "may require the pedigree to be explicitly renumbered before "
+                "this call.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             logger.info("[NOTE]: The pedigree is not renumbered. Renumbering...")
             pedobj.kw["renumber"] = True
             pedobj.renumber()
@@ -1984,9 +1984,11 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
 
 def a_coefficients(pedobj, a: Optional[np.ndarray] = None, method: str = 'nrm', output: bool = True) -> Dict[str, float]:
     """
-    Write population average coefficients of inbreeding and relationship to a file, 
-    as well as individual animal IDs and coefficients of inbreeding. For large pedigrees 
-    that cannot be allocated due to memory restrictions, outputs -999.9 for all outputs.
+    Write population average coefficients of inbreeding and relationship to a file,
+    as well as individual animal IDs and coefficients of inbreeding.
+
+    A returned ``{}`` means nobody in the pedigree has *F* > 0. Matrix
+    construction failure raises ``PyPedalError`` rather than returning ``{}``.
 
     Parameters
     ----------
@@ -2011,19 +2013,19 @@ def a_coefficients(pedobj, a: Optional[np.ndarray] = None, method: str = 'nrm', 
 
     # Validate method
     if method not in ['nrm', 'frm']:
-        method = 'nrm'
+        raise PyPedalUsageError(
+            "a_coefficients: method=%r is not supported. Use 'nrm' or 'frm'."
+            % (method,)
+        )
 
     # Retrieve or create the numerator relationship matrix
     if pedobj.kw.get('form_nrm'):
         a = pedobj.nrm.nrm
     elif a is None:
-        try:
-            if method == 'nrm':
-                a = pyp_nrm.fast_a_matrix(pedobj.pedigree, pedobj.kw)
-            else:
-                a = pyp_nrm.fast_a_matrix_r(pedobj.pedigree, pedobj.kw)
-        except Exception:
-            return {}
+        if method == 'nrm':
+            a = pyp_nrm.fast_a_matrix(pedobj.pedigree, pedobj.kw)
+        else:
+            a = pyp_nrm.fast_a_matrix_r(pedobj.pedigree, pedobj.kw)
 
     lenped = len(pedobj.pedigree)
     f_sum = f_n = fnz_sum = fnz_n = r_sum = r_n = rnz_sum = rnz_n = 0.0
@@ -2109,19 +2111,21 @@ def fast_a_coefficients(
 
     # Validate method and storage options
     if method not in ['nrm', 'frm']:
-        method = 'nrm'
+        raise PyPedalUsageError(
+            "fast_a_coefficients: method=%r is not supported. Use 'nrm' or 'frm'."
+            % (method,)
+        )
     if storage not in ['dense', 'sparse']:
-        storage = 'dense'
+        raise PyPedalUsageError(
+            "fast_a_coefficients: storage=%r is not supported. Use 'dense' or 'sparse'."
+            % (storage,)
+        )
 
     # Retrieve or create the numerator relationship matrix
     if pedobj.kw.get('form_nrm', False):
         a = pedobj.nrm.nrm
     elif a is None:
-        try:
-            a = pyp_nrm.fast_a_matrix(pedobj.pedigree, pedobj.kw, method=storage)
-        except Exception:
-            logger.error("Matrix creation failed.")
-            return {}
+        a = pyp_nrm.fast_a_matrix(pedobj.pedigree, pedobj.kw, method=storage)
 
     lenped = len(pedobj.pedigree)
     f_sum = f_n = fnz_sum = fnz_n = r_sum = r_n = rnz_sum = rnz_n = 0.0
@@ -2161,9 +2165,9 @@ def fast_a_coefficients(
     return individual_coi
 
 
-def theoretical_ne_from_metadata(pedobj, output: bool = True) -> bool:
+def theoretical_ne_from_metadata(pedobj, output: bool = True) -> float:
     """
-    Computes the theoretical effective population size (N_e) based on the number 
+    Computes the theoretical effective population size (N_e) based on the number
     of sires and dams in a pedigree metadata object. Writes results to an output file
     when ``output`` is True.
 
@@ -2174,38 +2178,45 @@ def theoretical_ne_from_metadata(pedobj, output: bool = True) -> bool:
     output : bool, optional
         If True (the default), write ``{filetag}_ne_from_metadata_.dat``. If
         False, perform the calculation without writing that analysis file.
-        The return value remains True on success and False on failure.
+        The returned Ne is the same in either case.
 
     Returns
     -------
-    bool
-        True on success, False on failure.
+    float
+        The calculated theoretical effective population size.
+
+    Raises
+    ------
+    PyPedalError
+        If Ne cannot be computed from the pedigree metadata.
     """
     if pedobj.kw.get('debug_messages'):
         logger.info('Entered theoretical_ne_from_metadata()')
 
     try:
-        # Retrieve the number of unique sires and dams
         ns = float(pedobj.metadata.num_unique_sires)
         nd = float(pedobj.metadata.num_unique_dams)
-
-        # Calculate the theoretical effective population size
+        if ns <= 0.0 or nd <= 0.0:
+            raise PyPedalError(
+                "theoretical_ne_from_metadata: need at least one sire and one "
+                "dam (n_sires=%s, n_dams=%s)." % (ns, nd)
+            )
         ne = 1.0 / ((1.0 / (4.0 * ns)) + (1.0 / (4.0 * nd)))
+    except PyPedalError:
+        raise
+    except (TypeError, ValueError, ZeroDivisionError, AttributeError) as e:
+        raise PyPedalError(
+            "theoretical_ne_from_metadata: could not compute Ne from pedigree "
+            "metadata: %s" % e
+        ) from e
 
-        if output:
-            _write_theoretical_ne_output(pedobj, ns, nd, ne)
+    if output:
+        _write_theoretical_ne_output(pedobj, ns, nd, ne)
 
-        if pedobj.kw.get('debug_messages'):
-            logger.info('Exited theoretical_ne_from_metadata()')
+    if pedobj.kw.get('debug_messages'):
+        logger.info('Exited theoretical_ne_from_metadata()')
 
-        return True
-
-    except Exception as e:
-        logger.error(f"Error in theoretical_ne_from_metadata: {e}")
-        if pedobj.kw.get('debug_messages'):
-            logger.info('Exited theoretical_ne_from_metadata() with failure')
-
-        return False
+    return float(ne)
 
 
 def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
@@ -2421,6 +2432,9 @@ def relationship(anim_a, anim_b, pedobj, renumber=False):
         If either ID is not a current/renumbered animalID in this pedigree.
         Unresolved IDs are not returned as 0.0; 0.0 remains the coefficient
         for a genuinely unrelated existing pair.
+    PyPedalError
+        If the relationship matrix cannot be formed. Computational failure
+        is not returned as 0.0.
     """
     if not pedobj.kw['pedigree_is_renumbered'] and not renumber:
         if pedobj.kw['messages'] != 'quiet':
@@ -2460,7 +2474,6 @@ def relationship(anim_a, anim_b, pedobj, renumber=False):
     _require_current_id('first', anim_a)
     _require_current_id('second', anim_b)
 
-    _r = 0.0  # Default relationship
     if anim_a == anim_b:
         return 1.0
 
@@ -2471,55 +2484,45 @@ def relationship(anim_a, anim_b, pedobj, renumber=False):
     except Exception:
         pass
 
-    try:
-        _ped_a = pyp_nrm.recurse_pedigree(pedobj, anim_a, [])
-        _ped_b = pyp_nrm.recurse_pedigree(pedobj, anim_b, [])
-        _ped = []
-        _seen = {}
+    _ped_a = pyp_nrm.recurse_pedigree(pedobj, anim_a, [])
+    _ped_b = pyp_nrm.recurse_pedigree(pedobj, anim_b, [])
+    _ped = []
+    _seen = {}
 
-        for _a in _ped_a:
-            if _a.animalID not in _seen:
-                _ped.append(_a)
-                _seen[_a.animalID] = _a.animalID
+    for _a in _ped_a:
+        if _a.animalID not in _seen:
+            _ped.append(_a)
+            _seen[_a.animalID] = _a.animalID
 
-        for _b in _ped_b:
-            if _b.animalID not in _seen:
-                _ped.append(_b)
-                _seen[_b.animalID] = _b.animalID
+    for _b in _ped_b:
+        if _b.animalID not in _seen:
+            _ped.append(_b)
+            _seen[_b.animalID] = _b.animalID
 
-        _tag = f"{pedobj.kw['filetag']}"
-        _reord = [copy.deepcopy(animal) for animal in _ped]
+    _tag = f"{pedobj.kw['filetag']}"
+    _reord = [copy.deepcopy(animal) for animal in _ped]
 
-        if pedobj.kw['slow_reorder']:
-            _reord = pyp_utils.reorder(_reord, _tag, debug=pedobj.kw['debug_messages'],
-                                       missingparent=pedobj.kw['missing_parent'])
-        else:
-            _reord = pyp_utils.fast_reorder(_reord, _tag,
-                                            missingparent=pedobj.kw['missing_parent'])
+    if pedobj.kw['slow_reorder']:
+        _reord = pyp_utils.reorder(_reord, _tag, debug=pedobj.kw['debug_messages'],
+                                   missingparent=pedobj.kw['missing_parent'])
+    else:
+        _reord = pyp_utils.fast_reorder(_reord, _tag,
+                                        missingparent=pedobj.kw['missing_parent'])
 
-        _s, _map = pyp_utils.renumber(_reord, _tag, returnmap=True,
-                                      debug=pedobj.kw['debug_messages'],
-                                      missingparent=pedobj.kw['missing_parent'],
-                                      animaltype=pedobj.kw['animal_type'])
+    _s, _map = pyp_utils.renumber(_reord, _tag, returnmap=True,
+                                  debug=pedobj.kw['debug_messages'],
+                                  missingparent=pedobj.kw['missing_parent'],
+                                  animaltype=pedobj.kw['animal_type'])
 
-        _opts = copy.deepcopy(pedobj.kw)
-        _opts['filetag'] = _tag
+    _opts = copy.deepcopy(pedobj.kw)
+    _opts['filetag'] = _tag
 
-        if pedobj.kw['nrm_method'] == 'nrm':
-            _a = pyp_nrm.fast_a_matrix(_s, _opts)
-        else:
-            _a = pyp_nrm.fast_a_matrix_r(_s, _opts)
+    if pedobj.kw['nrm_method'] == 'nrm':
+        _a = pyp_nrm.fast_a_matrix(_s, _opts)
+    else:
+        _a = pyp_nrm.fast_a_matrix_r(_s, _opts)
 
-        if _a is False:
-            return 0.0
-        _r = pyp_nrm._matrix_value(_a, _map[anim_a] - 1, _map[anim_b] - 1)
-    except Exception as e:
-        logger.warning(
-            'Could not compute the relationship between animals %s and %s; defaulting to 0.0. Error: %s',
-            anim_a, anim_b, str(e)
-        )
-        _r = 0.0
-    return _r
+    return pyp_nrm._matrix_value(_a, _map[anim_a] - 1, _map[anim_b] - 1)
 
 
 def _mating_require_gens(gens, routine):
@@ -2639,11 +2642,6 @@ def _local_additive_relationship(pedobj, anim_a, anim_b):
         _a = pyp_nrm.fast_a_matrix(_s, _opts)
     else:
         _a = pyp_nrm.fast_a_matrix_r(_s, _opts)
-    if _a is False:
-        raise PyPedalUsageError(
-            'mating_coi: could not form the additive relationship for '
-            'animals %s and %s.' % (anim_a, anim_b)
-        )
     return float(pyp_nrm._matrix_value(_a, _map[anim_a] - 1, _map[anim_b] - 1))
 
 
@@ -3734,12 +3732,22 @@ def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, s
     # as false autozygosity.
 
     # Validate parameters
-    if rounds < 1:
-        logger.error("Rounds must be greater than 0. Defaulting to 100.")
-        rounds = 100
-    if loci < 1:
-        logger.error("Loci must be greater than 0. Defaulting to 100.")
-        loci = 100
+    if isinstance(rounds, bool) or not isinstance(rounds, int) or rounds < 1:
+        raise PyPedalUsageError(
+            "dropped_ancestral_inbreeding: rounds must be an integer >= 1; "
+            "got %r." % (rounds,)
+        )
+    if isinstance(loci, bool) or not isinstance(loci, int) or loci < 1:
+        raise PyPedalUsageError(
+            "dropped_ancestral_inbreeding: loci must be an integer >= 1; "
+            "got %r." % (loci,)
+        )
+    if isinstance(seed, bool) or not isinstance(seed, int):
+        raise PyPedalUsageError(
+            "dropped_ancestral_inbreeding: seed must be an integer; got %r. "
+            "Omit the argument to use the default 5048665."
+            % (seed,)
+        )
     # `frequency` is accepted for call compatibility and ignored. Warn only when
     # a caller actually passes one, so that ordinary use produces no noise while
     # the deprecation stays visible to the callers it concerns.
@@ -3752,18 +3760,6 @@ def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, s
             "Results no longer depend on this argument.",
             DeprecationWarning, stacklevel=2)
 
-    try:
-        seed = int(seed)
-    except ValueError:
-        logger.error("Seed must be an integer. Defaulting to 5048665.")
-        seed = 5048665
-
-    # Simulation-local RNG. Previously np.random.seed(seed) + np.random.rand(),
-    # which reseeded numpy's process-global state for every other caller. The
-    # public `seed` argument is unchanged, and no `rng` parameter is added; only
-    # where the state lives has changed. This alters the draw sequence, which is
-    # an intentional reproducibility change and not a scientific one -- see
-    # a dedicated gene-drop verification.
     rng = np.random.default_rng(seed)
 
     missing = str(pedobj.kw['missing_parent'])

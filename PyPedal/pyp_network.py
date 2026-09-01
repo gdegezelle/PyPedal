@@ -105,10 +105,20 @@ def find_ancestors_g(pedgraph, anid, _ancestors=None, gens=3):
 
     if _ancestors is None:
         _ancestors = {}
-    try:
-        gens = int(gens)
-    except (TypeError, ValueError):
-        gens = 3
+    if isinstance(gens, bool) or not isinstance(gens, int):
+        try:
+            if isinstance(gens, bool):
+                raise TypeError
+            gens = int(gens)
+        except (TypeError, ValueError):
+            raise PyPedalUsageError(
+                "find_ancestors_g: gens must be an integer generation depth; "
+                "got %r." % (gens,)
+            ) from None
+    if gens < 0:
+        raise PyPedalUsageError(
+            "find_ancestors_g: gens must be an integer >= 0; got %r." % (gens,)
+        )
     if gens <= 0:
         return _ancestors
 
