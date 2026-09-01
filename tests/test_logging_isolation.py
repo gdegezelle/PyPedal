@@ -169,3 +169,55 @@ def test_second_pedigree_replaces_the_owned_logfile_handler(tmp_path):
     )
     result = _run(script)
     assert "ok" in result.stdout
+
+
+def test_close_owned_handlers_leaves_host_and_root_alone(tmp_path):
+    """Test utility must close only PyPedal-owned logfile handlers."""
+    from _pedhelpers import close_owned_pypedal_log_handlers
+    from PyPedal.pyp_newclasses import (
+        PYPEDAL_LOGGER_NAME,
+        _PYPEDAL_OWNED_HANDLER,
+        load_pedigree,
+    )
+
+    pedfile = tmp_path / "t.ped"
+    pedfile.write_text("1 0 0\n2 0 0\n3 1 2\n", encoding="utf-8")
+    root = logging.getLogger()
+    package = logging.getLogger(PYPEDAL_LOGGER_NAME)
+    host_root = logging.StreamHandler()
+    host_pkg = logging.StreamHandler()
+    root.addHandler(host_root)
+    package.addHandler(host_pkg)
+    try:
+        load_pedigree(
+            options={
+                "pedfile": str(pedfile),
+                "pedformat": "asd",
+                "messages": "quiet",
+                "pedigree_summary": 0,
+                "renumber": True,
+            }
+        )
+        owned_before = [
+            handler
+            for handler in package.handlers
+            if getattr(handler, _PYPEDAL_OWNED_HANDLER, False)
+        ]
+        assert owned_before
+        logfile = owned_before[0].baseFilename
+        close_owned_pypedal_log_handlers()
+        owned_after = [
+            handler
+            for handler in package.handlers
+            if getattr(handler, _PYPEDAL_OWNED_HANDLER, False)
+        ]
+        assert owned_after == []
+        assert host_pkg in package.handlers
+        assert host_root in root.handlers
+        os.remove(logfile)
+    finally:
+        root.removeHandler(host_root)
+        package.removeHandler(host_pkg)
+        host_root.close()
+        host_pkg.close()
+        close_owned_pypedal_log_handlers()

@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 
+from _pedhelpers import close_owned_pypedal_log_handlers
 from PyPedal.pyp_app import normalize_sepchar, pedigree_open_options
 from PyPedal.pyp_errors import PyPedalPedigreeFormatError
 from PyPedal.pyp_newclasses import load_pedigree
@@ -63,6 +64,7 @@ class TestAsdxbnCsvLoad(unittest.TestCase):
                 }
             )
         finally:
+            close_owned_pypedal_log_handlers()
             os.remove(path)
             log = path[:-4] + ".log"
             if os.path.exists(log):
@@ -93,6 +95,7 @@ class TestAsdxbnCsvLoad(unittest.TestCase):
             named = [a for a in ped.pedigree if a.originalID == 1]
             self.assertEqual("A Day Before Sunrise de Mar&Mar", named[0].name)
         finally:
+            close_owned_pypedal_log_handlers()
             os.remove(path)
             log = path[:-4] + ".log"
             if os.path.exists(log):
@@ -119,6 +122,7 @@ class TestSimpleSeparatorLoads(unittest.TestCase):
                 }
             )
         finally:
+            close_owned_pypedal_log_handlers()
             os.remove(path)
             log = path[:-4] + ".log"
             if os.path.exists(log):
@@ -150,6 +154,7 @@ class TestSimpleSeparatorLoads(unittest.TestCase):
             ped = load_pedigree(options=opts)
             self.assertEqual(3, len(ped.pedigree))
         finally:
+            close_owned_pypedal_log_handlers()
             os.remove(path)
             log = path[:-4] + ".log"
             if os.path.exists(log):
