@@ -298,3 +298,20 @@ def test_min_max_f_invalid_forma_raises():
         ped = load_corpus("mrode.ped")
         with pytest.raises(PyPedalUsageError, match="forma"):
             pyp_metrics.min_max_f(ped, forma="huge")
+
+
+def test_inbreeding_method_literal_matches_runtime_contract():
+    from typing import get_args
+
+    from PyPedal.pyp_nrm import InbreedingMethod, MatrixMethod
+
+    assert get_args(InbreedingMethod) == (
+        "tabular",
+        "vanraden",
+        "meu_luo",
+        "mod_meu_luo",
+        "aguilar",
+    )
+    assert get_args(MatrixMethod) == ("dense", "sparse")
+    assert not hasattr(InbreedingMethod, "__members__")
+

@@ -25,13 +25,23 @@ import datetime
 import subprocess
 import time
 from math import sqrt
+from typing import List, Literal
+
 from . import pyp_errors, pyp_network, pyp_utils
 from . import pyp_validate
 from .pyp_results import InbreedingResult
-from typing import List
-
 
 logger = logging.getLogger(__name__)
+
+InbreedingMethod = Literal[
+    "tabular",
+    "vanraden",
+    "meu_luo",
+    "mod_meu_luo",
+    "aguilar",
+]
+MatrixMethod = Literal["dense", "sparse"]
+
 
 def _matrix_value(matrix, row, col):
     """Return A[row, col] as a float for dense or sparse relationship matrices."""
@@ -81,7 +91,7 @@ def _foundercoi_flag(pedopts):
     )
 
 
-def _require_dense_or_sparse(routine, method):
+def _require_dense_or_sparse(routine, method: MatrixMethod) -> MatrixMethod:
     if method not in ("dense", "sparse"):
         raise pyp_errors.PyPedalUsageError(
             "%s: method=%r is not supported. Use 'dense' or 'sparse'."
@@ -174,7 +184,7 @@ def a_matrix(pedobj, save=False):
     return a
 
 
-def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, fill=1):
+def fast_a_matrix(pedigree, pedopts, save=False, method: MatrixMethod = 'sparse', debug=False, fill=1):
     """
     Form a numerator relationship matrix from a pedigree.
 
@@ -276,7 +286,7 @@ def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, f
 
 
 
-def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
+def fast_a_matrix_r(pedigree, pedopts, save=False, method: MatrixMethod = "sparse"):
     """
     Form a relationship matrix from a pedigree. fast_a_matrix_r() differs from
     fast_a_matrix() in that the coefficients of relationship are corrected for the
@@ -367,7 +377,7 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
         return np.array(a, dtype=float) if not use_sparse else np.array(a.toarray(), dtype=float)
 
 
-def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=False, amethod=3) -> InbreedingResult:
+def inbreeding(pedobj, method: InbreedingMethod = 'tabular', gens=0, rels=0, output=True, force=False, amethod=3) -> InbreedingResult:
     """
     Dispatch pedigrees to the appropriate function for computing CoI.
 
@@ -1853,7 +1863,7 @@ def partial_inbreeding(pedobj, animals=None, gens=0, rels=1, cleanmaps=1):
     return partial_inbreeding_dict
 
 
-def fast_partial_a_matrix(pedigree, founder, founderlist, pedopts, method='dense', debug=0):
+def fast_partial_a_matrix(pedigree, founder, founderlist, pedopts, method: MatrixMethod = 'dense', debug=0):
     """
     fast_partial_a_matrix() calculates a partial kinship matrix for a given
     founder in a pedigree and returns a dictionary of partial inbreeding

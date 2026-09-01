@@ -25,7 +25,7 @@ import logging
 import os
 import sys
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 from . import _pyp_parse
 from networkx import DiGraph
@@ -85,6 +85,18 @@ def install_pedigree_logfile(logfile: str) -> None:
     )
     setattr(handler, _PYPEDAL_OWNED_HANDLER, True)
     package.addHandler(handler)
+
+
+PedigreeSource = Literal[
+    "file",
+    "db",
+    "graph",
+    "graphfile",
+    "null",
+    "animallist",
+    "gedcomfile",
+    "textstream",
+]
 
 
 class NewPedigree:
@@ -756,7 +768,13 @@ class NewPedigree:
             logger.error('Cannot complete intersection operation because types do not match.')
             return NotImplemented
 
-    def load(self, pedsource='file', pedgraph=None, pedstream='', animallist=None):
+    def load(
+        self,
+        pedsource: PedigreeSource = 'file',
+        pedgraph=None,
+        pedstream='',
+        animallist=None,
+    ):
         """
         load() wraps several processes useful for loading and preparing a pedigree for
         use in an analysis, including reading the animals into a list of animal objects,

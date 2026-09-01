@@ -33,6 +33,9 @@ and PEP 440 (`4.0.1`).
   `inbreeding_aguilar` amethod, `find_ancestors_g` gens). Configuration
   and presentation fallbacks (INI values, paper size, `NewPedigree`
   defaults) are unchanged.
+- `inbreeding` method names and dense/sparse matrix storage are documented
+  as `Literal` aliases. Callers still pass strings; invalid values still
+  raise `PyPedalUsageError`.
 - `effective_founders_lacy` still auto-renumbers an unnumbered pedigree,
   but emits `DeprecationWarning` when it actually does so.
 
