@@ -16,16 +16,16 @@ internal helper.
 
 | Call | Module | Role |
 |---|---|---|
-| `inbreeding` | `pyp_nrm` | *F* by method (`tabular`, `vanraden`, `meu_luo`, …) |
+| `inbreeding` | `pyp_nrm` | *F* by method (`tabular`, `vanraden`, `meu_luo`, …); returns an `InbreedingResult` dict |
 | `relationship` | `pyp_metrics` | Pairwise *a<sub>ij</sub>* |
 | `mating_coi` | `pyp_metrics` | One prospective offspring *F* |
-| `mating_coi_group` | `pyp_metrics` | Explicit list of pairs |
+| `mating_coi_group` | `pyp_metrics` | Explicit list of pairs; returns a `MatingCoIGroupResult` dict |
 
 ## Founders, ancestors, gene drop
 
 | Call | Module | Role |
 |---|---|---|
-| `effective_founders_lacy` / `a_effective_founders_lacy` | `pyp_metrics` | Lacy *f<sub>e</sub>* (scalable default / dense-NRM small-pedigree form) |
+| `effective_founders_lacy` / `a_effective_founders_lacy` | `pyp_metrics` | Lacy *f<sub>e</sub>* (scalable default / dense-NRM small-pedigree form); both return `EffectiveFoundersResult` |
 | `a_effective_founders_boichard` | `pyp_metrics` | Boichard *f<sub>e</sub>* |
 | `a_effective_ancestors_definite` | `pyp_metrics` | Boichard *f<sub>a</sub>* |
 | `a_effective_ancestors_indefinite` | `pyp_metrics` | Approximate *f<sub>a</sub>* |

@@ -54,6 +54,12 @@ the pedigree. The default is `output=True`.
 
 Look animals up with current IDs, not original file IDs.
 
+The return is an `InbreedingResult`, a `dict` subclass. Existing key access
+is unchanged and remains the supported 4.x style: `result["fx"][5]`.
+`result.fx` is the same mapping, not a copy. `isinstance(result, dict)`
+is still true. `rel_dict` is omitted from the mapping when relationships
+were not computed; `result.rel_dict` is then `None`.
+
 ## Supported methods
 
 | `method` | What it does | Relationships (`rels=1`) |

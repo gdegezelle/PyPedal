@@ -70,7 +70,9 @@ print(got["matings"][(1, 2)])
 ```
 
 That prints `0.125` and `0.0`. Result keys are tuples of current
-animal IDs.
+animal IDs. The return is a `MatingCoIGroupResult` (`dict` subclass);
+`got["matings"]` remains the supported 4.x access, and `got.matings` is
+the same mapping.
 
 Underscore strings such as `["4_3", "1_2"]` are accepted as
 **compatibility** input when parsing is unambiguous. Prefer the pair

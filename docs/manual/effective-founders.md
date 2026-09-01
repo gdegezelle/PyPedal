@@ -66,6 +66,10 @@ That prints `3` and `2.91`. Three founders do not contribute equally, so
 the effective number is a little under 3. Extra floating-point digits are
 not biological precision.
 
+Both entry points return an `EffectiveFoundersResult` (`dict` subclass)
+with the same keys. `got["fa_effective_founders"]` remains the supported
+4.x access; `got.fa_effective_founders` is the same number.
+
 These functions write a `*_fe_lacy*.dat` file next to the pedigree stem
 when `output=True` (the default). Pass `output=False` to run the same
 calculation without that analysis file. Work in a temporary directory.

@@ -13,6 +13,10 @@ and PEP 440 (`4.0.1`).
 - Analysis metrics that historically always wrote `.dat` files now accept
   `output=True` (the default) to keep that behaviour, or `output=False` to
   compute the same result without those analysis files.
+- Successful `inbreeding`, Lacy effective-founder, and `mating_coi_group`
+  results are dict subclasses (`InbreedingResult`,
+  `EffectiveFoundersResult`, `MatingCoIGroupResult`). Existing key access
+  is unchanged; named properties are convenience accessors.
 
 ## [4.0.1] — 2026-08-31
 
