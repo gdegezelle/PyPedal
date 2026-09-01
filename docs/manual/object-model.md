@@ -47,6 +47,72 @@ Analyses assume that pipeline succeeded.
 `ped.pedigree[animalID - 1]` is the animal while the list is still in
 renumbered order.
 
+## Data state: factual, derived, and cached
+
+A loaded pedigree mixes three kinds of data. The same attribute name can
+move from one role to another. PyPedal 4.0.1 does not split those roles
+into separate fields.
+
+### Factual / loaded
+
+These values come from the input file (or from an equivalent stream) and
+are not computed by an analysis:
+
+- original IDs (`originalID`; or the hash of a unique string identity)
+- sire and dam IDs as recorded (`sireID` / `damID`, or `missing_parent`)
+- names, sex, breed, user field, and similar optional columns
+- recorded birth year / date (`by` / `bd`), including unknown as `None`
+- loaded inbreeding `animal.fa` when `pedformat` contains `f`
+- loaded genomic inbreeding `animal.fg` when `pedformat` contains `G`
+- SNP genotypes when `snpfile` is set (not from a `P` column)
+
+Input generation `gen` (pedformat `g`) is also factual: it is a label
+from the file, not the inferred depth `igen`.
+
+### Derived
+
+These values are inferred from pedigree structure or from load-time
+options. They can change if the pedigree is reordered, renumbered, or
+mutated:
+
+- founder status (`founder == 'y'` only when both parents are unknown)
+- half-founder status (exactly one parent unknown; not a stored field)
+- implicit parents materialized because they were cited but had no row
+- inferred generation `igen` after `set_generation`
+- pedigree completeness (`pedcomp`) after that calculation
+- estimated chronology ranges after `estimate_birth_dates`
+- renumbered / padded identifiers (`animalID`, `paddedID`, `renumberedID`)
+- identity maps (`idmap`, `backmap`, `namemap`)
+
+Metadata counts (`num_unique_founders`, `num_unknown_birth_years`, and
+similar) are a snapshot of the pedigree at load (or when metadata is
+rebuilt). They are derived, not a second copy of the animal records.
+
+### Cached / computed
+
+These values are analysis results stored on the pedigree or on animals.
+They are not automatically kept in sync if you later change the pedigree:
+
+- `animal.fa` after `inbreeding()` (see the caveat below)
+- `kw["f_computed"]` and `kw["g_computed"]`
+- `ped.nrm` when a numerator relationship matrix has been formed
+
+Deleting or merging animals sets `ped.nrm = None`. It does not restore a
+previously loaded `fa` column.
+
+### `animal.fa` can change role
+
+`fa` is one field with two lives:
+
+1. After load, if the file had an `f` column, `fa` is the **loaded**
+   coefficient and `kw["f_computed"]` is set `True`.
+2. After `inbreeding()`, `fa` is overwritten with the **computed**
+   coefficient for that animal. PyPedal 4.0.1 keeps a single `fa` field;
+it does not store a parallel loaded copy.
+
+If you need the file value after computing inbreeding, keep your own
+copy before calling `inbreeding()`.
+
 ## Other classes
 
 `PedigreeMetadata` holds counts (records, sires, dams, founders).

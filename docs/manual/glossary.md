@@ -21,6 +21,9 @@
 **effective founder number (*f<sub>e</sub>*)**
 : Number of equally contributing founders needed to match observed contribution imbalance (Lacy, 1989; related Boichard estimator exists).
 
+**fa**
+: Animal inbreeding field. After load this may be a file column (`f`); after `inbreeding()` it is the computed coefficient. One field, not a loaded/computed pair. See [Object model](object-model.md).
+
 **founder**
 : Animal with both parents unknown (`founder == 'y'`).
 

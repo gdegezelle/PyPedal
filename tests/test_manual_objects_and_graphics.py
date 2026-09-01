@@ -152,6 +152,18 @@ def test_ph4_doc11_originalid_vs_animalid():
     assert "animalid - 1" in ids or "animalid-1" in ids.replace(" ", "")
 
 
+def test_object_model_documents_factual_derived_cached_state():
+    text = _plain("object-model.md")
+    assert "factual" in text
+    assert "derived" in text
+    assert "cached" in text or "computed" in text
+    assert "animal.fa" in text or "fa" in text
+    assert "f_computed" in text
+    assert "overwritten" in text
+    glossary = _plain("glossary.md")
+    assert "fa" in glossary
+
+
 def test_ph4_doc12_wxpython_is_historical():
     hits = []
     for path in _user_markdown():

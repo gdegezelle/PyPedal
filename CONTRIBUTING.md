@@ -92,3 +92,7 @@ Do not commit `dist/`, `build/`, or `*.egg-info`.
 
 Do not add generated analysis files, verification dossiers, or a second
 user manual.
+
+Parser internals used by `NewPedigree.preprocess` are private. Do not
+re-export them from `PyPedal.__init__` or document them as a public
+parser API.

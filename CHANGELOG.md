@@ -17,6 +17,9 @@ and PEP 440 (`4.0.1`).
   results are dict subclasses (`InbreedingResult`,
   `EffectiveFoundersResult`, `MatingCoIGroupResult`). Existing key access
   is unchanged; named properties are convenience accessors.
+- The object-model manual page documents factual, derived, and cached
+  pedigree data, including that `animal.fa` can hold a loaded coefficient
+  and later be overwritten by a computed one.
 
 ### Changed
 
