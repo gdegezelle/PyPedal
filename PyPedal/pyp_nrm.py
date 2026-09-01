@@ -29,7 +29,7 @@ from typing import List, Literal
 
 from . import pyp_errors, pyp_network, pyp_utils
 from . import pyp_validate
-from .pyp_results import InbreedingResult
+from .pyp_results import InbreedingResult, ProgressCallback
 
 logger = logging.getLogger(__name__)
 
@@ -377,7 +377,7 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method: MatrixMethod = "spars
         return np.array(a, dtype=float) if not use_sparse else np.array(a.toarray(), dtype=float)
 
 
-def inbreeding(pedobj, method: InbreedingMethod = 'tabular', gens=0, rels=0, output=True, force=False, amethod=3) -> InbreedingResult:
+def inbreeding(pedobj, method: InbreedingMethod = 'tabular', gens=0, rels=0, output=True, force=False, amethod=3, *, progress: ProgressCallback | None = None) -> InbreedingResult:
     """
     Dispatch pedigrees to the appropriate function for computing CoI.
 
@@ -395,6 +395,9 @@ def inbreeding(pedobj, method: InbreedingMethod = 'tabular', gens=0, rels=0, out
     :param output: Flag to write output files (True: yes, False: no).
     :param force: Override use of NRM for CoI (0: use NRM, 1: ignore NRM).
     :param amethod: Method parameter for Aguilar's INBUPGF90 program.
+    :param progress: Optional ``(done, total)`` callback used by ``meu_luo``
+        and ``mod_meu_luo``. Keyword-only; default ``None``. Other methods
+        do not report progress. Callback exceptions propagate unchanged.
     :return: ``InbreedingResult`` (a ``dict`` subclass) with keys ``fx``,
         ``metadata``, and optionally ``rel_dict``. ``result["fx"]`` remains
         the supported 4.x access; ``result.fx`` is the same mapping.
@@ -445,11 +448,13 @@ def inbreeding(pedobj, method: InbreedingMethod = 'tabular', gens=0, rels=0, out
             )
         elif method == 'meu_luo':
             warn_no_relationships(method, rels)
-            fx, reldict = _unpack_inbreeding(inbreeding_meuwissen_luo(pedobj, gens=gens), rels)
+            fx, reldict = _unpack_inbreeding(
+                inbreeding_meuwissen_luo(pedobj, gens=gens, progress=progress), rels
+            )
         elif method == 'mod_meu_luo':
             warn_no_relationships(method, rels)
             fx, reldict = _unpack_inbreeding(
-                inbreeding_modified_meuwissen_luo(pedobj, gens=gens), rels
+                inbreeding_modified_meuwissen_luo(pedobj, gens=gens, progress=progress), rels
             )
         elif method == 'aguilar':
             logger.info(f"Using INBUPGF90 program with method {amethod}.")
@@ -1151,7 +1156,7 @@ def _require_meuwissen_luo_numbering(pedigree, missing_parent):
                 )
 
 
-def inbreeding_meuwissen_luo(pedobj, gens=0, **kw):
+def inbreeding_meuwissen_luo(pedobj, gens=0, *, progress: ProgressCallback | None = None, **kw):
     """
     inbreeding_meuwissen_luo() computes CoI using the method of Meuwissen and
     Luo (1992). It calculates only inbreeding coefficients, not relationships.
@@ -1166,6 +1171,11 @@ def inbreeding_meuwissen_luo(pedobj, gens=0, **kw):
     The pedigree must already be numbered 1..n with parents before offspring.
     This routine does not renumber. An unnumbered list raises
     :class:`~PyPedal.pyp_errors.PyPedalUsageError`.
+
+    ``progress``, if given, is called as ``progress(done, total)`` after each
+    animal is completed. ``total`` is the pedigree size. The final event is
+    ``progress(n, n)``. ``progress=None`` (the default) is equivalent to the
+    uninstrumented calculation. Callback exceptions propagate unchanged.
     """
     try:
         logger.info("Entered inbreeding_meuwissen_luo()")
@@ -1258,6 +1268,8 @@ def inbreeding_meuwissen_luo(pedobj, gens=0, **kw):
         fvec[i] = aii - 1.0
         for idx in touched:
             lvec[idx] = 0.0
+        if progress is not None:
+            progress(i + 1, n)
 
     fx = {animal_id[i]: fvec[i] for i in range(n)}
 
@@ -1265,13 +1277,17 @@ def inbreeding_meuwissen_luo(pedobj, gens=0, **kw):
     return fx
 
 
-def inbreeding_modified_meuwissen_luo(pedobj, gens=0, **kw):
+def inbreeding_modified_meuwissen_luo(pedobj, gens=0, *, progress: ProgressCallback | None = None, **kw):
     """
     inbreeding_modified_meuwissen_luo() computes CoI using the method of Meuwissen
     and Luo (1992) as modified by Quaas (1995). It calculates only inbreeding coefficients,
     not relationships. This code is a direct implementation of the algorithm presented
     in Appendix B.2 of Mrode (2005). Mrode cites Quaas's method as: Quaas, R. L. 1995. Fx
     algorithms. An unpublished note.
+
+    ``progress``, if given, is called as ``progress(done, total)`` after each
+    animal is completed. ``total`` is the pedigree size. The final event is
+    ``progress(n, n)``. Callback exceptions propagate unchanged.
     """
     try:
         logger.info("Entered inbreeding_modified_meuwissen_luo()")
@@ -1402,6 +1418,9 @@ def inbreeding_modified_meuwissen_luo(pedobj, gens=0, **kw):
 
                 ancs.remove(j)
                 ancd.remove(k)
+
+        if progress is not None:
+            progress(i + 1, len(pedobj.pedigree))
 
     # Clean-up allocated resources
     del lvecs, lvecd, avec, dvec

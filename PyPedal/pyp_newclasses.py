@@ -43,11 +43,34 @@ from . import (
     pyp_snp,
     pyp_utils,
 )
+from .pyp_results import ProgressCallback
 
 logger = logging.getLogger(__name__)
 
 PYPEDAL_LOGGER_NAME = "PyPedal"
 _PYPEDAL_OWNED_HANDLER = "_pypedal_owned"
+
+
+class _ProgressCallbackError(Exception):
+    """Unwrap a user progress-callback exception so preprocess does not wrap it."""
+
+    def __init__(self, cause: BaseException) -> None:
+        super().__init__()
+        self.cause = cause
+
+
+def _raised_from_callable(exc: BaseException, callback) -> bool:
+    """True when ``exc`` originated inside ``callback`` (including ``__call__``)."""
+    code = getattr(callback, "__code__", None)
+    if code is None:
+        call = getattr(type(callback), "__call__", None)
+        code = getattr(call, "__code__", None)
+    frame = exc.__traceback__
+    while frame is not None:
+        if code is not None and frame.tb_frame.f_code is code:
+            return True
+        frame = frame.tb_next
+    return False
 
 
 def filetag_from_pedfile(pedfile) -> str:
@@ -774,6 +797,8 @@ class NewPedigree:
         pedgraph=None,
         pedstream='',
         animallist=None,
+        *,
+        progress: ProgressCallback | None = None,
     ):
         """
         load() wraps several processes useful for loading and preparing a pedigree for
@@ -792,6 +817,11 @@ class NewPedigree:
             Stream of text from which to load the pedigree (used when `pedsource='textstream'`).
         animallist : list, optional
             List of NewAnimal objects from which to create a pedigree (used when `pedsource='animallist'`).
+        progress : callable, optional, keyword-only
+            ``progress(done, total)`` while records are read. File sources
+            report ``total=None`` so the file is not scanned twice. Text and
+            database sources may supply a cheap total. Default ``None``.
+            Callback exceptions propagate unchanged.
 
         Returns
         -------
@@ -831,7 +861,7 @@ class NewPedigree:
                         cursor.execute(sql)
                         dbstream = cursor.fetchall()
                         conn.close()
-                        self.preprocess(dbstream=dbstream)
+                        self.preprocess(dbstream=dbstream, progress=progress)
                     else:
                         logger.error('Failed to connect to database %s', self.kw['database_name'])
                         raise pyp_errors.PyPedalConfigurationError(
@@ -917,7 +947,7 @@ class NewPedigree:
                         'sepchar': ',',
                         'pedfile': f"{self.kw['pedfile']}.tmp"
                     })
-                    self.preprocess()
+                    self.preprocess(progress=progress)
                 else:
                     logger.error('Invalid pedigree format from GEDCOM file')
                     raise pyp_errors.PyPedalPedigreeSourceError(
@@ -932,7 +962,7 @@ class NewPedigree:
         elif pedsource == 'textstream':
             self.kw.update({'pedformat': 'ASD', 'sepchar': ','})
             logger.info('Preprocessing a textstream')
-            self.preprocess(textstream=pedstream)
+            self.preprocess(textstream=pedstream, progress=progress)
 
         else:  # Default is loading from a file
             if not self.kw['pedfile']:
@@ -940,7 +970,7 @@ class NewPedigree:
                 raise ValueError("The key 'pedfile' must be set in self.kw before calling preprocess().")
 
             logger.info('Preprocessing %s', self.kw['pedfile'])
-            self.preprocess()
+            self.preprocess(progress=progress)
 
         # Post-processing: renumbering, assigning generations, etc.
         if self.kw.get('reorder') and not self.kw.get('renumber'):
@@ -1471,7 +1501,8 @@ class NewPedigree:
         return _retval
 
 
-    def preprocess(self, textstream: str = '', dbstream = '') -> bool:
+    def preprocess(self, textstream: str = '', dbstream = '', *,
+                   progress: ProgressCallback | None = None) -> bool:
         """Read animal records into ``self.pedigree``.
 
         This method owns pedformat interpretation, record iteration,
@@ -1481,6 +1512,9 @@ class NewPedigree:
 
         :param textstream: Optional string containing animal records.
         :param dbstream: Optional list of tuples of animal records.
+        :param progress: Optional ``(done, total)`` callback after each
+            completed input record. File sources use ``total=None``.
+            Callback exceptions propagate unchanged.
         :return: True on success, False on failure.
         :rtype: bool
         """
@@ -1628,6 +1662,15 @@ class NewPedigree:
                     textstream=textstream,
                     dbstream=dbstream,
                 )
+                load_total = source.known_total
+
+                def _emit_load_progress():
+                    if progress is None:
+                        return
+                    try:
+                        progress(line_counter, load_total)
+                    except Exception as exc:
+                        raise _ProgressCallbackError(exc) from exc
 
                 while True:
                     line = source.readline(line_counter, logger)
@@ -1661,17 +1704,20 @@ class NewPedigree:
                         # Handle comment lines
                         if line[0] == '#':
                             logger.info('Pedigree comment (line %s): %s', line_counter, line.strip())
+                            _emit_load_progress()
                             continue
 
                         # Handle deprecated pedigree format strings
                         elif line[0] == '%':
                             self.kw['old_pedformat'] = line[1:].strip()  # Store the format string
                             logger.warning('Encountered deprecated pedigree format string (%s) on line %s of the pedigree file.', line.strip(), line_counter)
+                            _emit_load_progress()
                             continue
 
                         # Handle empty or blank lines
                         elif len(line.strip()) == 0:
                             logger.warning('Encountered an empty (blank) record on line %s of the pedigree file.', line_counter)
+                            _emit_load_progress()
                             continue
                         else:
                             animal_counter += 1
@@ -1707,6 +1753,7 @@ class NewPedigree:
                                                      f"skipped and will not have an entry in the pedigree.")
                                         print(f"[ERROR]: {error_msg}")
                                         logger.error(error_msg)
+                                        _emit_load_progress()
                                         continue
 
                                     # Track sires and dams
@@ -1745,6 +1792,7 @@ class NewPedigree:
                                         if self.kw['animal_type'] == 'new':
                                             self.namemap[an.name] = an.animalID
                                             self.namebackmap[an.animalID] = an.name
+                                    _emit_load_progress()
                             else:
                                 error_msg = (
                                     f"The record on line {line_counter} of file {self.kw['pedfile']} has {len(lfields)} columns, "
@@ -1820,6 +1868,8 @@ class NewPedigree:
                 source.close()
             _retval = True
 
+        except _ProgressCallbackError as wrapped:
+            raise wrapped.cause
         except PyPedalError:
             raise
         except Exception as e:
@@ -3475,6 +3525,8 @@ def loadPedigree(
     pedgraph=None,
     pedstream="",
     debugLoad=False,
+    *,
+    progress: ProgressCallback | None = None,
 ):
     """
     loadPedigree() wraps pedigree creation and loading into a one-step process. 
@@ -3496,6 +3548,8 @@ def loadPedigree(
         String of tuples to unpack into a pedigree.
     debugLoad : bool, optional
         When True, print debugging messages while loading.
+    progress : callable, optional, keyword-only
+        Forwarded to ``NewPedigree.load``. Default ``None``.
 
     Returns
     -------
@@ -3517,7 +3571,8 @@ def loadPedigree(
         if debugLoad:
             print(f"[DEBUG]: Loading pedigree from source: {pedsource}")
 
-        _pedigree.load(pedsource=pedsource, pedgraph=pedgraph, pedstream=pedstream)
+        _pedigree.load(pedsource=pedsource, pedgraph=pedgraph, pedstream=pedstream,
+                       progress=progress)
         return _pedigree
 
     except PyPedalError:
@@ -3528,13 +3583,14 @@ def loadPedigree(
         # pedigree.
         raise
 
-    except TypeError as e:
-        error_msg = f"[ERROR]: loadPedigree() failed due to a type mismatch. Error: {e}"
-        print(error_msg)
-        logger.error(error_msg)
-        return False
-
     except Exception as e:
+        if progress is not None and _raised_from_callable(e, progress):
+            raise
+        if isinstance(e, TypeError):
+            error_msg = f"[ERROR]: loadPedigree() failed due to a type mismatch. Error: {e}"
+            print(error_msg)
+            logger.error(error_msg)
+            return False
         error_msg = f"[ERROR]: loadPedigree() encountered an unexpected error. Error: {e}"
         print(error_msg)
         logger.error(error_msg)

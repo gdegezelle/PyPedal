@@ -107,6 +107,38 @@ def pedigree_open_options(
 
 
 GUI_PREVIEW_ROWS = 500
+GUI_PROGRESS_POLL_MS = 80
+
+
+def gui_progress_mode(done: int, total: int | None) -> tuple[str, float | None]:
+    """Map a scientific progress event to a progress-bar mode.
+
+    Known ``total`` becomes determinate. Unknown ``total`` stays
+    indeterminate. This helper does not touch Tk widgets.
+    """
+    if total is None or total <= 0:
+        return "indeterminate", None
+    fraction = float(done) / float(total)
+    if fraction < 0.0:
+        fraction = 0.0
+    elif fraction > 1.0:
+        fraction = 1.0
+    return "determinate", fraction
+
+
+class GuiProgressBridge:
+    """Publish the latest ``(done, total)`` from a worker thread.
+
+    The scientific callback only stores state. Tk widgets must be updated
+    on the UI thread by reading ``latest``. Rapid events coalesce: the UI
+    renders the most recent snapshot, not every callback.
+    """
+
+    def __init__(self) -> None:
+        self.latest: tuple[int, int | None] | None = None
+
+    def __call__(self, done: int, total: int | None) -> None:
+        self.latest = (done, total)
 
 
 def gui_control_states(busy: bool) -> dict:
@@ -238,6 +270,9 @@ class PyPedalApp:
         self.pedigree = None
         self.filename = ""
         self._busy = False
+        self._gui_progress = GuiProgressBridge()
+        self._progress_poll_id = None
+        self._progress_bar_mode = "indeterminate"
 
         self._build_layout()
 
@@ -341,11 +376,55 @@ class PyPedalApp:
             button.configure(state=analysis_state)
         self.about_button.configure(state=about_state)
         if busy:
+            self._progress_bar_mode = "indeterminate"
+            self.progress.configure(mode="indeterminate")
+            self.progress.set(0)
             self.progress.pack(fill="x", padx=16, pady=(0, 8), before=self.status)
             self.progress.start()
+            self._schedule_progress_poll()
         else:
+            self._cancel_progress_poll()
+            self._apply_progress_snapshot()
             self.progress.stop()
+            self._progress_bar_mode = "indeterminate"
+            self.progress.configure(mode="indeterminate")
             self.progress.pack_forget()
+
+    def _schedule_progress_poll(self) -> None:
+        if self._progress_poll_id is not None:
+            return
+        self._progress_poll_id = self.root.after(
+            GUI_PROGRESS_POLL_MS, self._poll_progress
+        )
+
+    def _cancel_progress_poll(self) -> None:
+        poll_id = self._progress_poll_id
+        if poll_id is not None:
+            self.root.after_cancel(poll_id)
+            self._progress_poll_id = None
+
+    def _poll_progress(self) -> None:
+        self._progress_poll_id = None
+        self._apply_progress_snapshot()
+        if self._busy:
+            self._schedule_progress_poll()
+
+    def _apply_progress_snapshot(self) -> None:
+        snapshot = self._gui_progress.latest
+        if snapshot is None:
+            return
+        done, total = snapshot
+        mode, fraction = gui_progress_mode(done, total)
+        if mode == "determinate":
+            if self._progress_bar_mode != "determinate":
+                self.progress.stop()
+                self.progress.configure(mode="determinate")
+                self._progress_bar_mode = "determinate"
+            self.progress.set(fraction)
+        elif self._progress_bar_mode != "indeterminate":
+            self.progress.configure(mode="indeterminate")
+            self._progress_bar_mode = "indeterminate"
+            self.progress.start()
 
     def _need_pedigree(self) -> bool:
         if self.pedigree is None:
@@ -356,6 +435,7 @@ class PyPedalApp:
     def _run_background(self, work, title: str, finish=None) -> None:
         if self._busy:
             return
+        self._gui_progress = GuiProgressBridge()
         self._set_busy(True)
         self._set_status(f"{title}…")
         complete = finish or self._finish_background
@@ -417,7 +497,7 @@ class PyPedalApp:
 
         def work():
             ped = pyp_newclasses.NewPedigree(options)
-            ped.load()
+            ped.load(progress=self._gui_progress)
             return ped
 
         self._run_background(
@@ -443,7 +523,9 @@ class PyPedalApp:
             return
 
         def work():
-            result = pyp_nrm.inbreeding(self.pedigree, method="meu_luo")
+            result = pyp_nrm.inbreeding(
+                self.pedigree, method="meu_luo", progress=self._gui_progress
+            )
             result_file = f"{self.pedigree.kw.get('filetag')}_inbreeding.dat"
             return _format_inbreeding(result, result_file=result_file)
 
@@ -473,7 +555,9 @@ class PyPedalApp:
             return
 
         def work():
-            result = pyp_nrm.inbreeding(self.pedigree, method="meu_luo")
+            result = pyp_nrm.inbreeding(
+                self.pedigree, method="meu_luo", progress=self._gui_progress
+            )
             if isinstance(result, tuple):
                 result = result[0]
             fx = result.get("fx", {}) if isinstance(result, dict) else {}

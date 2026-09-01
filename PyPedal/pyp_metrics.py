@@ -32,7 +32,11 @@ from . import pyp_chronology, pyp_io, pyp_network, pyp_nrm, pyp_utils, pyp_valid
 from .pyp_errors import (
     PyPedalError, PyPedalInternalError,
     PyPedalPedigreeStructureError, PyPedalUsageError, PyPedalValidationError)
-from .pyp_results import EffectiveFoundersResult, MatingCoIGroupResult
+from .pyp_results import (
+    EffectiveFoundersResult,
+    MatingCoIGroupResult,
+    ProgressCallback,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -1662,8 +1666,19 @@ def boichard_marginal_contributions(pedobj, reference, tie_break=BOICHARD_TIE_BR
         yield ids[pos], float(p[pos] / n)
 
 
+def _collect_boichard_order(pedobj, population, progress: ProgressCallback | None = None):
+    """Iterate Appendix B once, reporting each completed ancestor selection."""
+    order = []
+    for item in boichard_marginal_contributions(pedobj, population):
+        order.append(item)
+        if progress is not None:
+            progress(len(order), None)
+    return order
+
+
 def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: Optional[int] = None,
-                                   *, reference: Optional[Iterable[int]] = None, output: bool = True) -> float:
+                                   *, reference: Optional[Iterable[int]] = None, output: bool = True,
+                                   progress: ProgressCallback | None = None) -> float:
     """
     Effective number of ancestors, f_a = 1 / sum(p_k^2).
 
@@ -1709,6 +1724,11 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
         If True (the default), write ``{filetag}_fa_boichard_definite_.dat``.
         If False, perform the calculation and return the same ``f_a`` without
         writing that analysis file.
+    progress : callable, optional, keyword-only
+        ``progress(done, total)`` after each selected ancestor. ``total`` is
+        ``None`` because the number of positive-contribution ancestors is not
+        known cheaply in advance. Default ``None``. Callback exceptions
+        propagate unchanged.
 
     Returns
     -------
@@ -1734,7 +1754,7 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
     _boichard_require_antichain(pedobj, population, routine)
 
     _ids, _s, _d, phantoms, n_founders = _boichard_completed_arrays(pedobj)
-    order = list(boichard_marginal_contributions(pedobj, population))
+    order = _collect_boichard_order(pedobj, population, progress)
     contribs = {animal_id: value for animal_id, value in order}
     ancestors = [animal_id for animal_id, _ in order]
 
@@ -1779,7 +1799,8 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
 
 
 def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen: Optional[int] = None, n: int = 25,
-                                     *, reference: Optional[Iterable[int]] = None, output: bool = True) -> Tuple[float, float]:
+                                     *, reference: Optional[Iterable[int]] = None, output: bool = True,
+                                     progress: ProgressCallback | None = None) -> Tuple[float, float]:
     """
     Lower and upper bounds on the effective number of ancestors, ``(f_l, f_u)``.
 
@@ -1859,6 +1880,10 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
         If True (the default), write ``{filetag}_fa_boichard_indefinite_.dat``.
         If False, perform the calculation and return the same ``(f_l, f_u)``
         without writing that analysis file.
+    progress : callable, optional, keyword-only
+        Same contract as :func:`a_effective_ancestors_definite`. The full
+        selection sequence is still produced; ``n`` only truncates the bound
+        arithmetic.
 
     Returns
     -------
@@ -1889,7 +1914,7 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
     _boichard_require_antichain(pedobj, population, routine)
 
     _ids, _s, _d, phantoms, n_founders = _boichard_completed_arrays(pedobj)
-    order = list(boichard_marginal_contributions(pedobj, population))
+    order = _collect_boichard_order(pedobj, population, progress)
     if not order:
         raise PyPedalError(
             '%s: no ancestor has a positive contribution, so there is nothing '
@@ -3102,7 +3127,7 @@ def _build_gene_drop_plan(pedobj, most_recent, routine):
 
 def effective_founder_genomes(pedobj, rounds=10, chrometype='autosome',
                               heterogametic='m', quiet=False, *, seed=None,
-                              output=True):
+                              output=True, progress=None):
     """
     Estimate N_g, the effective number of founder genomes still present in the
     population under study, by replicated Mendelian gene dropping.
@@ -3156,6 +3181,10 @@ def effective_founder_genomes(pedobj, rounds=10, chrometype='autosome',
         ``random`` and ``numpy.random`` states are left untouched.
     output : bool
         Write ``<filetag>_gene_drop.out``. Default True, as it has always been.
+    progress : callable, optional, keyword-only
+        ``progress(done, total)`` after each completed replicate. ``total`` is
+        ``rounds``. Default ``None``. Callback exceptions propagate unchanged.
+        The callback does not consume RNG draws.
 
     Returns
     -------
@@ -3282,6 +3311,9 @@ def effective_founder_genomes(pedobj, rounds=10, chrometype='autosome',
         # So the per-replicate inversion above is right and only the averaging
         # was wrong. Online arithmetic mean, no list of every replicate:
         summary_freqs['n_g'] += (_ng - summary_freqs['n_g']) / (r + 1)
+
+        if progress is not None:
+            progress(r + 1, rounds)
 
         if not output:
             continue
@@ -3683,7 +3715,8 @@ def descendants(anid, pedobj, _desc):
 MENDELIAN_TRANSMISSION_P = 0.5
 
 
-def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, seed=5048665):
+def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, seed=5048665, *,
+                                 progress=None):
     """
     dropped_ancestral_inbreeding() uses a gene dropping approach to calculate
     ancestral inbreeding, the probability of an individual inheriting an allele
@@ -3711,6 +3744,10 @@ def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, s
         MENDELIAN_TRANSMISSION_P.
     seed : int, optional
         Seed for the random number generator (default is 5048665).
+    progress : callable, optional, keyword-only
+        ``progress(done, total)`` after each completed replicate. ``total`` is
+        ``rounds``. Default ``None``. Callback exceptions propagate unchanged.
+        The callback does not consume RNG draws.
 
     Returns:
     -------
@@ -3889,6 +3926,9 @@ def dropped_ancestral_inbreeding(pedobj, rounds=100, loci=100, frequency=None, s
             autozygous = label_1 == label_2
             labels[animal_id] = (label_1, label_2)
             flags[animal_id] = (flag_1 | autozygous, flag_2 | autozygous)
+
+        if progress is not None:
+            progress(_replicate + 1, rounds)
 
     # Mean over replicates. Each replicate contributes one already-per-locus
     # estimate, so with equal-size rounds this is the mean over all

@@ -232,15 +232,29 @@ class PedigreeRecordSource:
         self._lines: list[str] | None = None
         self._db = None
         self._db_index = 0
+        self._known_total: int | None = None
         if textstream == "" and dbstream == "":
             self.kind = "file"
             self._file = open(pedfile, "r", encoding="utf-8-sig")
         elif dbstream == "":
             self.kind = "text"
             self._lines = textstream.split("\n")[:-1]
+            self._known_total = len(self._lines)
         else:
             self.kind = "db"
             self._db = dbstream
+            try:
+                self._known_total = len(dbstream)
+            except TypeError:
+                self._known_total = None
+
+    @property
+    def known_total(self) -> int | None:
+        """Cheap record count when already in memory; ``None`` for files.
+
+        File sources do not scan twice merely to report a total.
+        """
+        return self._known_total
 
     def readline(self, line_counter: int, logger: Any) -> str | Literal[False]:
         """Return the next raw record, or False when a stream is exhausted."""

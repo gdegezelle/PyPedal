@@ -15,19 +15,27 @@ These are thin ``dict`` subclasses. Existing 4.0.x callers that use
 Convenience properties read the same stored keys. They do not cache,
 copy, mutate, or invent values. Import them from this module::
 
-    from PyPedal.pyp_results import InbreedingResult
+    from PyPedal.pyp_results import InbreedingResult, ProgressCallback
 
 This module imports nothing else from PyPedal.
 """
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 # Current animalID after a default (renumbered) load is an int. String IDs
 # remain possible on unrestored or non-renumbered records, so the public
 # alias is the union actually stored as mapping keys.
 AnimalId = int | str
+
+# Optional long-running-operation reporter. Callers pass ``progress=None``
+# (the default) to keep existing behaviour. ``done`` is completed units;
+# ``total`` is the known unit count, or ``None`` when the length is not
+# known cheaply. Callback exceptions propagate unchanged; they are not
+# translated into ``PyPedalError``. There is no cancellation API.
+ProgressCallback = Callable[[int, int | None], None]
 
 
 class InbreedingResult(dict):
