@@ -137,6 +137,8 @@ def test_sdist_contains_exactly_one_griffon_pedigree_dataset(tmp_path):
     assert leftover == [], leftover
 
 
+# Exact LF bytes are part of the scientific data contract. Git checks this
+# file out with eol=lf (.gitattributes) so Windows autocrlf cannot change it.
 CANONICAL_SHA256 = "f288e1ab00eb710e8cfdb2df6175e8513c4d15df57ea16220d8397bc91389443"
 
 

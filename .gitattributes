@@ -3,3 +3,8 @@
 # https://github.com/github/linguist/blob/master/README.md
 *.html linguist-language=txt
 *.tex linguist-language=txt
+
+# Exact byte SHA of this pedigree is part of the release/scientific data
+# contract (tests/test_griffon_sample_contract.py). Keep LF on every
+# checkout so Windows core.autocrlf cannot change the hash.
+PyPedal/examples/griffonbruxellois_2026_pyp.ped text eol=lf
