@@ -17,13 +17,17 @@ and a `PedigreeMetadata` class.
 Modified for the PyPedal 4.0 Python 3 release by Geert Degezelle, 2025-2026. See CHANGELOG.md. SPDX-License-Identifier: LGPL-2.1-or-later.
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 
 import os
 import sys
 import warnings
-from typing import Any, Optional, List, Dict, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+from . import _pyp_parse
 from networkx import DiGraph
 import numpy as np
 import math
@@ -210,19 +214,19 @@ class NewPedigree:
         self.kw = kw
 
         # Initialize the Big Main Data Structures to null values
-        self.pedigree = []
+        self.pedigree: list[NewAnimal | LightAnimal] = []
         # Animals PyPedal created itself because they appeared as a sire or dam
         # but had no record of their own. The post-load count is then larger
         # than the number of input rows, which used to be discoverable only by
         # reading thousands of [NOTE] lines. Surfaced in
         # PedigreeMetadata.num_implicit_parents.
-        self._implicit_parents = []
+        self._implicit_parents: list[int | str] = []
         self.metadata = {}
-        self.idmap = {}  # Used to map between original and renumbered IDs
-        self.backmap = {}  # Used to map between renumbered and original IDs
-        self.namemap = {}  # This is needed to map IDs to names when IDs are read using string formats (ASD)
-        self.namebackmap = {}
-        self.stringmap = {}  # Maps original IDs to names in ASD pedigrees
+        self.idmap: dict[int | str, int | str] = {}
+        self.backmap: dict[int | str, int | str] = {}
+        self.namemap: dict[str, int | str] = {}
+        self.namebackmap: dict[int | str, str] = {}
+        self.stringmap: dict[Any, Any] = {}
         self.snp = False  # Holds SNP genotype data, indexed by originalID
 
         # Maybe these will go in a configuration file later
@@ -1450,9 +1454,12 @@ class NewPedigree:
 
 
     def preprocess(self, textstream: str = '', dbstream = '') -> bool:
-        """
-        Preprocess a pedigree file, which includes reading the animals into a list, forming lists of sires and
-        dams, and checking for common errors.
+        """Read animal records into ``self.pedigree``.
+
+        This method owns pedformat interpretation, record iteration,
+        NewAnimal construction, and implicit-parent materialization.
+        ``load()`` still owns later lifecycle stages: reorder, SNP,
+        renumbering, metadata, and chronology.
 
         :param textstream: Optional string containing animal records.
         :param dbstream: Optional list of tuples of animal records.
@@ -1493,183 +1500,88 @@ class NewPedigree:
                     print(f"[ERROR]: Null pedigree format string assigned a default value of {self.kw['pedformat']}.")
                 raise ValueError("pedformat is not set in self.kw")
 
-            # This is where we check the format string to figure out what we have in the input file.
-            # Check for valid characters...
-            _pedformat = []
-            for _char in self.kw['pedformat']:
-                if _char in self.pedformat_codes and _char != 'Z':
-                    _pedformat.append(_char)
-                elif _char in self.pedformat_codes and _char == 'Z':
-                    _pedformat.append('.')
+            source = None
+
+            # pedformat interpretation is a one-shot map. load() still owns
+            # reorder, SNP, renumbering, metadata, and chronology.
+            _pedformat, _format_events = _pyp_parse.canonicalize_pedformat(
+                self.kw['pedformat'], self.pedformat_codes
+            )
+            for _kind, _char in _format_events:
+                if _kind == "Z":
                     if self.kw['messages'] == 'verbose':
                         print("[INFO]: Skipping one or more columns in the input file.")
-                    logger.info('Skipping one or more columns in the input file as requested by the pedigree format string %s',
-                                 self.kw['pedformat'])
+                    logger.info(
+                        'Skipping one or more columns in the input file as requested '
+                        'by the pedigree format string %s',
+                        self.kw['pedformat'],
+                    )
                 else:
-                    # Replace the invalid code with a period, which is ignored when the string is parsed.
-                    _pedformat.append('.')
                     if self.kw['messages'] == 'verbose':
                         print(f"[DEBUG]: Invalid format code, {_char}, encountered!")
-                    logger.error('Invalid column format code %s found while reading pedigree format string %s',
-                                  _char, self.kw['pedformat'])
-                    
-            # Map pedformat to column indices
-            for _char in _pedformat:
-                try:
-                    pedformat_locations['animal'] = _pedformat.index('a')
-                except ValueError:
-                    try:
-                        pedformat_locations['animal'] = _pedformat.index('A')
-                    except ValueError:
-                        print(f"[CRITICAL]: No animal identification code was specified in the pedigree format string {_pedformat}! This is a critical error and the program will halt.")
-                        critical_count += 1
-                
-                try:
-                    pedformat_locations['sire'] = _pedformat.index('s')
-                except ValueError:
-                    try:
-                        pedformat_locations['sire'] = _pedformat.index('S')
-                    except ValueError:
-                        print(f"[CRITICAL]: No sire identification code was specified in the pedigree format string {_pedformat}! This is a critical error and the program will halt.")
-                        critical_count += 1
-                
-                try:
-                    pedformat_locations['dam'] = _pedformat.index('d')
-                except ValueError:
-                    try:
-                        pedformat_locations['dam'] = _pedformat.index('D')
-                    except ValueError:
-                        print(f"[CRITICAL]: No dam identification code was specified in the pedigree format string {_pedformat}! This is a critical error and the program will halt.")
-                        critical_count += 1
-
-                # Handle the optional fields:
-                try:
-                    pedformat_locations['generation'] = _pedformat.index('g')
-                except ValueError:
-                    pedformat_locations['generation'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No generation code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-                
-                try:
-                    pedformat_locations['gencoeff'] = _pedformat.index('p')
-                except ValueError:
-                    pedformat_locations['gencoeff'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No generation coefficient was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-                # Pedformat 'p' stores an input gencoeff. Pattie calculation is
-                # outside the 4.0 domain; do not treat 'p' as "compute gen_coeff".
-                if self.kw.get('gen_coeff'):
-                    raise pyp_errors.PyPedalUsageError(
-                        "kw['gen_coeff'] calculation is outside the PyPedal 4.0 "
-                        "domain. Pedformat 'p' may store a supplied generation "
-                        "coefficient; PyPedal does not compute Pattie (1965) "
-                        "coefficients. Leave gen_coeff at False."
+                    logger.error(
+                        'Invalid column format code %s found while reading pedigree '
+                        'format string %s',
+                        _char,
+                        self.kw['pedformat'],
                     )
-                
-                try:
-                    pedformat_locations['sex'] = _pedformat.index('x')
-                except ValueError:
-                    pedformat_locations['sex'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No sex code was specified in the pedigree format string {self.kw['pedformat']}. This program  will continue.")
 
-                try:
-                    pedformat_locations['birthyear'] = _pedformat.index('y')
-                except ValueError:
-                    pedformat_locations['birthyear'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No birth date (YYYY) code was specified in the pedigree format string {self.kw['pedformat']}.  This program will continue.")
-                
-                try:
-                    pedformat_locations['inbreeding'] = _pedformat.index('f')
-                except ValueError:
-                    pedformat_locations['inbreeding'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No coeffcient of inbreeding code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-                
-                try:
-                    pedformat_locations['genomic_inbreeding'] = _pedformat.index('G')
-                except ValueError:
-                    pedformat_locations['genomic_inbreeding'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No coeffcient of genomic inbreeding code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-                
-                try:
-                    pedformat_locations['homozygosity'] = _pedformat.index('Y')
-                except ValueError:
-                    pedformat_locations['homozygosity'] = -999
-
-                try:
-                    pedformat_locations['breed'] = _pedformat.index('r')
-                except ValueError:
-                    pedformat_locations['breed'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No breed code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-
-                try:
-                    pedformat_locations['name'] = _pedformat.index('n')
-                except ValueError:
-                    pedformat_locations['name'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No name code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-
-                try:
-                    pedformat_locations['birthdate'] = _pedformat.index('b')
-                except ValueError:
-                    pedformat_locations['birthdate'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No birth date (MMDDYYYY) code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-
-                try:
-                    pedformat_locations['alive'] = _pedformat.index('l')
-                except ValueError:
-                    pedformat_locations['alive'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No alive/dead code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-
-                try:
-                    pedformat_locations['age'] = _pedformat.index('e')
-                except ValueError:
-                    pedformat_locations['age'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No age code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-
-                try:
-                    pedformat_locations['alleles'] = _pedformat.index('L')
-                    if self.kw['alleles_sepchar'] == self.kw['sepchar']:
-                        if self.kw['messages'] == 'all':
-                            print("[DEBUG]: The same separating character was specified for both columns of input "
-                                "(option sepchar) and alleles (option alleles_sepchar) in an animal's "
-                                "allelotype. The allelotypes will not be used in this pedigree.")
-                        logger.warning('The same separating character was specified for both columns of input '
-                                        '(option sepchar) and alleles (option alleles_sepchar) in an animal\'s '
-                                        'allelotype. The allelotypes will not be used in this pedigree.')
-                        pedformat_locations['alleles'] = -999
-                except ValueError:
-                    pedformat_locations['alleles'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No alleles code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-
-                try:
-                    pedformat_locations['herd'] = _pedformat.index('h')
-                except ValueError:
-                    pedformat_locations['herd'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No herd code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-
-                try:
-                    pedformat_locations['herd'] = _pedformat.index('H')
-                except ValueError:
-                    pedformat_locations['herd'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No herd code was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
-
-                try:
-                    pedformat_locations['userfield'] = _pedformat.index('u')
-                except ValueError:
-                    pedformat_locations['userfield'] = -999
-                    if self.kw['messages'] == 'all':
-                        print(f"[DEBUG]: No user-defined field was specified in the pedigree format string {self.kw['pedformat']}. This program will continue.")
+            (
+                pedformat_locations,
+                critical_count,
+                _alleles_collision,
+                _optional_debug,
+            ) = _pyp_parse.build_pedformat_locations(
+                _pedformat,
+                alleles_sepchar=self.kw['alleles_sepchar'],
+                sepchar=self.kw['sepchar'],
+                pedformat=self.kw['pedformat'],
+            )
+            if 'animal' not in pedformat_locations:
+                print(
+                    f"[CRITICAL]: No animal identification code was specified in the "
+                    f"pedigree format string {_pedformat}! This is a critical error "
+                    f"and the program will halt."
+                )
+            if 'sire' not in pedformat_locations:
+                print(
+                    f"[CRITICAL]: No sire identification code was specified in the "
+                    f"pedigree format string {_pedformat}! This is a critical error "
+                    f"and the program will halt."
+                )
+            if 'dam' not in pedformat_locations:
+                print(
+                    f"[CRITICAL]: No dam identification code was specified in the "
+                    f"pedigree format string {_pedformat}! This is a critical error "
+                    f"and the program will halt."
+                )
+            if self.kw['messages'] == 'all':
+                for _msg in _optional_debug:
+                    print(_msg)
+            if _alleles_collision:
+                if self.kw['messages'] == 'all':
+                    print(
+                        "[DEBUG]: The same separating character was specified for both "
+                        "columns of input "
+                        "(option sepchar) and alleles (option alleles_sepchar) in an "
+                        "animal's "
+                        "allelotype. The allelotypes will not be used in this pedigree."
+                    )
+                logger.warning(
+                    'The same separating character was specified for both columns of '
+                    'input (option sepchar) and alleles (option alleles_sepchar) in '
+                    'an animal\'s allelotype. The allelotypes will not be used in '
+                    'this pedigree.'
+                )
+            # Pedformat 'p' stores an input gencoeff. Pattie calculation is
+            # outside the 4.0 domain; do not treat 'p' as "compute gen_coeff".
+            if self.kw.get('gen_coeff'):
+                raise pyp_errors.PyPedalUsageError(
+                    "kw['gen_coeff'] calculation is outside the PyPedal 4.0 "
+                    "domain. Pedformat 'p' may store a supplied generation "
+                    "coefficient; PyPedal does not compute Pattie (1965) "
+                    "coefficients. Leave gen_coeff at False."
+                )
 
             # If the pedigree file includes coefficients of inbreeding flag the pedigree
             if 'f' in self.kw['pedformat']:
@@ -1686,46 +1598,23 @@ class NewPedigree:
                     'pedigree cannot be read without animal, sire and dam.'
                     % (self.kw['pedformat'], critical_count))
             else:
-                counter = 0
                 if self.kw['messages'] == 'verbose' and self.kw['pedigree_summary']:
                     print(f"[INFO]: Opening pedigree file {self.kw['pedfile']}")
                     logger.info('Opening pedigree file %s', self.kw['pedfile'])
 
-                ## Open the file
-                if textstream == '' and dbstream == "":
-                    infile = open(self.kw['pedfile'], 'r', encoding="utf-8-sig")
-                elif dbstream == "":
-                    # Parse the textstream
-                    # Note that this will cause the loss of the last record in the
-                    # string if that record DOES NOT have a trailing \n as the
-                    # documentation says it must.
-                    infile = textstream.split('\n')[:-1]
-                else:
-                    # dbstream is a list of tuples from a database
-                    infile = dbstream
+                # File, textstream, and db records are normalized to raw lines.
+                # A textstream without a trailing newline still drops the last
+                # record. Database tuples are joined with a comma.
+                source = _pyp_parse.PedigreeRecordSource(
+                    self.kw['pedfile'],
+                    textstream=textstream,
+                    dbstream=dbstream,
+                )
 
                 while True:
-                    if textstream == '' and dbstream == '':
-                        line = infile.readline()  # Reading line from file
-                    elif dbstream == '':
-                        try:
-                            line = infile.pop(0)
-                        except IndexError:
-                            logger.warning('Reached the end of the textstream after reading %s records.', line_counter)
-                            line = False
-                            break
-                    else:
-                        # Do tuple unpacking on database records
-                        try:
-                            # dbline = dbstream.pop()
-                            # Code from Matt Kelly -- dbstream.pop() didn't work for him on OS/X 1.0.4
-                            dbline = dbstream[counter]
-                            line = ','.join(map(str, dbline))
-                            counter += 1
-                        except IndexError:
-                            logger.info('Reached the end of the dbstream after reading %s records.', line_counter)
-                            line = False
-                            break
+                    line = source.readline(line_counter, logger)
+                    if line is False:
+                        break
 
                     # Log the raw line
                     logger.debug(f"Raw line read: {repr(line)}")
@@ -1858,12 +1747,9 @@ class NewPedigree:
 
                 # This is where we deal with parents with no pedigree file entry.
                 # Things are kind of tricky when we are working with the S and D codes.
-                _null_locations = pedformat_locations.copy()  # Ensure _null_locations is not a reference to pedformat_locations
-                for _n in _null_locations.keys():
-                    _null_locations[_n] = -999
-                _null_locations['animal'] = 0
-                _null_locations['sire'] = 1
-                _null_locations['dam'] = 2
+                _null_locations = _pyp_parse.implicit_parent_locations(
+                    pedformat_locations
+                )
 
                 # Source tokens already given a record by the loops below.
                 #
@@ -1881,71 +1767,36 @@ class NewPedigree:
                 # itself creates. It is not general record merging, and it does
                 # not make duplicate animal IDs acceptable -- a genuine
                 # duplicate still refuses in pyp_utils/_order_pedigree().
-                _materialized = set()
-
-                for _s in _sires.keys():
-                    if str(_s) in _materialized:
-                        continue
-                    try:
-                        _i = self.idmap[_s]
-                    except KeyError:
-                        if ('S' in self.kw['pedformat'] and str(_s) != str(self.kw['missing_name'])) or \
-                                ('s' in self.kw['pedformat'] and str(_s) != str(self.kw['missing_parent'])):
-                            if self.kw['messages'] == 'verbose':
-                                print(f'[NOTE]: Adding sire {_s} to the pedigree')
-                            an = NewAnimal(
-                                _null_locations, 
-                                [_s, self.kw['missing_parent'], self.kw['missing_parent']],
-                                self.kw
-                            )
-                            self.pedigree.append(an)
-                            self.idmap[an.animalID] = an.animalID
-                            self.backmap[an.animalID] = an.animalID
-                            self.namemap[an.name] = an.animalID
-                            self.namebackmap[an.animalID] = an.name
-                            logger.info(f'Added pedigree entry for sire {_s}')
-                            if self.kw['messages'] == 'verbose':
-                                print(f'[NOTE]: Added pedigree entry for sire {_s}')
-                            self._implicit_parents.append(an.animalID)
-                            _materialized.add(str(_s))
-
-                for _d in _dams.keys():
-                    if str(_d) in _materialized:
-                        continue
-                    try:
-                        _i = self.idmap[_d]
-                    except KeyError:
-                        if ('D' in self.kw['pedformat'] and str(_d) != str(self.kw['missing_name'])) or \
-                                ('d' in self.kw['pedformat'] and str(_d) != str(self.kw['missing_parent'])):
-                            if self.kw['messages'] == 'verbose':
-                                print(f'[NOTE]: Adding dam {_d} to the pedigree')
-                            an = NewAnimal(
-                                _null_locations, 
-                                [_d, self.kw['missing_parent'], self.kw['missing_parent']],
-                                self.kw
-                            )
-                            self.pedigree.append(an)
-                            self.idmap[an.animalID] = an.animalID
-                            self.backmap[an.animalID] = an.animalID
-                            self.namemap[an.name] = an.animalID
-                            self.namebackmap[an.animalID] = an.name
-                            logger.info(f'Added pedigree entry for dam {_d}')
-                            if self.kw['messages'] == 'verbose':
-                                print(f'[NOTE]: Added pedigree entry for dam {_d}')
-                            self._implicit_parents.append(an.animalID)
-                            _materialized.add(str(_d))
+                for _role, _token in _pyp_parse.iter_implicit_parent_tokens(
+                    _sires,
+                    _dams,
+                    self.idmap,
+                    self.kw['pedformat'],
+                    self.kw['missing_parent'],
+                    self.kw['missing_name'],
+                ):
+                    if self.kw['messages'] == 'verbose':
+                        print(f'[NOTE]: Adding {_role} {_token} to the pedigree')
+                    an = NewAnimal(
+                        _null_locations,
+                        [_token, self.kw['missing_parent'], self.kw['missing_parent']],
+                        self.kw
+                    )
+                    self.pedigree.append(an)
+                    self.idmap[an.animalID] = an.animalID
+                    self.backmap[an.animalID] = an.animalID
+                    self.namemap[an.name] = an.animalID
+                    self.namebackmap[an.animalID] = an.name
+                    logger.info(f'Added pedigree entry for {_role} {_token}')
+                    if self.kw['messages'] == 'verbose':
+                        print(f'[NOTE]: Added pedigree entry for {_role} {_token}')
+                    self._implicit_parents.append(an.animalID)
 
             # Finish up
             #
-            logger.info('Closing pedigree file') 
-            if textstream == '' and dbstream == '':
-                infile.close()
-            elif textstream == '':
-                del dbstream
-                del infile
-            else:
-                del textstream
-                del infile
+            logger.info('Closing pedigree file')
+            if source is not None:
+                source.close()
             _retval = True
 
         except PyPedalError:

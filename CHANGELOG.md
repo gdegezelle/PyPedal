@@ -20,6 +20,9 @@ and PEP 440 (`4.0.1`).
 
 ### Changed
 
+- Pedigree file parsing still goes through `NewPedigree.preprocess` /
+  `load()`. Column mapping, record iteration, and implicit-parent
+  detection now live in private helpers with no public behaviour change.
 - `theoretical_ne_from_metadata` returns the calculated Ne float. It no
   longer returns `True`/`False`. `output=True` still writes the historical
   `.dat` file; `output=False` still writes nothing. The Ne formula is
