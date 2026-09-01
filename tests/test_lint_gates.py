@@ -89,6 +89,16 @@ class TestBlockingRuffSubset(unittest.TestCase):
             if expected in line:
                 self.assertNotIn("|| true", line, "the gate is not blocking")
 
+    def test_ci_keeps_linux_matrix_and_adds_cost_conscious_platforms(self):
+        workflow = os.path.join(REPO, ".github", "workflows", "ci.yml")
+        text = open(workflow).read()
+        self.assertIn('python-version: ["3.12", "3.13", "3.14"]', text)
+        self.assertIn("ubuntu-latest", text)
+        self.assertIn("macos-latest", text)
+        self.assertIn("windows-latest", text)
+        self.assertIn('pytest tests/ -m "not integration"', text)
+        self.assertIn("python-version: \"3.12\"", text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -104,3 +104,40 @@ jobs:
       # Narrow by design: the two modules carrying the mathematics.
       - name: mypy (report only)
         run: mypy || true
+
+  platform:
+    name: platform (py3.12 / ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      # Compatibility coverage, not a full 3.12/3.13/3.14 matrix.
+      # Graphviz extras and a desktop display are not required.
+      - name: Unit tests
+        run: pytest tests/ -m "not integration" -v
+
+      - name: Ruff correctness subset (blocking)
+        run: ruff check --select F821,F811,F601 --output-format=github .
+
+      - name: No tracked file was modified by the test run
+        shell: bash
+        run: |
+          git status --porcelain > "${RUNNER_TEMP}/after.txt"
+          if [ -s "${RUNNER_TEMP}/after.txt" ]; then
+            echo "The test run modified tracked files:"
+            cat "${RUNNER_TEMP}/after.txt"
+            exit 1
+          fi
