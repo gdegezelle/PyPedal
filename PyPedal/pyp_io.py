@@ -55,9 +55,15 @@ def a_inverse_from_file(inputfile):
             a_inv = pickle.load(f)
         logger.info('Successfully loaded A-inverse')
         return a_inv
+    except FileNotFoundError as e:
+        raise pyp_errors.PyPedalUsageError(
+            "a_inverse_from_file: file %r does not exist." % (inputfile,)
+        ) from e
     except Exception as e:
-        logger.error(f"Failed to load A-inverse: {e}")
-        return np.zeros((1, 1), dtype=float)
+        raise pyp_errors.PyPedalError(
+            "a_inverse_from_file: could not load a relationship-matrix inverse "
+            "from %r: %s" % (inputfile, e)
+        ) from e
 
 
 def dissertation_pedigree_to_file(pedobj):
@@ -565,36 +571,38 @@ def summary_inbreeding(f_metadata: dict) -> str:
     Returns
     -------
     str
-        A string representation of the inbreeding statistics, or '0' if an error occurs.
+        A string representation of the inbreeding statistics.
     """
-    try:
-        summary = []
-        line1 = "=" * 80
-        line2 = "-" * 80
+    if not isinstance(f_metadata, dict):
+        raise pyp_errors.PyPedalUsageError(
+            "summary_inbreeding: metadata must be a dict "
+            "(the inbreeding()['metadata'] mapping); got %s."
+            % type(f_metadata).__name__
+        )
 
-        summary.append(line1)
-        summary.append("Inbreeding Statistics")
-        summary.append(line1)
-        summary.append("All animals:")
-        summary.append(line2)
+    summary = []
+    line1 = "=" * 80
+    line2 = "-" * 80
 
-        for k, v in f_metadata.get("all", {}).items():
-            summary.append(_format_inbreeding_stat(k, v))
+    summary.append(line1)
+    summary.append("Inbreeding Statistics")
+    summary.append(line1)
+    summary.append("All animals:")
+    summary.append(line2)
 
-        summary.append(line1)
-        summary.append("Animals with computed F > 0:")
-        summary.append(line2)
+    for k, v in f_metadata.get("all", {}).items():
+        summary.append(_format_inbreeding_stat(k, v))
 
-        for k, v in f_metadata.get("nonzero", {}).items():
-            summary.append(_format_inbreeding_stat(k, v))
+    summary.append(line1)
+    summary.append("Animals with computed F > 0:")
+    summary.append(line2)
 
-        summary.append(line1)
+    for k, v in f_metadata.get("nonzero", {}).items():
+        summary.append(_format_inbreeding_stat(k, v))
 
-        return "\n".join(summary)
+    summary.append(line1)
 
-    except Exception as e:
-        print(f"An error occurred while generating the summary: {e}")
-        return "0"
+    return "\n".join(summary)
 
 
 def save_ijk(pedobj, nrm_filename: str) -> int:

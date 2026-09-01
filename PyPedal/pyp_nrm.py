@@ -49,6 +49,52 @@ def _coi_from_matrix(matrix, row):
     return _matrix_value(matrix, row, row) - 1.0
 
 
+_DENSE_NRM_ALTERNATIVE = (
+    "For large pedigrees use inbreeding(..., method='meu_luo') "
+    "instead of forming a dense numerator relationship matrix."
+)
+
+
+def _raise_allocation_failure(routine, n, dtype, exc, alternative=None):
+    """Raise a typed error for a failed matrix/vector allocation."""
+    dt = np.dtype(dtype)
+    try:
+        nbytes = int(n) * int(n) * int(dt.itemsize)
+        size_part = "%d-by-%d %s matrix (approximately %d bytes)" % (
+            n, n, dt.name, nbytes)
+    except (TypeError, ValueError, OverflowError):
+        size_part = "%d-by-%d %s matrix" % (n, n, dt.name)
+    hint = alternative if alternative is not None else _DENSE_NRM_ALTERNATIVE
+    raise pyp_errors.PyPedalError(
+        "%s: unable to allocate a %s. %s" % (routine, size_part, hint)
+    ) from exc
+
+
+def _foundercoi_flag(pedopts):
+    """Return 0 or 1 for foundercoi; reject values outside True/False/0/1."""
+    value = pedopts.get("foundercoi", False)
+    if type(value) in (bool, int) and value in (0, 1, False, True):
+        return int(bool(value) if type(value) is bool else value)
+    raise pyp_errors.PyPedalUsageError(
+        "fast_a_matrix: foundercoi=%r is not supported. Use True, False, 1, or 0."
+        % (value,)
+    )
+
+
+def _require_dense_or_sparse(routine, method):
+    if method not in ("dense", "sparse"):
+        raise pyp_errors.PyPedalUsageError(
+            "%s: method=%r is not supported. Use 'dense' or 'sparse'."
+            % (routine, method)
+        )
+    return method
+
+
+def _alloc_float_list(n):
+    """Allocate a length-n list of 0.0; used so tests can inject MemoryError."""
+    return [0.0] * n
+
+
 def _unpack_inbreeding(result, rels):
     """Normalize inbreeding helper return values to (fx, reldict-or-None)."""
     if isinstance(result, tuple):
@@ -58,7 +104,10 @@ def _unpack_inbreeding(result, rels):
         fx = result
         reldict = None
     if fx is False or fx is None:
-        fx = {}
+        raise pyp_errors.PyPedalError(
+            "inbreeding: the coefficient routine returned no result. "
+            "This is a computation failure, not an empty pedigree."
+        )
     if rels and reldict is None:
         reldict = {}
     return fx, reldict
@@ -73,58 +122,56 @@ def a_matrix(pedobj, save=False):
     """
     logger.info('Entered a_matrix()')
 
+    l = pedobj.metadata.num_records
     try:
-        l = pedobj.metadata.num_records
-        a = np.zeros((l, l), dtype=float)  # Initialize a matrix of zeros of appropriate dimension
+        a = np.zeros((l, l), dtype=float)
+    except MemoryError as e:
+        _raise_allocation_failure("a_matrix", l, float, e)
 
-        for row in range(l):
-            for col in range(row, l):
-                # Cast IDs to integers (in case they are read as strings)
-                pedobj.pedigree[col].animalID = int(pedobj.pedigree[col].animalID)
-                pedobj.pedigree[col].sireID = int(pedobj.pedigree[col].sireID)
-                pedobj.pedigree[col].damID = int(pedobj.pedigree[col].damID)
+    for row in range(l):
+        for col in range(row, l):
+            # Cast IDs to integers (in case they are read as strings)
+            pedobj.pedigree[col].animalID = int(pedobj.pedigree[col].animalID)
+            pedobj.pedigree[col].sireID = int(pedobj.pedigree[col].sireID)
+            pedobj.pedigree[col].damID = int(pedobj.pedigree[col].damID)
 
-                if (
-                    str(pedobj.pedigree[col].sireID) == str(pedobj.kw['missing_parent'])
-                    and str(pedobj.pedigree[col].damID) == str(pedobj.kw['missing_parent'])
-                ):
-                    # Both parents unknown and assumed unrelated
-                    a[row, col] = 1.0 if row == col else 0.0
-                elif str(pedobj.pedigree[col].sireID) == str(pedobj.kw['missing_parent']):
-                    # Sire unknown, dam known
-                    a[row, col] = 1.0 if row == col else 0.5 * a[row, pedobj.pedigree[col].damID - 1]
-                elif str(pedobj.pedigree[col].damID) == str(pedobj.kw['missing_parent']):
-                    # Sire known, dam unknown
-                    a[row, col] = 1.0 if row == col else 0.5 * a[row, pedobj.pedigree[col].sireID - 1]
+            if (
+                str(pedobj.pedigree[col].sireID) == str(pedobj.kw['missing_parent'])
+                and str(pedobj.pedigree[col].damID) == str(pedobj.kw['missing_parent'])
+            ):
+                # Both parents unknown and assumed unrelated
+                a[row, col] = 1.0 if row == col else 0.0
+            elif str(pedobj.pedigree[col].sireID) == str(pedobj.kw['missing_parent']):
+                # Sire unknown, dam known
+                a[row, col] = 1.0 if row == col else 0.5 * a[row, pedobj.pedigree[col].damID - 1]
+            elif str(pedobj.pedigree[col].damID) == str(pedobj.kw['missing_parent']):
+                # Sire known, dam unknown
+                a[row, col] = 1.0 if row == col else 0.5 * a[row, pedobj.pedigree[col].sireID - 1]
+            else:
+                # Both parents known
+                if row == col:
+                    a[row, col] = 1.0 + 0.5 * a[
+                        pedobj.pedigree[col].sireID - 1, pedobj.pedigree[col].damID - 1
+                    ]
                 else:
-                    # Both parents known
-                    if row == col:
-                        a[row, col] = 1.0 + 0.5 * a[
-                            pedobj.pedigree[col].sireID - 1, pedobj.pedigree[col].damID - 1
-                        ]
-                    else:
-                        intermediate = (
-                            a[row, pedobj.pedigree[col].sireID - 1]
-                            + a[row, pedobj.pedigree[col].damID - 1]
-                        )
-                        a[row, col] = 0.5 * intermediate
+                    intermediate = (
+                        a[row, pedobj.pedigree[col].sireID - 1]
+                        + a[row, pedobj.pedigree[col].damID - 1]
+                    )
+                    a[row, col] = 0.5 * intermediate
 
-                # Symmetrize the matrix
-                a[col, row] = a[row, col]
+            # Symmetrize the matrix
+            a[col, row] = a[row, col]
 
-        if save:
-            a_outputfile = f"{pedobj.kw['filetag']}_a_matrix_.dat"
-            with open(a_outputfile, 'w') as aout:
-                for row in range(l):
-                    line = ",".join(f"{a[row, col]:.5f}" for col in range(l)) + "\n"
-                    aout.write(line)
+    if save:
+        a_outputfile = f"{pedobj.kw['filetag']}_a_matrix_.dat"
+        with open(a_outputfile, 'w') as aout:
+            for row in range(l):
+                line = ",".join(f"{a[row, col]:.5f}" for col in range(l)) + "\n"
+                aout.write(line)
 
-        logger.info('Exited a_matrix()')
-        return a
-
-    except Exception as e:
-        logger.error(f"Error in a_matrix(): {e}")
-        return np.zeros((1, 1), dtype=float)
+    logger.info('Exited a_matrix()')
+    return a
 
 
 def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, fill=1):
@@ -144,9 +191,8 @@ def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, f
     """
     logger.info('Entered fast_a_matrix()')
 
-    foundercoi = int(pedopts.get("foundercoi", 0))
-    if foundercoi not in [0, 1]:
-        foundercoi = 0
+    foundercoi = _foundercoi_flag(pedopts)
+    method = _require_dense_or_sparse("fast_a_matrix", method)
 
     ped_length = len(pedigree)
     
@@ -158,10 +204,6 @@ def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, f
     animal_ids = np.array([int(a.animalID) for a in pedigree], dtype=np.int32)
     sire_ids = np.array([int(a.sireID) for a in pedigree], dtype=np.int32)
     dam_ids = np.array([int(a.damID) for a in pedigree], dtype=np.int32)
-    
-    # Auto-select method for large pedigrees if not specified
-    if method not in ["dense", "sparse"]:
-        method = "sparse" if ped_length > 10000 else "dense"
 
     # Priority 1: Use sparse matrices by default, with better format
     use_sparse = (method == "sparse")
@@ -172,17 +214,8 @@ def fast_a_matrix(pedigree, pedopts, save=False, method='sparse', debug=False, f
             a = lil_matrix((ped_length, ped_length), dtype=np.float64)
         else:
             a = np.zeros([ped_length, ped_length], dtype="float64")
-    except MemoryError:
-        # Fallback to memmap if even sparse fails
-        if use_sparse:
-            logger.warning("Sparse matrix allocation failed, falling back to memmap")
-            use_sparse = False
-        a = np.memmap(
-            "fast_a_matrix_mmap.bin", dtype="float32", mode="w+", shape=(ped_length, ped_length)
-        )
-    except Exception as e:
-        logger.error(f"Unable to allocate a matrix of rank {ped_length} in fast_a_matrix(): {e}")
-        return False
+    except MemoryError as e:
+        _raise_allocation_failure("fast_a_matrix", ped_length, np.float64, e)
 
     # Priority 2: Eliminate string conversions - use integer comparisons directly
     # Initialize diagonal with 1.0
@@ -256,6 +289,7 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
     """
     logger.info("Entered fast_a_matrix_r()")
 
+    method = _require_dense_or_sparse("fast_a_matrix_r", method)
     ped_length = len(pedigree)
     
     # Priority 3: Pre-extract ID arrays for better performance
@@ -267,10 +301,6 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
     sire_ids = np.array([int(a.sireID) for a in pedigree], dtype=np.int32)
     dam_ids = np.array([int(a.damID) for a in pedigree], dtype=np.int32)
     
-    # Auto-select method for large pedigrees if not specified
-    if method not in ["dense", "sparse"]:
-        method = "sparse" if ped_length > 10000 else "dense"
-
     # Priority 1: Use sparse matrices by default
     use_sparse = (method == "sparse")
     
@@ -279,16 +309,8 @@ def fast_a_matrix_r(pedigree, pedopts, save=False, method="sparse"):
             a = lil_matrix((ped_length, ped_length), dtype=np.float64)
         else:
             a = np.zeros((ped_length, ped_length), dtype="float64")
-    except MemoryError:
-        if use_sparse:
-            logger.warning("Sparse matrix allocation failed, falling back to memmap")
-            use_sparse = False
-        a = np.memmap(
-            "fast_a_matrix_r_mmap.bin", dtype="float32", mode="w+", shape=(ped_length, ped_length)
-        )
-    except Exception as e:
-        logger.error(f"Unable to allocate a matrix of rank {ped_length} in fast_a_matrix_r(): {e}")
-        return False
+    except MemoryError as e:
+        _raise_allocation_failure("fast_a_matrix_r", ped_length, np.float64, e)
 
     # Priority 2: Use integer comparisons directly (no string conversions)
     for row in range(ped_length):
@@ -374,12 +396,16 @@ def inbreeding(pedobj, method='tabular', gens=0, rels=0, output=True, force=Fals
     
     valid_methods = ['vanraden', 'tabular', 'meu_luo', 'mod_meu_luo', 'aguilar']
     if method not in valid_methods:
-        logger.warning(f"Unrecognized method '{method}' provided to inbreeding(); defaulting to 'tabular'.")
-        method = 'tabular'
+        raise pyp_errors.PyPedalUsageError(
+            "inbreeding: method=%r is not supported. Use one of: %s."
+            % (method, ", ".join(repr(item) for item in valid_methods))
+        )
 
-    if gens < 0:
-        logger.warning(f"Invalid gens value '{gens}' provided to inbreeding(); defaulting to 0.")
-        gens = 0
+    if isinstance(gens, bool) or not isinstance(gens, int) or gens < 0:
+        raise pyp_errors.PyPedalUsageError(
+            "inbreeding: gens must be an integer >= 0 "
+            "(0 means the complete pedigree); got %r." % (gens,)
+        )
 
     if rels:
         rel_dict = {
@@ -639,9 +665,6 @@ def inbreeding_vanraden(pedobj, cleanmaps=True, gens=0, rels=False):
                 else:
                     _a = fast_a_matrix_r(_s, _opts, method=pedobj.kw.get('matrix_type', 'sparse'))
 
-                if _a is False:
-                    continue
-
                 for j in range(len(_s)):
                     _orig_id = _backmap[_s[j].animalID]
                     fx.setdefault(_orig_id, _coi_from_matrix(_a, j))
@@ -682,9 +705,11 @@ def inbreeding_aguilar(pedobj, amethod=3):
     pedfile = f"aguilar_pedigree_{pedobj.kw['pedname']}.txt"
     coifile = f"{pedfile}.solinb"
 
-    # Validate `amethod`
-    if amethod not in [1, 2, 3]:
-        amethod = 3
+    if isinstance(amethod, bool) or amethod not in (1, 2, 3):
+        raise pyp_errors.PyPedalUsageError(
+            "inbreeding_aguilar: amethod=%r is not supported. Use 1, 2, or 3."
+            % (amethod,)
+        )
 
     # Verbose logging
     if pedobj.kw.get('messages') == 'verbose':
@@ -1018,9 +1043,6 @@ def inbreeding_tabular(pedobj, gens=0, rels=0):
             else:
                 _a = fast_a_matrix_r(_s, _opts, method=pedobj.kw.get('matrix_type', 'dense'))
 
-            if _a is False:
-                raise RuntimeError("Unable to allocate the relationship matrix")
-
             fx = {}
             for j in range(len(_s)):
                 fx[_backmap[_s[j].animalID]] = _coi_from_matrix(_a, j)
@@ -1030,9 +1052,6 @@ def inbreeding_tabular(pedobj, gens=0, rels=0):
                 _a = fast_a_matrix(pedobj.pedigree, pedobj.kw, method=pedobj.kw.get('matrix_type', 'sparse'))
             else:
                 _a = fast_a_matrix_r(pedobj.pedigree, pedobj.kw, method=pedobj.kw.get('matrix_type', 'sparse'))
-
-            if _a is False:
-                raise RuntimeError("Unable to allocate the relationship matrix")
 
             fx = {}
             for i in range(pedobj.metadata.num_records):
@@ -1068,12 +1087,11 @@ def inbreeding_tabular(pedobj, gens=0, rels=0):
         # dangling parent reference would otherwise look like "no inbreeding".
         logger.error("inbreeding_tabular() refused", exc_info=True)
         raise
-    except Exception as e:
-        logger.error(f"Error in inbreeding_tabular(): {e}")
-        if rels:
-            return {}, {}
-        else:
-            return {}
+    except MemoryError as e:
+        raise pyp_errors.PyPedalError(
+            "inbreeding_tabular: unable to allocate working storage for the "
+            "relationship matrix."
+        ) from e
 
 
 def _require_meuwissen_luo_numbering(pedigree, missing_parent):
@@ -1163,14 +1181,14 @@ def inbreeding_meuwissen_luo(pedobj, gens=0, **kw):
 
     try:
         logger.info("Allocating vectors in inbreeding_meuwissen_luo().")
-        lvec = [0.0] * n
-        dvec = [0.0] * n
-        fvec = [0.0] * n
-    except Exception as e:
-        logger.error(
-            f"Unable to allocate vectors in inbreeding_meuwissen_luo(): {str(e)}"
-        )
-        return False
+        lvec = _alloc_float_list(n)
+        dvec = _alloc_float_list(n)
+        fvec = _alloc_float_list(n)
+    except MemoryError as e:
+        raise pyp_errors.PyPedalError(
+            "inbreeding_meuwissen_luo: unable to allocate working vectors for "
+            "%d animals (approximately %d bytes)." % (n, n * 8 * 3)
+        ) from e
 
     if pedobj.kw.get("debug_messages", False):
         print("[DEBUG]: Starting loop over pedigree with", n, "animals")
@@ -1269,10 +1287,10 @@ def inbreeding_modified_meuwissen_luo(pedobj, gens=0, **kw):
         avec = np.memmap("avec_memmap.bin", dtype="float64", mode="w+", shape=(len(pedobj.pedigree),))
         dvec = np.memmap("dvec_memmap.bin", dtype="float64", mode="w+", shape=(len(pedobj.pedigree),))
     except Exception as e:
-        logger.error(
-            f"Unable to allocate vectors in inbreeding_modified_meuwissen_luo(): {str(e)}"
-        )
-        return False
+        raise pyp_errors.PyPedalError(
+            "inbreeding_modified_meuwissen_luo: unable to allocate working "
+            "vectors for %d animals." % len(pedobj.pedigree)
+        ) from e
 
     if pedobj.kw.get("debug_messages", False):
         print(f"[DEBUG]: Starting loop over pedigree with {len(pedobj.pedigree)} animals")
@@ -1846,9 +1864,7 @@ def fast_partial_a_matrix(pedigree, founder, founderlist, pedopts, method='dense
     _sires = {}
     _dams = {}
     l = len(pedigree)
-
-    if method not in ['dense', 'sparse']:
-        method = 'dense'
+    method = _require_dense_or_sparse("fast_partial_a_matrix", method)
 
     # Use PySparse for large matrices, otherwise use NumPy
     if method == 'sparse':
@@ -1862,12 +1878,8 @@ def fast_partial_a_matrix(pedigree, founder, founderlist, pedopts, method='dense
     else:
         try:
             a = np.zeros((l, l), dtype=np.float64)
-        except MemoryError:
-            a = np.memmap('fast_partial_a_matrix_mmap.bin', dtype='float32', mode='w+', shape=(l, l))
-        except Exception:
-            print(f'[ERROR]: Unable to allocate a matrix of rank {l} in fast_partial_a_matrix()!')
-            logger.error(f'Unable to allocate a matrix of rank {l} in fast_partial_a_matrix()!')
-            return False
+        except MemoryError as e:
+            _raise_allocation_failure("fast_partial_a_matrix", l, np.float64, e)
 
     # Initialize animal, sire, and dam lists
     if pedopts.get('debug_messages') and pedopts['messages'] != 'quiet':
