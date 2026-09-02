@@ -1,10 +1,10 @@
-# macOS distribution (PyPedal 4.2-D)
+# macOS distribution (PyPedal 4.2)
 
 Engineering notes for building `PyPedal.app` and `PyPedal.dmg`. This file
 is not part of the user manual and is not in MkDocs navigation.
 
-The Python package version remains **4.1.0** until 4.2-E. CustomTkinter
-launchers (`pypedal`, `pypedal-gui`, `python -m PyPedal`) are unchanged.
+Official launchers (`pypedal`, `pypedal-gui`, `python -m PyPedal`) start
+the PySide6 desktop. CustomTkinter is not a runtime dependency.
 
 ## Automated now
 
@@ -20,9 +20,7 @@ python tools/macos/build_dmg.py \
 `./tools/macos/build_app.sh` is a compatibility wrapper around the same
 Python entry.
 
-The spec reads `[project].version` from `pyproject.toml`. Rebuilding at
-4.2.0 does not require a separate spec edit if that field (and
-`PyPedal/__version__.py`) are bumped together.
+The spec reads `[project].version` from `pyproject.toml`.
 
 Default output is outside the repository. Do not commit `.app` or `.dmg`
 artifacts.
@@ -44,8 +42,8 @@ There is no `.ped` document-type registration.
 
 Place an authoritative `tools/macos/PyPedal.icns` when one exists. The
 build wires it in automatically. No project-owned logo is in the tree
-today; do not invent one. See the D report: **FINAL APPLICATION ICON
-ASSET REQUIRED**.
+today; do not invent one. **FINAL APPLICATION ICON ASSET STILL REQUIRED
+FOR PROFESSIONAL BINARY RELEASE.**
 
 ### Smoke
 
@@ -58,13 +56,8 @@ cd /tmp
   --self-test /absolute/path/to/tiny.ped
 ```
 
-`--self-test` loads the pedigree and runs Meuwissen–Luo, Lacy founders,
-relationship, mating CoI, and theoretical Ne with `output=False`. It does
-not start the GUI.
-
 A frozen app changes its working directory to
-`~/Library/Application Support/PyPedal` so library log files are not
-written relative to Finder’s cwd. Pedigree paths remain absolute.
+`~/Library/Application Support/PyPedal`. Pedigree paths remain absolute.
 
 ## Maintainer credentials (not in this tree)
 
@@ -86,13 +79,12 @@ Expected release-time sequence (placeholders only):
 Do not store Apple IDs, app-specific passwords, API private keys, or
 keychain passwords in the repository.
 
-## Deferred to release time (4.2-E)
+## Deferred to a signed binary release
 
-- Version bump to 4.2.0 and rebuild of app + DMG
 - Application icon asset, if still missing
 - Developer ID signing and notarization, if a distribution identity exists
-- Finder double-click human confirmation (checklist in the D report)
-- Public launcher cutover away from CustomTkinter
+- Finder double-click human confirmation
+- Public macOS download publication
 
 An unsigned or ad-hoc-signed development app is expected to fail
 Gatekeeper. That is a signature-state result, not an invitation to disable

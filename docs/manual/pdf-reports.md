@@ -91,4 +91,7 @@ Prefer snake_case in new scripts.
 `pdf_mean_metric_by` writes a simple metric-by-group PDF. It is not a
 pedigree drawing.
 
-The CustomTkinter app has **no PDF menu**. Use these library functions.
+The CustomTkinter app had no PDF menu. The PySide6 desktop can export a
+metadata PDF and a three-generation PDF from **File → Export** when the
+`reports` extra is installed. The library functions remain available
+for scripts.

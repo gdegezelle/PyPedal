@@ -1,4 +1,4 @@
-# PyPedal 4.1.0
+# PyPedal 4.2.0
 
 PyPedal is a Python package for **pedigree analysis**. It loads a recorded
 animal pedigree, checks common data problems, and computes inbreeding,
@@ -11,7 +11,7 @@ summaries.
 **Python:** Python 3.12 or newer (3.12, 3.13, and 3.14)
 
 This repository is a standalone Python 3 port of Cole’s PyPedal 2.0.4.
-This is **PyPedal 4.1.0**. It **has not been published** to PyPI.
+This is **PyPedal 4.2.0**. It **has not been published** to PyPI.
 
 ## What you can compute
 
@@ -21,7 +21,7 @@ This is **PyPedal 4.1.0**. It **has not been published** to PyPI.
 - Gene dropping
 - Optional Graphviz / matplotlib drawings (`graphics` extra)
 - Optional headless PDF reports (`reports` extra)
-- Optional CustomTkinter desktop app (`gui` extra)
+- Optional PySide6 desktop app (`gui` extra)
 
 Bounds of those capabilities are in the [user manual](docs/manual/index.md).
 
@@ -71,7 +71,7 @@ For large files use `method="meu_luo"`. There is no automatic switch at
 (`PyPedal/examples/griffonbruxellois_2026_pyp.ped`; checkout/sdist only;
 comma-separated `asdxb`, 2026 export with recorded births through 2025).
 
-Desktop app: `python -m PyPedal` or `pypedal`.
+Desktop app: `python -m PyPedal` or `pypedal` (requires `PyPedal[gui]`).
 
 ```bash
 python verify_setup.py
@@ -82,7 +82,7 @@ python -m pytest tests/ -m "not integration" -q
 
 - [User manual](docs/manual/index.md)
 - [Changelog](CHANGELOG.md)
-- [Migration from 2.0.4 and 4.0.x](MIGRATION.md)
+- [Migration from 2.0.4, 4.0.x, and 4.1.x](MIGRATION.md)
 - [Contributing](CONTRIBUTING.md)
 - [Third-party notices](THIRD-PARTY.md)
 

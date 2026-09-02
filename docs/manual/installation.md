@@ -37,7 +37,8 @@ extras.
 
 | Extra | What it adds |
 |---|---|
-| `gui` | CustomTkinter desktop app (`python -m PyPedal` or `pypedal`; not a command-line analysis CLI) |
+| `gui` | PySide6 desktop (`python -m PyPedal` or `pypedal`; alias of `desktop`) |
+| `desktop` | PySide6 desktop (same dependency as `gui`) |
 | `graphics` | matplotlib, pydot, Graphviz Python bindings, Pillow |
 | `graphviz-extra` | pygraphviz (needed by some drawing functions) |
 | `reports` | ReportLab; headless PDF pedigree reports |
@@ -57,7 +58,7 @@ import PyPedal
 print(PyPedal.__version__)
 ```
 
-On this line that prints `4.1.0`.
+On this line that prints `4.2.0`.
 
 From a repository checkout you can also run:
 

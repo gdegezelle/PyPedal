@@ -4,6 +4,8 @@ This guide is for users of PyPedal 2.0.4 who are moving to PyPedal 4.0.
 It describes user-facing differences, not an engineering history. Callers
 already on PyPedal 4.0.x should skip to
 [PyPedal 4.0.x to PyPedal 4.1.0](#pypedal-40x-to-pypedal-410).
+Callers already on 4.1.x should skip to
+[PyPedal 4.1.x to PyPedal 4.2.0](#pypedal-41x-to-pypedal-420).
 
 PyPedal 4 is a Python 3 reimplementation of Cole’s 2.0.4 library. Some
 results match 2.0.4 exactly. Some differ because the 4.0 behaviour is the
@@ -137,10 +139,11 @@ automatic duplicate scavenger.
 
 ## Reports, GUI, database
 
-- PDF pedigree reports need the `reports` extra (ReportLab). They are
-  library functions, not GUI menus.
-- The desktop app is CustomTkinter (`python -m PyPedal` or `pypedal`).
-  wxPython is gone.
+- PDF pedigree reports need the `reports` extra (ReportLab). The PySide6
+  desktop can export a metadata PDF and a three-generation PDF from
+  **File → Export**.
+- The desktop app is PySide6 (`python -m PyPedal` or `pypedal`). The
+  `gui` extra installs PySide6. CustomTkinter and wxPython are gone.
 - SQLite uses stdlib `sqlite3`. SQLAlchemy, pyDAL, and ADOdb are not
   PyPedal 4 options.
 
@@ -252,6 +255,36 @@ Automatic Lacy renumbering has not been removed.
 Selected long-running operations accept an optional `progress=`
 callback. The default is `None` and preserves 4.0.x results. Not every
 function reports progress. There is no cancellation API.
+
+## PyPedal 4.1.x to PyPedal 4.2.0
+
+Scientific formulas and 4.1 result/`output=` behaviour are unchanged.
+No migration step is required for library callers.
+
+### Desktop toolkit
+
+The optional GUI extra is PySide6, not CustomTkinter.
+
+```bash
+pip install "PyPedal[gui]"
+```
+
+`gui` is an alias of `desktop`. Both install PySide6.
+
+`pypedal`, `pypedal-gui`, and `python -m PyPedal` launch the PySide6
+desktop. The temporary `pypedal-qt` command is removed.
+
+`import PyPedal.pyp_app` still succeeds. `pyp_app.main()` delegates to
+the PySide6 desktop. CustomTkinter widget classes and CTk-era GUI
+helpers are gone.
+
+`import PyPedal` and `import PyPedal.application` still do not require
+PySide6.
+
+### Relationship and Mating IDs
+
+Those desktop pages use **current (renumbered) animal IDs**. Name and
+original-ID lookup are not provided in 4.2.
 
 ## Where to read next
 

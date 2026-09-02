@@ -4,33 +4,42 @@ All notable changes to PyPedal are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 where practical. Version identifiers follow [Semantic Versioning](https://semver.org/)
-and PEP 440 (`4.1.0`).
+and PEP 440 (`4.2.0`).
 
 ## [Unreleased]
 
+## [4.2.0] — 2026-09-02
+
+Minor release. It has not been published to PyPI. Engineering macOS
+`.app` / `.dmg` packaging exists; the development artifacts are not
+signed or notarized.
+
 ### Added
 
-- Added a Qt-free application/session layer in preparation for the PySide6
-  desktop replacement.
-- Initial PySide6 desktop shell and scalable pedigree browser
-  (`pypedal-qt`, `python -m PyPedal.desktop`). CustomTkinter remains the
-  `pypedal` / `pypedal-gui` application during this development cycle.
-- Qt desktop analysis workflows: Meuwissen–Luo inbreeding, inbreeding by
-  year (cache reuse), Lacy effective founders, pairwise relationship,
-  mating CoI (pair and explicit group), theoretical Ne from metadata,
-  pedigree Save As, and explicit UTF-8 result export. Analysis jobs use
-  `output=False`; `.dat` files are not written on Run.
-- Optional pedigree metadata and three-generation PDF export in the Qt
-  desktop (`File -> Export`), using existing `pyp_reports` APIs. ReportLab
-  remains the `reports` extra.
-- macOS `PyPedal.app` / engineering `PyPedal.dmg` packaging commands
+- Qt-free application/session layer between the desktop and the scientific
+  library.
+- PySide6 desktop: native File menu, scalable animal table (including the
+  ~98k Griffon sample), background load/progress, Meuwissen–Luo inbreeding,
+  inbreeding by year from the inbreeding cache, Lacy effective founders,
+  pairwise relationship, mating CoI (pair and explicit group), theoretical
+  Ne, Save Pedigree As, UTF-8 result export, and optional metadata /
+  three-generation PDF export (`reports` extra).
+- macOS `PyPedal.app` / engineering `PyPedal.dmg` packaging
   (`tools/macos/build_app.py`, `tools/macos/build_dmg.py`).
 
 ### Changed
 
-- Qt desktop Open is a native File-menu command (`Open…`, platform Open
-  shortcut). The Open toolbar is gone. The packaged macOS app identifies
-  as PyPedal. The Metadata page is a compact top-aligned inspector.
+- `pypedal`, `pypedal-gui`, and `python -m PyPedal` launch the PySide6
+  desktop. The `gui` extra installs PySide6 (alias of `desktop`).
+- `PyPedal.pyp_app` is a thin compatibility launcher that delegates to
+  `PyPedal.desktop`.
+- Open is **File → Open…** only. There is no Open toolbar or in-window
+  Open button.
+
+### Removed
+
+- CustomTkinter desktop implementation and runtime dependency.
+- Temporary `pypedal-qt` console script.
 
 ## [4.1.0] — 2026-09-01
 

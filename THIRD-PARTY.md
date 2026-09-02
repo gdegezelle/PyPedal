@@ -30,10 +30,10 @@ ADOdb’s license is not a PyPedal project license.
 ## Ordinary Python dependencies
 
 NumPy, pandas, SciPy, NetworkX, and optional extras (matplotlib, Graphviz
-bindings, ReportLab, CustomTkinter, PySide6) are external packages. They are
+bindings, ReportLab, PySide6) are external packages. They are
 not bundled as source in this repository.
 
-PySide6 6.11.2 (the current optional `desktop` extra) declares its PyPI
+PySide6 6.11.2 (the current optional `desktop` / `gui` extra) declares its PyPI
 distribution license as `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only`
 in installed package metadata (`License:` field of `PySide6-6.11.2.dist-info/METADATA`).
 The project homepage listed there is https://pyside.org.

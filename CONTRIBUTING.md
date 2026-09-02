@@ -69,9 +69,7 @@ mkdocs build --strict -d /tmp/pypedal-user-manual
 
 `PyPedal.application` is a Qt-free session and load layer between the
 PySide6 desktop and the scientific library. `PyPedal.desktop` is the
-PySide6 UI (`pypedal-qt`, `python -m PyPedal.desktop`). During 4.2-B,
-`pypedal`, `pypedal-gui`, and `python -m PyPedal` still launch
-CustomTkinter.
+PySide6 UI. `pypedal`, `pypedal-gui`, and `python -m PyPedal` launch it.
 
 Permanent dependency direction:
 
@@ -83,14 +81,8 @@ Scientific modules must not import application or desktop. Application
 must not import GUI toolkits (`PySide6`, `tkinter`, `customtkinter`).
 Desktop should reach science through application adapters.
 
-The 4.2-A test that forbids *application* imports of analysis modules
-(`pyp_nrm`, `pyp_metrics`, …) is an A-scope restriction. 4.2-C will add
-application job adapters that call those APIs. The permanent prohibition
-is only the reverse dependency.
-
 Architecture tests under `tests/test_application/` and
-`tests/test_desktop/` enforce the direction that is in force for the
-current workstream.
+`tests/test_desktop/` enforce that direction.
 
 ## Lint
 

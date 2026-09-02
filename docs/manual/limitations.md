@@ -39,7 +39,8 @@ See [PDF reports](pdf-reports.md).
 
 - ReportLab is optional. Calling a PDF API without it raises
   `PyPedalDependencyError`.
-- The APIs are headless. The CustomTkinter app does not host PDF menus.
+- The APIs are headless. The PySide6 desktop can also export those PDFs
+  from **File → Export** when ReportLab is installed.
 - Three-generation subjects are current `animalID` values. Layout depth is
   the historical 15-slot pedigree (proband + three ancestral generations).
 
@@ -160,7 +161,7 @@ replacement. See [Saving, pickle, and SQLite](saving-and-exporting.md).
 
 ### Historical wxPython GUI
 
-The 4.0 application is CustomTkinter.
+The 4.2 application is PySide6.
 See [Desktop application](desktop-application.md).
 
 ### `pyp_network.dyad_census`

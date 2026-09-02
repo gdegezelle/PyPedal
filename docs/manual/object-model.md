@@ -50,7 +50,7 @@ renumbered order.
 ## Data state: factual, derived, and cached
 
 A loaded pedigree mixes three kinds of data. The same attribute name can
-move from one role to another. PyPedal 4.1.0 does not split those roles
+move from one role to another. PyPedal 4.2.0 does not split those roles
 into separate fields.
 
 ### Factual / loaded
@@ -107,7 +107,7 @@ previously loaded `fa` column.
 1. After load, if the file had an `f` column, `fa` is the **loaded**
    coefficient and `kw["f_computed"]` is set `True`.
 2. After `inbreeding()`, `fa` is overwritten with the **computed**
-   coefficient for that animal. PyPedal 4.1.0 keeps a single `fa` field;
+   coefficient for that animal. PyPedal 4.2.0 keeps a single `fa` field;
 it does not store a parallel loaded copy.
 
 If you need the file value after computing inbreeding, keep your own
