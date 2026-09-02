@@ -11,7 +11,7 @@ from PySide6.QtCore import QCoreApplication
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
 
-from PyPedal.desktop.app import apply_application_identity, create_application
+from PyPedal.desktop.app import apply_application_identity, create_application, prepare_frozen_cwd
 
 _TEST_ORG = "PyPedalTests"
 _TEST_APP = "PyPedalDesktopTests"
@@ -44,3 +44,7 @@ def test_create_application_sets_native_identity() -> None:
         assert app.applicationVersion() == "4.1.0"
     finally:
         _restore_test_identity()
+
+
+def test_prepare_frozen_cwd_is_a_noop_when_not_frozen() -> None:
+    assert prepare_frozen_cwd() is None

@@ -49,6 +49,17 @@ def test_python_m_desktop_version() -> None:
     assert proc.stdout.strip() == PYPEDAL_VERSION
 
 
+def test_self_test_runs_jobs_without_qapplication(tmp_path) -> None:
+    from _pedhelpers import close_owned_pypedal_log_handlers
+
+    pedigree = tmp_path / "mrode.ped"
+    pedigree.write_text("1 0 0\n2 0 0\n3 1 2\n4 1 0\n5 4 3\n6 5 2\n", encoding="utf-8")
+    try:
+        assert main(["--self-test", str(pedigree)]) == 0
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
 def test_import_desktop_does_not_import_pyside() -> None:
     script = (
         "import sys\n"
