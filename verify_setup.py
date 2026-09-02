@@ -175,6 +175,7 @@ OPTIONAL_DEPENDENCIES = {
     },
     'reports': {'reportlab': 'ReportLab'},
     'gui': {'customtkinter': 'CustomTkinter'},
+    'desktop': {'PySide6': 'PySide6'},
     'graphviz-extra': {'pygraphviz': 'PyGraphviz'},
 }
 

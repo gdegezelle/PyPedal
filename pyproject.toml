@@ -53,6 +53,13 @@ dependencies = [
 graphics = ["matplotlib", "pydot", "graphviz", "pillow"]
 reports = ["reportlab"]
 gui = ["customtkinter"]
+# PySide6 6.11.2 (PyPI, 2026-08-18) declares requires-python >=3.10,<3.15 and
+# publishes cp312/cp313/cp314 wheels. That covers this project's 3.12–3.14
+# library floor. CustomTkinter remains the `gui` extra until 4.2-E.
+desktop = ["PySide6>=6.11.2"]
+desktop-test = ["PySide6>=6.11.2", "pytest-qt>=4.5.0"]
+# PyInstaller is a build tool for the macOS .app spike, not a runtime extra.
+macos-app = ["PySide6>=6.11.2", "pyinstaller>=6.14"]
 graphviz-extra = ["pygraphviz"]
 test = ["pytest", "pypdf", "setuptools>=64", "wheel"]
 # Every FEATURE, so a user can install the whole library. Deliberately not the
@@ -64,6 +71,7 @@ all = [
     "pillow",
     "reportlab",
     "customtkinter",
+    "PySide6>=6.11.2",
 ]
 # Development toolchain. Not part of `all` -- installing PyPedal to use it
 # should not drag in a linter and a type checker.
@@ -85,6 +93,7 @@ docs = [
 
 [project.scripts]
 pypedal = "PyPedal.pyp_app:main"
+pypedal-qt = "PyPedal.desktop.main:main"
 
 [project.gui-scripts]
 pypedal-gui = "PyPedal.pyp_app:main"
@@ -123,6 +132,7 @@ markers = [
     "integration: runs example scripts or large pedigrees as subprocesses; slow, deselected by default and run explicitly in CI",
     "docs: user-manual existence and example-contract tests; optional selector, not a separate release gate",
     "packaging: version, license, wheel, and verify_setup identity tests; optional selector, not a separate release gate",
+    "desktop: PySide6 widget and model tests; skipped when the desktop extra is absent",
 ]
 
 [tool.ruff]
@@ -158,6 +168,10 @@ ignore = [
 # Re-exports for backwards compatibility; the names are unused by design.
 "PyPedal/__init__.py" = ["F401"]
 "tests/oracles/__init__.py" = ["F401", "E402"]
+"tests/test_desktop/test_model.py" = ["E402"]
+"tests/test_desktop/test_widgets.py" = ["E402"]
+"tests/test_desktop/test_window.py" = ["E402"]
+"tests/test_desktop/test_griffon_scale.py" = ["E402"]
 
 [tool.ruff.format]
 # Format is checked on changed files only. There is no whole-tree
@@ -191,6 +205,13 @@ warn_unused_ignores = true
 # New application-layer code is typed. Legacy pyp_* modules stay on the
 # reporting-only settings above.
 module = ["PyPedal.application", "PyPedal.application.*"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = ["PyPedal.desktop", "PyPedal.desktop.*"]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
