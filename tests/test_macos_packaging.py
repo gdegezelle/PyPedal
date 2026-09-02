@@ -41,7 +41,7 @@ def test_submodule_filter_drops_ctk_and_tests() -> None:
     assert config.keep_submodule("PyPedal.application.jobs") is True
     assert config.keep_submodule("PyPedal.desktop.pages.inbreeding") is True
     assert config.keep_submodule("PyPedal.pyp_app") is False
-    assert config.keep_submodule("PyPedal.pyp_tests") is False
+    assert config.keep_submodule("PyPedal.pyp_tests") is True
     assert config.keep_submodule("PyPedal.examples.new_methods") is False
 
 

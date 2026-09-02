@@ -69,7 +69,6 @@ a = Analysis(  # noqa: F821
         "IPython",
         "pytest",
         "PyPedal.pyp_app",
-        "PyPedal.pyp_tests",
         "PyPedal.examples",
     ],
     noarchive=False,
