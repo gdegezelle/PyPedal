@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout
+from PySide6.QtWidgets import QHeaderView, QLabel, QPushButton, QTableView, QVBoxLayout
 
 
 def add_analysis_header(layout: QVBoxLayout, title: str, explanation: str) -> None:
@@ -13,6 +13,16 @@ def add_analysis_header(layout: QVBoxLayout, title: str, explanation: str) -> No
     note.setObjectName("analysis_explanation")
     layout.addWidget(heading)
     layout.addWidget(note)
+
+
+def configure_result_table(view: QTableView) -> None:
+    """Native table settings so result columns remain usable when resized."""
+    view.setSortingEnabled(True)
+    view.setAlternatingRowColors(True)
+    view.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
+    view.verticalHeader().setVisible(False)
+    view.horizontalHeader().setStretchLastSection(True)
+    view.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
 
 
 def make_run_button(text: str = "Run") -> QPushButton:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -12,6 +13,27 @@ from PySide6.QtWidgets import QApplication
 from PyPedal.__version__ import version as PYPEDAL_VERSION
 from PyPedal.desktop.main_window import MainWindow
 from PyPedal.desktop.settings import APPLICATION_NAME, ORGANIZATION_NAME, DesktopSettings
+
+
+def user_data_directory() -> Path:
+    """Directory for logs when the process cwd is not a project tree."""
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "PyPedal"
+    return Path.home() / ".pypedal"
+
+
+def prepare_frozen_cwd() -> Path | None:
+    """Give a frozen app a writable cwd so pedigree logs are not cwd-relative.
+
+    Finder launches often start with ``/`` or a useless directory. Scientific
+    loads still use the absolute pedigree path chosen by the user.
+    """
+    if not getattr(sys, "frozen", False):
+        return None
+    target = user_data_directory()
+    target.mkdir(parents=True, exist_ok=True)
+    os.chdir(target)
+    return target
 
 
 def apply_application_identity() -> None:
@@ -54,6 +76,7 @@ def create_application(argv: list[str] | None = None) -> QApplication:
 
 def run_desktop(pedigree: Path | None = None) -> int:
     """Show the main window and run the Qt event loop."""
+    prepare_frozen_cwd()
     app = create_application()
     window = MainWindow(DesktopSettings())
     window.show()

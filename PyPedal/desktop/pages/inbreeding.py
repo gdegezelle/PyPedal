@@ -10,6 +10,7 @@ from PyPedal.desktop.models.analysis_tables import InbreedingResultTableModel
 from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_value
 from PyPedal.desktop.pages.analysis_chrome import (
     add_analysis_header,
+    configure_result_table,
     make_export_button,
     make_run_button,
 )
@@ -52,9 +53,7 @@ class InbreedingPage(QWidget):
         self.view = QTableView()
         self.view.setObjectName("inbreeding_table")
         self.view.setModel(self.model)
-        self.view.setSortingEnabled(True)
-        self.view.setAlternatingRowColors(True)
-        self.view.verticalHeader().setVisible(False)
+        configure_result_table(self.view)
 
         self.run_button = make_run_button("Run inbreeding")
         self.run_button.clicked.connect(self.run_requested.emit)

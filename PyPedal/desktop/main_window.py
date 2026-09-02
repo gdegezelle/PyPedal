@@ -8,6 +8,7 @@ from pathlib import Path
 from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
 from PySide6.QtWidgets import (
     QFileDialog,
+    QInputDialog,
     QLabel,
     QListWidget,
     QListWidgetItem,
@@ -32,6 +33,8 @@ from PyPedal.application import (
     YearInbreedingOutcome,
     export_inbreeding_csv,
     export_mating_group_csv,
+    export_metadata_pdf,
+    export_three_gen_pdf,
     export_year_inbreeding_csv,
     parse_animal_id,
     run_effective_founders,
@@ -156,6 +159,17 @@ class MainWindow(QMainWindow):
         self.save_action.setShortcut(QKeySequence.StandardKey.SaveAs)
         self.save_action.triggered.connect(self.save_pedigree_as)
         file_menu.addAction(self.save_action)
+
+        self.export_menu = file_menu.addMenu("Export")
+        self.export_menu.setObjectName("menu_export")
+        self.pdf_metadata_action = QAction("Metadata Report as PDF…", self)
+        self.pdf_metadata_action.setObjectName("action_pdf_metadata")
+        self.pdf_metadata_action.triggered.connect(self.export_metadata_pdf_report)
+        self.export_menu.addAction(self.pdf_metadata_action)
+        self.pdf_three_gen_action = QAction("Three-Generation Pedigree as PDF…", self)
+        self.pdf_three_gen_action.setObjectName("action_pdf_three_gen")
+        self.pdf_three_gen_action.triggered.connect(self.export_three_gen_pdf_report)
+        self.export_menu.addAction(self.pdf_three_gen_action)
 
         self.close_action = QAction("Close Pedigree", self)
         self.close_action.setObjectName("action_close")
@@ -406,6 +420,8 @@ class MainWindow(QMainWindow):
         self.open_action.setEnabled(not busy)
         self.recent_menu.setEnabled(not busy)
         self.save_action.setEnabled(not busy and not empty)
+        self.pdf_metadata_action.setEnabled(not busy and not empty)
+        self.pdf_three_gen_action.setEnabled(not busy and not empty)
         self.close_action.setEnabled(not busy and not empty)
         for button in self._analysis_buttons():
             button.setEnabled(not busy and not empty)
@@ -453,15 +469,19 @@ class MainWindow(QMainWindow):
         empty = self.session.is_empty
         self.close_action.setEnabled(not empty and not self._busy)
         self.save_action.setEnabled(not empty and not self._busy)
+        self.pdf_metadata_action.setEnabled(not empty and not self._busy)
+        self.pdf_three_gen_action.setEnabled(not empty and not self._busy)
         for button in self._analysis_buttons():
             button.setEnabled(not empty and not self._busy)
         if empty:
             self.status_file.setText("No pedigree")
             self.status_count.setText("")
+            self.setWindowFilePath("")
             return
         source = self.session.source_path
         name = source.name if source is not None else "pedigree"
         self.status_file.setText(name)
+        self.setWindowFilePath(str(source) if source is not None else "")
         pedigree = self.session.pedigree
         count = len(pedigree.pedigree) if pedigree is not None else 0
         self.status_count.setText(f"{count:,} animals")
@@ -609,6 +629,62 @@ class MainWindow(QMainWindow):
         self._start_analysis(
             f"Saving {destination.name}",
             lambda _progress: save_pedigree(session, destination, overwrite=True),
+            lambda _result: None,
+        )
+
+    def _choose_pdf_path(self, title: str, suggested: str) -> Path | None:
+        path, _selected = QFileDialog.getSaveFileName(
+            self,
+            title,
+            suggested,
+            "PDF files (*.pdf);;All files (*)",
+        )
+        if not path:
+            return None
+        return Path(path)
+
+    def export_metadata_pdf_report(self) -> None:
+        if self._busy or self.session.is_empty:
+            return
+        suggested = "metadata.pdf"
+        source = self.session.source_path
+        if source is not None:
+            suggested = str(source.with_name(f"{source.stem}_metadata.pdf"))
+        path = self._choose_pdf_path("Export metadata report", suggested)
+        if path is None:
+            return
+        session = self.session
+        self._start_analysis(
+            f"Writing {path.name}",
+            lambda _progress: export_metadata_pdf(session, path, overwrite=True),
+            lambda _result: None,
+        )
+
+    def export_three_gen_pdf_report(self) -> None:
+        if self._busy or self.session.is_empty:
+            return
+        suggested_id = self.animals_page.selected_animal_id()
+        text, accepted = QInputDialog.getText(
+            self,
+            "Three-generation pedigree",
+            "Current animal ID:",
+            text="" if suggested_id is None else str(suggested_id),
+        )
+        if not accepted:
+            return
+        try:
+            animal_id = parse_animal_id(text, label="Animal ID")
+        except Exception as exc:
+            show_application_error(self, exc, "")
+            return
+        suggested = f"three_generation_{animal_id}.pdf"
+        path = self._choose_pdf_path("Export three-generation pedigree", suggested)
+        if path is None:
+            return
+        session = self.session
+        self._start_analysis(
+            f"Writing {path.name}",
+            lambda _progress: export_three_gen_pdf(session, animal_id, path, overwrite=True),
             lambda _result: None,
         )
 

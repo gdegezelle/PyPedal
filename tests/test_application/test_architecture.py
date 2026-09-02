@@ -103,13 +103,13 @@ def test_application_job_adapters_may_import_scientific_modules():
     """4.2-A forbade this because A had no job adapters.
 
     4.2-C introduces explicit adapters in ``jobs.py``. Application MAY
-    import scientific modules. Scientific modules still MUST NOT import
-    application or desktop.
+    import scientific modules including ``pyp_reports``. Scientific modules
+    still MUST NOT import application or desktop.
     """
     jobs = APPLICATION / "jobs.py"
     tree = ast.parse(jobs.read_text(encoding="utf-8"), filename=str(jobs))
     imported = _imported_names(tree) | _from_import_modules(tree)
-    scientific = {"pyp_nrm", "pyp_metrics"}
+    scientific = {"pyp_nrm", "pyp_metrics", "pyp_reports"}
     hits = {name.split(".")[-1] for name in imported} & scientific
     assert hits == scientific
 

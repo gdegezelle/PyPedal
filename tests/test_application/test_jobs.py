@@ -11,6 +11,8 @@ from PyPedal.application import (
     PedigreeOpenOptions,
     PedigreeSession,
     ensure_inbreeding,
+    export_metadata_pdf,
+    export_three_gen_pdf,
     load_into_session,
     parse_animal_id,
     require_pedigree,
@@ -23,7 +25,7 @@ from PyPedal.application import (
     run_theoretical_ne,
     save_pedigree,
 )
-from PyPedal.pyp_errors import PyPedalError, PyPedalUsageError
+from PyPedal.pyp_errors import PyPedalDependencyError, PyPedalError, PyPedalUsageError
 from PyPedal.pyp_results import InbreedingResult
 
 MRODE = """\
@@ -199,6 +201,44 @@ def test_save_pedigree_writes_and_refuses_overwrite(tmp_path: Path) -> None:
         with pytest.raises(PyPedalUsageError, match="already exists"):
             save_pedigree(session, dest)
         save_pedigree(session, dest, overwrite=True)
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_metadata_and_three_gen_pdf(tmp_path: Path) -> None:
+    session = _load(tmp_path, MRODE)
+    meta = tmp_path / "metadata.pdf"
+    three = tmp_path / "three.pdf"
+    try:
+        written = export_metadata_pdf(session, meta)
+        assert written == meta.resolve()
+        assert meta.is_file()
+        assert meta.stat().st_size > 0
+        with pytest.raises(PyPedalUsageError, match="already exists"):
+            export_metadata_pdf(session, meta)
+        pedigree = session.pedigree
+        assert pedigree is not None
+        animal = next(item for item in pedigree.pedigree if item.originalID == 5)
+        export_three_gen_pdf(session, animal.animalID, three)
+        assert three.is_file()
+        assert three.stat().st_size > 0
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_pdf_missing_reportlab_is_dependency_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session = _load(tmp_path)
+    import PyPedal.application.jobs as jobs
+
+    def missing(*_args: object, **_kwargs: object) -> None:
+        raise PyPedalDependencyError("PDF reports require ReportLab")
+
+    monkeypatch.setattr(jobs, "pdf_pedigree_metadata", missing)
+    try:
+        with pytest.raises(PyPedalDependencyError, match="ReportLab"):
+            export_metadata_pdf(session, tmp_path / "x.pdf")
     finally:
         close_owned_pypedal_log_handlers()
 

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QLineEdit, QTableView, QVBoxLayout, QWidget
 
+from PyPedal.application import BROWSE_COLUMNS
 from PyPedal.desktop.models.pedigree_table import PedigreeFilterProxy, PedigreeTableModel
 
 FILTER_DEBOUNCE_MS = 250
+_ANIMAL_ID_COLUMN = next(i for i, column in enumerate(BROWSE_COLUMNS) if column.key == "animalID")
 
 
 class AnimalsPage(QWidget):
@@ -56,3 +58,21 @@ class AnimalsPage(QWidget):
         """Apply the current search without waiting for debounce (tests)."""
         self._debounce.stop()
         self._apply_filter()
+
+    def selected_animal_id(self) -> int | None:
+        """Return the current-row animal ID, or ``None`` if nothing is selected."""
+        selection = self.view.selectionModel()
+        if selection is None:
+            return None
+        rows = selection.selectedRows()
+        if not rows:
+            return None
+        raw = self.proxy.data(
+            self.proxy.index(rows[0].row(), _ANIMAL_ID_COLUMN),
+            Qt.ItemDataRole.UserRole,
+        )
+        if isinstance(raw, int):
+            return raw
+        if isinstance(raw, str) and raw.isdigit():
+            return int(raw)
+        return None

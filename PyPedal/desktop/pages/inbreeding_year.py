@@ -11,6 +11,7 @@ from PyPedal.application import InbreedingByYearRow
 from PyPedal.desktop.models.analysis_tables import YearInbreedingTableModel
 from PyPedal.desktop.pages.analysis_chrome import (
     add_analysis_header,
+    configure_result_table,
     make_export_button,
     make_run_button,
 )
@@ -31,9 +32,7 @@ class InbreedingYearPage(QWidget):
         self.view = QTableView()
         self.view.setObjectName("year_table")
         self.view.setModel(self.model)
-        self.view.setSortingEnabled(True)
-        self.view.setAlternatingRowColors(True)
-        self.view.verticalHeader().setVisible(False)
+        configure_result_table(self.view)
         self.run_button = make_run_button("Summarize by year")
         self.run_button.clicked.connect(self.run_requested.emit)
         self.export_button = make_export_button()

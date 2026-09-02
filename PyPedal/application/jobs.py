@@ -10,8 +10,8 @@ Mutation
 - ``run_effective_founders``: mutates the pedigree only if Lacy's
   compatibility path actually renumbers.
 - ``run_relationship``, ``run_mating_coi``, ``run_mating_coi_group``,
-  ``run_theoretical_ne``, ``save_pedigree``: read-only with respect to
-  coefficients (save writes a file the user chose).
+  ``run_theoretical_ne``, ``save_pedigree``, PDF exports: read-only with
+  respect to coefficients (save/PDF write a file the user chose).
 
 Progress
 --------
@@ -39,6 +39,7 @@ from PyPedal.pyp_metrics import (
 )
 from PyPedal.pyp_newclasses import NewPedigree
 from PyPedal.pyp_nrm import inbreeding
+from PyPedal.pyp_reports import pdf_pedigree_metadata, pdf_three_gen_ped
 from PyPedal.pyp_results import (
     EffectiveFoundersResult,
     InbreedingResult,
@@ -205,6 +206,40 @@ def run_theoretical_ne(session: PedigreeSession) -> float:
     return value
 
 
+def _destination(path: Path, *, overwrite: bool) -> Path:
+    resolved = path.expanduser().resolve()
+    if resolved.exists() and not overwrite:
+        raise PyPedalUsageError(f"{resolved} already exists.")
+    return resolved
+
+
+def export_metadata_pdf(
+    session: PedigreeSession,
+    destination: Path,
+    *,
+    overwrite: bool = False,
+) -> Path:
+    """Write the existing pedigree-metadata PDF to an explicit path."""
+    pedigree = require_pedigree(session)
+    path = _destination(destination, overwrite=overwrite)
+    pdf_pedigree_metadata(pedigree, reportfile=str(path))
+    return path
+
+
+def export_three_gen_pdf(
+    session: PedigreeSession,
+    animal_id: int,
+    destination: Path,
+    *,
+    overwrite: bool = False,
+) -> Path:
+    """Write the existing three-generation pedigree PDF for one animal ID."""
+    pedigree = require_pedigree(session)
+    path = _destination(destination, overwrite=overwrite)
+    pdf_three_gen_ped(animal_id, pedigree, reportfile=str(path))
+    return path
+
+
 def save_pedigree(
     session: PedigreeSession,
     destination: Path,
@@ -215,9 +250,7 @@ def save_pedigree(
 ) -> Path:
     """Write the loaded pedigree to ``destination`` via ``NewPedigree.save``."""
     pedigree = require_pedigree(session)
-    path = destination.expanduser().resolve()
-    if path.exists() and not overwrite:
-        raise PyPedalUsageError(f"{path} already exists.")
+    path = _destination(destination, overwrite=overwrite)
     fmt = pedformat
     if fmt is None and session.load_options is not None:
         fmt = session.load_options.pedformat

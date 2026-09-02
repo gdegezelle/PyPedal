@@ -20,6 +20,7 @@ from PyPedal.desktop.models.analysis_tables import MatingResultTableModel
 from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_value
 from PyPedal.desktop.pages.analysis_chrome import (
     add_analysis_header,
+    configure_result_table,
     make_export_button,
     make_run_button,
 )
@@ -61,7 +62,7 @@ class MatingPage(QWidget):
         self.group_view = QTableView()
         self.group_view.setObjectName("mating_group_table")
         self.group_view.setModel(self.group_model)
-        self.group_view.verticalHeader().setVisible(False)
+        configure_result_table(self.group_view)
 
         self.run_button = make_run_button("Run pair")
         self.run_button.clicked.connect(self.run_pair_requested.emit)
