@@ -12,6 +12,8 @@ environment named `pypedal3_env` is the convention in this repository.
 conda create -n pypedal3_env python=3.12
 conda activate pypedal3_env
 python -m pip install -e ".[gui,graphics,reports,test,docs,dev]"
+# Optional Qt desktop during 4.2-B:
+# python -m pip install -e ".[desktop-test]"
 ```
 
 A venv works the same way with `python3 -m venv .venv`.
@@ -63,14 +65,32 @@ python -m pip install -e ".[docs]"
 mkdocs build --strict -d /tmp/pypedal-user-manual
 ```
 
-## Application layer
+## Application and desktop layers
 
-`PyPedal.application` is a Qt-free session and load layer between a future
-PySide6 desktop and the scientific library. Scientific modules
-(`PyPedal/pyp_*.py`, except the temporary CustomTkinter `pyp_app.py`) must
-not import it. The application package must not import GUI toolkits
-(`PySide6`, `tkinter`, `customtkinter`). Architecture tests under
-`tests/test_application/` enforce that direction.
+`PyPedal.application` is a Qt-free session and load layer between the
+PySide6 desktop and the scientific library. `PyPedal.desktop` is the
+PySide6 UI (`pypedal-qt`, `python -m PyPedal.desktop`). During 4.2-B,
+`pypedal`, `pypedal-gui`, and `python -m PyPedal` still launch
+CustomTkinter.
+
+Permanent dependency direction:
+
+```
+PyPedal.desktop  →  PyPedal.application  →  scientific pyp_* modules
+```
+
+Scientific modules must not import application or desktop. Application
+must not import GUI toolkits (`PySide6`, `tkinter`, `customtkinter`).
+Desktop should reach science through application adapters.
+
+The 4.2-A test that forbids *application* imports of analysis modules
+(`pyp_nrm`, `pyp_metrics`, …) is an A-scope restriction. 4.2-C will add
+application job adapters that call those APIs. The permanent prohibition
+is only the reverse dependency.
+
+Architecture tests under `tests/test_application/` and
+`tests/test_desktop/` enforce the direction that is in force for the
+current workstream.
 
 ## Lint
 
@@ -80,10 +100,13 @@ Three Ruff rules are blocking:
 ruff check --select F821,F811,F601 .
 ```
 
-Everything else Ruff reports, and all mypy output, is reporting-only.
+Everything else Ruff reports, and all mypy output on legacy `pyp_*`
+modules, is reporting-only.
 Do not run a whole-tree format on scientific modules. New
-`PyPedal/application` code and `tests/test_application` must pass
-`ruff format --check` and `ruff check` under the repository rules.
+`PyPedal/application` and `PyPedal/desktop` code, and their tests, must
+pass `ruff format --check` and `ruff check` under the repository rules.
+Targeted mypy for `PyPedal.application` and `PyPedal.desktop` must stay
+clean.
 
 ## Packaging smoke
 

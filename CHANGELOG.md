@@ -12,6 +12,9 @@ and PEP 440 (`4.1.0`).
 
 - Added a Qt-free application/session layer in preparation for the PySide6
   desktop replacement.
+- Initial PySide6 desktop shell and scalable pedigree browser
+  (`pypedal-qt`, `python -m PyPedal.desktop`). CustomTkinter remains the
+  `pypedal` / `pypedal-gui` application during this development cycle.
 
 ## [4.1.0] — 2026-09-01
 
