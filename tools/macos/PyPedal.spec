@@ -1,25 +1,41 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec for the 4.2-B macOS .app spike.
+"""PyInstaller spec for the PyPedal macOS application bundle.
 
-This is an engineering spike, not the 4.2-D distribution package.
-Build with tools/macos/build_app.sh so output stays outside the repository.
-Bundle identifier: org.pypedal.PyPedal
+Build with ``python tools/macos/build_app.py``. Output stays outside the
+repository. Bundle identifier: org.pypedal.PyPedal
+
+Version strings are read from pyproject.toml so a 4.2.0 rebuild does not
+need a separate spec edit.
 
 Analysis, PYZ, EXE, COLLECT, and BUNDLE are provided by PyInstaller when
 it executes this spec.
 """
 
+from __future__ import annotations
+
+import sys
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
-SPECDIR = Path(SPECPATH).resolve()
-REPO = SPECDIR.parents[1]
-
-hiddenimports = collect_submodules(
-    "PyPedal",
-    filter=lambda name: "examples" not in name.split("."),
+SPECDIR = Path(SPECPATH).resolve()  # noqa: F821
+sys.path.insert(0, str(SPECDIR))
+from bundle_config import (  # noqa: E402
+    BUNDLE_IDENTIFIER,
+    BUNDLE_NAME,
+    drop_collected_path,
+    icns_path,
+    info_plist,
+    keep_submodule,
+    read_project_version,
+    repository_root,
 )
+
+REPO = repository_root()
+VERSION = read_project_version(REPO)
+ICON = icns_path(REPO)
+
+hiddenimports = collect_submodules("PyPedal", filter=keep_submodule)
 hiddenimports += [
     "numpy",
     "pandas",
@@ -46,9 +62,21 @@ a = Analysis(  # noqa: F821
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["tkinter", "customtkinter", "matplotlib", "IPython"],
+    excludes=[
+        "tkinter",
+        "customtkinter",
+        "matplotlib",
+        "IPython",
+        "pytest",
+        "PyPedal.pyp_app",
+        "PyPedal.pyp_tests",
+        "PyPedal.examples",
+    ],
     noarchive=False,
 )
+
+a.binaries = [item for item in a.binaries if not drop_collected_path(str(item[0]))]
+a.datas = [item for item in a.datas if not drop_collected_path(str(item[0]))]
 
 pyz = PYZ(a.pure)  # noqa: F821
 
@@ -57,7 +85,7 @@ exe = EXE(  # noqa: F821
     a.scripts,
     [],
     exclude_binaries=True,
-    name="PyPedal",
+    name=BUNDLE_NAME,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -73,21 +101,13 @@ coll = COLLECT(  # noqa: F821
     a.datas,
     strip=False,
     upx=False,
-    name="PyPedal",
+    name=BUNDLE_NAME,
 )
 
 app = BUNDLE(  # noqa: F821
     coll,
-    name="PyPedal.app",
-    icon=None,
-    bundle_identifier="org.pypedal.PyPedal",
-    info_plist={
-        "CFBundleName": "PyPedal",
-        "CFBundleDisplayName": "PyPedal",
-        "CFBundleIdentifier": "org.pypedal.PyPedal",
-        "CFBundleShortVersionString": "4.1.0",
-        "CFBundleVersion": "4.1.0",
-        "NSHighResolutionCapable": True,
-        "LSMinimumSystemVersion": "13.0",
-    },
+    name=f"{BUNDLE_NAME}.app",
+    icon=str(ICON) if ICON is not None else None,
+    bundle_identifier=BUNDLE_IDENTIFIER,
+    info_plist=info_plist(VERSION),
 )
