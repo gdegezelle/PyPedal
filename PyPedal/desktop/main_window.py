@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QSplitter,
     QStackedWidget,
-    QToolBar,
     QWidget,
 )
 
@@ -49,7 +48,6 @@ class MainWindow(QMainWindow):
 
         self._build_pages()
         self._build_menus()
-        self._build_toolbar()
         self._build_status()
         self._restore_geometry()
         self._refresh_recent_menu()
@@ -78,7 +76,7 @@ class MainWindow(QMainWindow):
 
     def _build_menus(self) -> None:
         file_menu = self.menuBar().addMenu("&File")
-        self.open_action = QAction("Open Pedigree…", self)
+        self.open_action = QAction("Open…", self)
         self.open_action.setObjectName("action_open")
         self.open_action.setShortcut(QKeySequence.StandardKey.Open)
         self.open_action.triggered.connect(self.open_pedigree)
@@ -93,25 +91,19 @@ class MainWindow(QMainWindow):
         file_menu.addAction(self.close_action)
         file_menu.addSeparator()
 
-        quit_action = QAction("Quit", self)
-        quit_action.setMenuRole(QAction.MenuRole.QuitRole)
-        quit_action.setShortcut(QKeySequence.StandardKey.Quit)
-        quit_action.triggered.connect(self.close)
-        file_menu.addAction(quit_action)
+        self.quit_action = QAction("Quit", self)
+        self.quit_action.setObjectName("action_quit")
+        self.quit_action.setMenuRole(QAction.MenuRole.QuitRole)
+        self.quit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        self.quit_action.triggered.connect(self.close)
+        file_menu.addAction(self.quit_action)
 
         help_menu = self.menuBar().addMenu("&Help")
-        about_action = QAction("About PyPedal", self)
-        about_action.setObjectName("action_about")
-        about_action.setMenuRole(QAction.MenuRole.AboutRole)
-        about_action.triggered.connect(self.show_about)
-        help_menu.addAction(about_action)
-
-    def _build_toolbar(self) -> None:
-        toolbar = QToolBar("Main")
-        toolbar.setObjectName("main_toolbar")
-        toolbar.setMovable(False)
-        toolbar.addAction(self.open_action)
-        self.addToolBar(toolbar)
+        self.about_action = QAction("About PyPedal", self)
+        self.about_action.setObjectName("action_about")
+        self.about_action.setMenuRole(QAction.MenuRole.AboutRole)
+        self.about_action.triggered.connect(self.show_about)
+        help_menu.addAction(self.about_action)
 
     def _build_status(self) -> None:
         self.status_file = QLabel("No pedigree")

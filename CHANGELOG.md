@@ -16,6 +16,12 @@ and PEP 440 (`4.1.0`).
   (`pypedal-qt`, `python -m PyPedal.desktop`). CustomTkinter remains the
   `pypedal` / `pypedal-gui` application during this development cycle.
 
+### Changed
+
+- Qt desktop Open is a native File-menu command (`Open…`, platform Open
+  shortcut). The Open toolbar is gone. The packaged macOS app identifies
+  as PyPedal. The Metadata page is a compact top-aligned inspector.
+
 ## [4.1.0] — 2026-09-01
 
 Minor release. It has not been published to PyPI.

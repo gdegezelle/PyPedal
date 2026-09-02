@@ -10,9 +10,9 @@ import pytest
 pytest.importorskip("PySide6")
 pytest.importorskip("pytestqt")
 
-from PySide6.QtCore import QSettings
-from PySide6.QtGui import QCloseEvent
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtCore import QSettings, Qt
+from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
+from PySide6.QtWidgets import QApplication, QMessageBox, QPushButton, QToolBar, QToolButton
 
 from PyPedal.application import PedigreeTableSource
 from PyPedal.desktop.dialogs.open_pedigree import OpenPedigreeDialog
@@ -64,6 +64,12 @@ def test_metadata_empty_state() -> None:
     page = MetadataPage()
     assert "No pedigree is open" in page._banner.text()
     assert page._banner.isHidden() is False
+    assert page._hint.isHidden() is False
+    assert page._form_host.isHidden() is True
+    last = page.layout().itemAt(page.layout().count() - 1)
+    assert last is not None
+    assert last.spacerItem() is not None
+    assert page._form.formAlignment() & Qt.AlignmentFlag.AlignTop
 
 
 def test_animals_search_does_not_copy_rows() -> None:
@@ -93,9 +99,46 @@ def test_empty_window_disables_close_and_shows_empty_pages(qtbot: object, tmp_pa
     assert window.close_action.isEnabled() is False
     assert window.open_action.isEnabled() is True
     assert "No pedigree is open" in window.metadata_page._banner.text()
+    assert window.metadata_page._form_host.isHidden() is True
     assert window.animals_page.model.rowCount() == 0
     assert window.status_file.text() == "No pedigree"
     assert window.status_operation.text() == "Ready"
+    assert window.findChildren(QToolBar) == []
+    open_buttons = [
+        widget
+        for widget in (*window.findChildren(QPushButton), *window.findChildren(QToolButton))
+        if "open" in widget.text().casefold()
+    ]
+    assert open_buttons == []
+
+
+def test_file_menu_open_contract(qtbot: object, tmp_path: Path) -> None:
+    window = _window(qtbot, tmp_path)
+    opens = [
+        action for action in window.findChildren(QAction) if action.objectName() == "action_open"
+    ]
+    assert opens == [window.open_action]
+    assert window.open_action.text() == "Open…"
+    assert window.open_action.shortcut() == QKeySequence(QKeySequence.StandardKey.Open)
+    assert window.recent_menu.title() == "Open Recent"
+    assert window.close_action.isEnabled() is False
+    assert window.quit_action.menuRole() == QAction.MenuRole.QuitRole
+    assert window.about_action.menuRole() == QAction.MenuRole.AboutRole
+    assert window.windowTitle() == "PyPedal 4.1.0"
+
+
+def test_open_action_invokes_open_workflow(
+    qtbot: object, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    called: list[MainWindow] = []
+
+    def fake_open(self: MainWindow) -> None:
+        called.append(self)
+
+    monkeypatch.setattr(MainWindow, "open_pedigree", fake_open)
+    window = _window(qtbot, tmp_path)
+    window.open_action.trigger()
+    assert called == [window]
 
 
 def test_about_shows_version_author_maintainer_license(

@@ -42,7 +42,7 @@ def test_main_window_smoke(qtbot: object, tmp_path: Path) -> None:
     assert window.windowTitle().startswith("PyPedal")
     assert window.nav.count() == 2
     assert window.stack.count() == 2
-    assert window.open_action.text() == "Open Pedigree…"
+    assert window.open_action.text() == "Open…"
 
 
 def test_worker_loads_small_pedigree(qtbot: object, tmp_path: Path) -> None:
@@ -60,6 +60,8 @@ def test_worker_loads_small_pedigree(qtbot: object, tmp_path: Path) -> None:
         assert "3" in window.status_count.text()
         assert window.status_file.text() == source.name
         assert window.metadata_page._banner.isHidden()
+        assert window.metadata_page._form_host.isHidden() is False
+        assert window.metadata_page._hint.isHidden()
         assert window.settings.recent_files()[0] == source.resolve()
     finally:
         close_owned_pypedal_log_handlers()
