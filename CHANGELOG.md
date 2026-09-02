@@ -15,6 +15,11 @@ and PEP 440 (`4.1.0`).
 - Initial PySide6 desktop shell and scalable pedigree browser
   (`pypedal-qt`, `python -m PyPedal.desktop`). CustomTkinter remains the
   `pypedal` / `pypedal-gui` application during this development cycle.
+- Qt desktop analysis workflows: Meuwissen–Luo inbreeding, inbreeding by
+  year (cache reuse), Lacy effective founders, pairwise relationship,
+  mating CoI (pair and explicit group), theoretical Ne from metadata,
+  pedigree Save As, and explicit UTF-8 result export. Analysis jobs use
+  `output=False`; `.dat` files are not written on Run.
 
 ### Changed
 
