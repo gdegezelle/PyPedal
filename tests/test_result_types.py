@@ -11,7 +11,6 @@ import unittest
 from _pedhelpers import chdir_tmp, load_corpus
 
 from PyPedal import pyp_metrics, pyp_nrm
-from PyPedal.pyp_app import _format_inbreeding
 from PyPedal.pyp_results import (
     EffectiveFoundersResult,
     InbreedingResult,
@@ -79,13 +78,6 @@ class TestInbreedingResult(unittest.TestCase):
         self.assertIsNone(without.rel_dict)
         self.assertIsInstance(with_rels, InbreedingResult)
         self.assertIsInstance(without, InbreedingResult)
-
-    def test_gui_formatter_still_accepts_the_dict_subclass(self):
-        with chdir_tmp():
-            result = pyp_nrm.inbreeding(
-                load_corpus("mrode.ped"), method="tabular", output=False)
-        text = _format_inbreeding(result)
-        self.assertIn("0.125000", text)
 
     def test_native_methods_all_return_inbreeding_result(self):
         for method in ("tabular", "vanraden", "meu_luo", "mod_meu_luo"):

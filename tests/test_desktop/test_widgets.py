@@ -14,11 +14,13 @@ from PySide6.QtCore import QSettings, Qt
 from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
 from PySide6.QtWidgets import QApplication, QMessageBox, QPushButton, QToolBar, QToolButton
 
+from PyPedal.__version__ import version as PYPEDAL_VERSION
 from PyPedal.application import PedigreeTableSource
 from PyPedal.desktop.dialogs.open_pedigree import OpenPedigreeDialog
 from PyPedal.desktop.main_window import MainWindow
 from PyPedal.desktop.pages.animals import AnimalsPage
 from PyPedal.desktop.pages.metadata import MetadataPage
+from PyPedal.desktop.pages.relationship import RelationshipPage
 from PyPedal.desktop.settings import MAX_RECENT_FILES, DesktopSettings
 
 if QApplication.instance() is None:
@@ -129,7 +131,7 @@ def test_file_menu_open_contract(qtbot: object, tmp_path: Path) -> None:
     assert window.close_action.isEnabled() is False
     assert window.quit_action.menuRole() == QAction.MenuRole.QuitRole
     assert window.about_action.menuRole() == QAction.MenuRole.AboutRole
-    assert window.windowTitle() == "PyPedal 4.1.0"
+    assert window.windowTitle() == f"PyPedal {PYPEDAL_VERSION}"
 
 
 def test_open_action_invokes_open_workflow(
@@ -160,7 +162,7 @@ def test_about_shows_version_author_maintainer_license(
     assert captured
     title, text = captured[0]
     assert title == "About PyPedal"
-    assert "4.1.0" in text
+    assert PYPEDAL_VERSION in text
     assert "John B. Cole" in text
     assert "Geert Degezelle" in text
     assert "LGPL-2.1-or-later" in text
@@ -243,3 +245,32 @@ def test_busy_disables_open_and_close_event_is_ignored(
     window.closeEvent(event)
     assert event.isAccepted() is False
     assert window._busy is True
+
+
+def test_relationship_id_fields_transfer_real_keyboard_focus(qtbot: object) -> None:
+    """Focus rings must follow real keyboard focus; blank clicks may leave it.
+
+    Clicking non-focusable page background is native Qt/macOS behaviour and
+    is not treated as a blur. Native focus indication is not disabled.
+    """
+    page = RelationshipPage()
+    qtbot.addWidget(page)
+    page.show()
+    page.activateWindow()
+    qtbot.waitExposed(page)
+
+    page.id_a.setFocus(Qt.FocusReason.OtherFocusReason)
+    qtbot.waitUntil(lambda: page.id_a.hasFocus(), timeout=2000)
+    assert page.id_b.hasFocus() is False
+
+    page.id_b.setFocus(Qt.FocusReason.OtherFocusReason)
+    qtbot.waitUntil(lambda: page.id_b.hasFocus(), timeout=2000)
+    assert page.id_a.hasFocus() is False
+
+    page.id_a.setFocus(Qt.FocusReason.OtherFocusReason)
+    qtbot.waitUntil(lambda: page.id_a.hasFocus(), timeout=2000)
+    qtbot.keyClick(page.id_a, Qt.Key.Key_Tab)
+    qtbot.waitUntil(lambda: page.id_b.hasFocus(), timeout=2000)
+    assert page.id_a.hasFocus() is False
+    assert page.id_a.focusPolicy() != Qt.FocusPolicy.NoFocus
+    assert page.id_b.focusPolicy() != Qt.FocusPolicy.NoFocus

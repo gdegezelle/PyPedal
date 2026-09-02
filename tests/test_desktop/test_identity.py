@@ -11,6 +11,7 @@ from PySide6.QtCore import QCoreApplication
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
 
+from PyPedal.__version__ import version as PYPEDAL_VERSION
 from PyPedal.desktop.app import apply_application_identity, create_application, prepare_frozen_cwd
 
 _TEST_ORG = "PyPedalTests"
@@ -29,7 +30,7 @@ def test_apply_application_identity_sets_qt_metadata() -> None:
         assert QCoreApplication.organizationName() == "PyPedal"
         assert QCoreApplication.applicationName() == "PyPedal"
         assert QGuiApplication.applicationDisplayName() == "PyPedal"
-        assert QCoreApplication.applicationVersion() == "4.1.0"
+        assert QCoreApplication.applicationVersion() == PYPEDAL_VERSION
     finally:
         _restore_test_identity()
 
@@ -41,7 +42,7 @@ def test_create_application_sets_native_identity() -> None:
         assert app.organizationName() == "PyPedal"
         assert app.applicationName() == "PyPedal"
         assert app.applicationDisplayName() == "PyPedal"
-        assert app.applicationVersion() == "4.1.0"
+        assert app.applicationVersion() == PYPEDAL_VERSION
     finally:
         _restore_test_identity()
 

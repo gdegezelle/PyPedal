@@ -1,17 +1,21 @@
-"""GUI-toolkit isolation and CustomTkinter compatibility wrappers."""
+"""GUI-toolkit isolation and pyp_app compatibility launcher."""
 
 from __future__ import annotations
 
+import ast
 import subprocess
 import sys
+from pathlib import Path
+
+from _pedhelpers import REPO
 
 from PyPedal.application import EXIT_STATUS as APP_EXIT_STATUS
 from PyPedal.application import exit_status_for as app_exit_status_for
 from PyPedal.application import normalize_sepchar as app_normalize_sepchar
-from PyPedal.pyp_app import EXIT_STATUS as CTK_EXIT_STATUS
-from PyPedal.pyp_app import exit_status_for as ctk_exit_status_for
-from PyPedal.pyp_app import normalize_sepchar as ctk_normalize_sepchar
-from PyPedal.pyp_app import pedigree_open_options
+from PyPedal.desktop.main import main as desktop_main
+from PyPedal.pyp_app import EXIT_STATUS as SHIM_EXIT_STATUS
+from PyPedal.pyp_app import exit_status_for as shim_exit_status_for
+from PyPedal.pyp_app import main as pyp_app_main
 from PyPedal.pyp_errors import PyPedalUsageError
 
 
@@ -46,20 +50,32 @@ print(application.__name__)
 
 
 def test_pyp_app_reexports_application_helpers():
-    assert ctk_normalize_sepchar is app_normalize_sepchar
-    assert ctk_exit_status_for is app_exit_status_for
-    assert CTK_EXIT_STATUS is APP_EXIT_STATUS
-    assert ctk_normalize_sepchar(", ") == ","
-    assert ctk_exit_status_for(PyPedalUsageError("x")) == 2
+    assert shim_exit_status_for is app_exit_status_for
+    assert SHIM_EXIT_STATUS is APP_EXIT_STATUS
+    assert shim_exit_status_for(PyPedalUsageError("x")) == 2
+    assert app_normalize_sepchar(", ") == ","
 
 
-def test_ctk_open_options_still_omit_pedigree_summary():
-    opts = pedigree_open_options("/tmp/dogs.ped", "asdxbn", ", ", True)
-    assert opts["sepchar"] == ","
-    assert opts["messages"] == "quiet"
-    assert "pedigree_summary" not in opts
-    assert opts["pedformat"] == "asdxbn"
-    assert opts["pedname"] == "dogs.ped"
+def test_pyp_app_main_delegates_to_desktop():
+    assert pyp_app_main(["--version"]) == 0
+    assert desktop_main(["--version"]) == 0
+
+
+def test_pyp_app_has_no_tk_or_customtkinter():
+    source = (Path(REPO) / "PyPedal" / "pyp_app.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                names.add(alias.name.split(".", 1)[0])
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            names.add(node.module.split(".", 1)[0])
+    assert "customtkinter" not in names
+    assert "tkinter" not in names
+    assert "PySide6" not in names
+    assert "CTk" not in source
+    assert "class PyPedalApp" not in source
 
 
 def test_plain_pypedal_import_does_not_require_gui_extra() -> None:

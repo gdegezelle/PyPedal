@@ -1,10 +1,9 @@
 """Optional progress callbacks: science-neutral, exceptions propagate."""
-import pytest
 
+import pytest
 from _pedhelpers import chdir_tmp, load_corpus
 
 from PyPedal import pyp_metrics, pyp_nrm
-from PyPedal.pyp_app import GuiProgressBridge, gui_progress_mode
 from PyPedal.pyp_errors import PyPedalError
 from PyPedal.pyp_newclasses import NewPedigree, load_pedigree
 from PyPedal.pyp_results import ProgressCallback
@@ -31,8 +30,10 @@ def _assert_monotonic_known_total(events, total):
 
 def test_progress_callback_type_is_public():
     assert callable(ProgressCallback) or ProgressCallback is not None
+
     def sample(done: int, total: int | None) -> None:
         return None
+
     typed: ProgressCallback = sample
     typed(1, 1)
 
@@ -43,9 +44,7 @@ def test_meuwissen_luo_progress_none_matches_recording_callback():
         none = pyp_nrm.inbreeding_meuwissen_luo(ped)
         recorder = Recorder()
         recorded = pyp_nrm.inbreeding_meuwissen_luo(ped, progress=recorder)
-        via_dispatch = pyp_nrm.inbreeding(
-            ped, method="meu_luo", output=False, progress=Recorder()
-        )
+        via_dispatch = pyp_nrm.inbreeding(ped, method="meu_luo", output=False, progress=Recorder())
         assert none == recorded
         assert {int(k): float(v) for k, v in via_dispatch["fx"].items()} == {
             int(k): float(v) for k, v in none.items()
@@ -84,9 +83,7 @@ def test_meuwissen_luo_callback_exception_propagates_and_stops():
 def test_dropped_ancestral_inbreeding_same_seed_with_and_without_callback():
     with chdir_tmp():
         ped = load_corpus("mrode.ped")
-        none = pyp_metrics.dropped_ancestral_inbreeding(
-            ped, rounds=5, loci=8, seed=31
-        )
+        none = pyp_metrics.dropped_ancestral_inbreeding(ped, rounds=5, loci=8, seed=31)
         recorder = Recorder()
         recorded = pyp_metrics.dropped_ancestral_inbreeding(
             ped, rounds=5, loci=8, seed=31, progress=recorder
@@ -119,9 +116,7 @@ def test_gene_drop_callback_exception_propagates():
             raise ValueError("stop drop")
 
         with pytest.raises(ValueError, match="stop drop") as caught:
-            pyp_metrics.dropped_ancestral_inbreeding(
-                ped, rounds=4, loci=4, seed=7, progress=boom
-            )
+            pyp_metrics.dropped_ancestral_inbreeding(ped, rounds=4, loci=4, seed=7, progress=boom)
         assert not isinstance(caught.value, PyPedalError)
         assert seen == [(1, 4)]
 
@@ -131,9 +126,7 @@ def test_boichard_progress_is_monotonic_with_unknown_total():
         ped = load_corpus("boichard2a.ped")
         none = pyp_metrics.a_effective_ancestors_definite(ped, output=False)
         recorder = Recorder()
-        recorded = pyp_metrics.a_effective_ancestors_definite(
-            ped, output=False, progress=recorder
-        )
+        recorded = pyp_metrics.a_effective_ancestors_definite(ped, output=False, progress=recorder)
         assert none == recorded
         assert recorder.events
         dones = [done for done, total in recorder.events]
@@ -236,37 +229,3 @@ def test_load_callback_exception_is_not_translated(tmp_path):
     assert not isinstance(caught.value, PyPedalError)
     assert seen
     assert seen[0][0] >= 1
-
-
-def test_gui_progress_bridge_only_stores_state():
-    bridge = GuiProgressBridge()
-    assert bridge.latest is None
-    configure_calls = []
-
-    class FakeWidget:
-        def configure(self, **kwargs):
-            configure_calls.append(kwargs)
-
-    widget = FakeWidget()
-    bridge(3, 10)
-    bridge(7, 10)
-    assert bridge.latest == (7, 10)
-    assert configure_calls == []
-    assert not hasattr(bridge, "progress")
-    widget.configure(mode="determinate")
-    assert configure_calls == [{"mode": "determinate"}]
-
-
-def test_gui_progress_mode_determinate_and_indeterminate():
-    assert gui_progress_mode(2, 4) == ("determinate", 0.5)
-    assert gui_progress_mode(4, 4) == ("determinate", 1.0)
-    assert gui_progress_mode(9, 4) == ("determinate", 1.0)
-    assert gui_progress_mode(1, None) == ("indeterminate", None)
-    assert gui_progress_mode(1, 0) == ("indeterminate", None)
-
-
-def test_gui_progress_bridge_coalesces_to_latest():
-    bridge = GuiProgressBridge()
-    for i in range(1, 1001):
-        bridge(i, 1000)
-    assert bridge.latest == (1000, 1000)

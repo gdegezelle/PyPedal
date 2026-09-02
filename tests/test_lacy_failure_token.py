@@ -27,12 +27,11 @@ WHAT IS *NOT* CLAIMED HERE
 The Lacy calculation is not changed. ``relationship()`` and
 ``a_coefficients`` are out of scope.
 """
-import inspect
 import os
 import tempfile
 import unittest
 
-from PyPedal import pyp_app, pyp_metrics
+from PyPedal import pyp_metrics
 from PyPedal.pyp_errors import PyPedalError, PyPedalUsageError, PyPedalValidationError
 
 from _pedhelpers import chdir_tmp, load_corpus, load_corpus_from_path
@@ -152,8 +151,3 @@ class TestLFS3FoundersOnlyAEffectiveRaises(unittest.TestCase):
                 pyp_metrics.a_effective_founders_lacy(ped)
         self.assertEqual(before, snapshot(ped))
 
-
-class TestLFS5GuiDoesNotInterpretTheToken(unittest.TestCase):
-    def test_calc_founders_does_not_compare_against_the_legacy_token(self):
-        src = inspect.getsource(pyp_app.PyPedalApp.calc_founders)
-        self.assertNotIn("-999.9", src)

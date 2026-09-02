@@ -2,7 +2,6 @@ import os
 import unittest
 
 from PyPedal import pyp_metrics, pyp_nrm
-from PyPedal.pyp_app import _format_inbreeding
 
 from _pedhelpers import load_example, load_griffon_test_small
 
@@ -76,15 +75,7 @@ class TestCorePedigreeWorkflow(unittest.TestCase):
             result = result[0]
         self.assertIsInstance(result, dict)
         self.assertTrue("fx" in result or "metadata" in result)
-        summary = _format_inbreeding(result)
-        self.assertIn("Inbreeding", summary)
-        self.assertIn("f_count", summary)
-        self.assertIn("Coefficients by animal", summary)
         self.assertTrue(all(float(v) == 0.0 for v in result["fx"].values()))
-        self.assertIn("No inbreeding in this pedigree", summary)
-        self.assertNotIn("new_lacy.ped", summary)
-        self.assertNotIn("mrode.ped", summary)
-        self.assertNotIn("hartlandclark.ped", summary)
 
     def test_inbreeding_mrode_has_nonzero_coi(self):
         ped = load_example(

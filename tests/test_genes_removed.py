@@ -116,7 +116,7 @@ class TestGenesRemovalAlreadyTrue(unittest.TestCase):
     def test_gen_rm_3_package_imports(self):
         import PyPedal
         self.assertTrue(PyPedal.__version__)
-        self.assertEqual("4.1.0", PyPedal.__version__)
+        self.assertEqual("4.2.0", PyPedal.__version__)
 
     def test_gen_rm_8_export_format_error_remains(self):
         self.assertTrue(issubclass(

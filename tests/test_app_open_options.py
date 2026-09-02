@@ -1,16 +1,18 @@
 """Desktop-app pedigree open options, including CSV separator padding."""
+
 import os
 import tempfile
 import unittest
+from pathlib import Path
 
 from _pedhelpers import close_owned_pypedal_log_handlers
-from PyPedal.pyp_app import normalize_sepchar, pedigree_open_options
+
+from PyPedal.application import PedigreeOpenOptions, normalize_sepchar
 from PyPedal.pyp_errors import PyPedalPedigreeFormatError
 from PyPedal.pyp_newclasses import load_pedigree
 
 
 class TestNormalizeSepchar(unittest.TestCase):
-
     def test_empty_and_spaces_mean_a_space(self):
         self.assertEqual(" ", normalize_sepchar(""))
         self.assertEqual(" ", normalize_sepchar(" "))
@@ -29,14 +31,16 @@ class TestNormalizeSepchar(unittest.TestCase):
 
 
 class TestPedigreeOpenOptions(unittest.TestCase):
-
     def test_csv_open_options_use_a_bare_comma(self):
-        opts = pedigree_open_options("/tmp/dogs.ped", "asdxbn", ", ", True)
+        opts = PedigreeOpenOptions(
+            pedformat="asdxbn", separator=", ", renumber=True
+        ).to_library_options(Path("/tmp/dogs.ped"))
         self.assertEqual(",", opts["sepchar"])
         self.assertEqual("asdxbn", opts["pedformat"])
         self.assertTrue(opts["renumber"])
         self.assertEqual("dogs.ped", opts["pedname"])
         self.assertEqual("quiet", opts["messages"])
+        self.assertEqual(0, opts["pedigree_summary"])
 
 
 class TestAsdxbnCsvLoad(unittest.TestCase):
@@ -89,8 +93,9 @@ class TestAsdxbnCsvLoad(unittest.TestCase):
         try:
             with open(path, "w", encoding="utf-8") as handle:
                 handle.write(self.ROWS)
-            opts = pedigree_open_options(path, "asdxbn", ", ", True)
-            opts["pedigree_summary"] = 0
+            opts = PedigreeOpenOptions(
+                pedformat="asdxbn", separator=", ", renumber=True
+            ).to_library_options(Path(path))
             ped = load_pedigree(options=opts)
             named = [a for a in ped.pedigree if a.originalID == 1]
             self.assertEqual("A Day Before Sunrise de Mar&Mar", named[0].name)
@@ -148,8 +153,9 @@ class TestSimpleSeparatorLoads(unittest.TestCase):
         try:
             with open(path, "w", encoding="utf-8") as handle:
                 handle.write("1 0 0\n2 0 0\n3 1 2\n")
-            opts = pedigree_open_options(path, "asd", "", True)
-            opts["pedigree_summary"] = 0
+            opts = PedigreeOpenOptions(
+                pedformat="asd", separator="", renumber=True
+            ).to_library_options(Path(path))
             self.assertEqual(" ", opts["sepchar"])
             ped = load_pedigree(options=opts)
             self.assertEqual(3, len(ped.pedigree))

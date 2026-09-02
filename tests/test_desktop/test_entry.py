@@ -37,6 +37,18 @@ def test_module_version_subprocess_does_not_create_qapplication() -> None:
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
+def test_python_m_pypedal_version() -> None:
+    proc = subprocess.run(
+        [sys.executable, "-m", "PyPedal", "--version"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.strip() == PYPEDAL_VERSION
+
+
 def test_python_m_desktop_version() -> None:
     proc = subprocess.run(
         [sys.executable, "-m", "PyPedal.desktop", "--version"],

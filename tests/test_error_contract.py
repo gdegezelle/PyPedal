@@ -28,17 +28,15 @@ import sys
 import tempfile
 import unittest
 
-from PyPedal import pyp_app, pyp_errors, pyp_newclasses
+from PyPedal import pyp_errors, pyp_newclasses
+from PyPedal.application import EXIT_STATUS, exit_status_for
 
 PACKAGE = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "PyPedal"))
 
-# The only places allowed to end the process. Two are ``if __name__ ==
-# '__main__'`` guards; the third is the GUI's missing-dependency check, which
-# runs before there is an application to report into.
+# The only places allowed to end the process are ``if __name__ == '__main__'``
+# guards on package and desktop launchers.
 ENTRY_POINTS = {
-    ("pyp_app.py", "_require_customtkinter"),
-    ("pyp_app.py", "<module>"),
     ("__main__.py", "<module>"),
 }
 
@@ -248,13 +246,14 @@ sys.exit(0)
         script = (
             "import sys\n"
             "sys.path.insert(0, %r)\n"
-            "from PyPedal import pyp_app, pyp_errors, pyp_newclasses\n"
+            "from PyPedal.application import exit_status_for\n"
+            "from PyPedal import pyp_errors, pyp_newclasses\n"
             "try:\n"
             "    pyp_newclasses.loadPedigree(options={'pedfile': %r,\n"
             "        'pedformat': 'asd', 'sepchar': ' ', 'messages': 'quiet',\n"
             "        'pedigree_summary': 0})\n"
             "except pyp_errors.PyPedalError as exc:\n"
-            "    sys.exit(pyp_app.exit_status_for(exc))\n"
+            "    sys.exit(exit_status_for(exc))\n"
             "sys.exit(0)\n" % (repo, path)
         )
         proc = subprocess.run([sys.executable, "-c", script],
@@ -282,15 +281,15 @@ class TestExitStatusMapping(unittest.TestCase):
         }
         for exc, expected in cases.items():
             with self.subTest(exception=type(exc).__name__):
-                self.assertEqual(expected, pyp_app.exit_status_for(exc))
+                self.assertEqual(expected, exit_status_for(exc))
 
     def test_no_mapping_is_zero(self):
-        for klass, status in pyp_app.EXIT_STATUS:
+        for klass, status in EXIT_STATUS:
             with self.subTest(exception=klass.__name__):
                 self.assertNotEqual(0, status)
 
     def test_an_unrecognised_error_still_maps_to_failure(self):
-        self.assertEqual(1, pyp_app.exit_status_for(RuntimeError("x")))
+        self.assertEqual(1, exit_status_for(RuntimeError("x")))
 
     def test_subclasses_map_before_their_base(self):
         """
@@ -298,7 +297,7 @@ class TestExitStatusMapping(unittest.TestCase):
         to the generic 1.
         """
         self.assertEqual(
-            70, pyp_app.exit_status_for(pyp_errors.PyPedalInternalError("x")))
+            70, exit_status_for(pyp_errors.PyPedalInternalError("x")))
 
 
 if __name__ == "__main__":

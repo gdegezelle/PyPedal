@@ -35,7 +35,7 @@ These are **release gates**.
 Public API behaviour that is not a published scientific number: IDs,
 mutation, logging, GUI helpers, configuration, output files, error
 types. Examples: `test_core.py`, `test_error_contract.py`,
-`test_gui_ux.py`, `test_progress.py`, `tests/test_application/`,
+`test_progress.py`, `tests/test_application/`,
 `tests/test_desktop/` (PySide6; skipped when the desktop extra is
 absent; dedicated CI jobs use `QT_QPA_PLATFORM=offscreen`).
 
