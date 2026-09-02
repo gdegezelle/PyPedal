@@ -206,6 +206,7 @@ def test_save_pedigree_writes_and_refuses_overwrite(tmp_path: Path) -> None:
 
 
 def test_metadata_and_three_gen_pdf(tmp_path: Path) -> None:
+    pytest.importorskip("reportlab")
     session = _load(tmp_path, MRODE)
     meta = tmp_path / "metadata.pdf"
     three = tmp_path / "three.pdf"
