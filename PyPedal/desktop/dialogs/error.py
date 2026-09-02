@@ -1,4 +1,4 @@
-"""Load-error presentation. Does not discard the original exception."""
+"""Error presentation. Does not discard the original exception."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from PyPedal.application import describe_exception
 from PyPedal.pyp_errors import PyPedalError
 
 
-def show_load_error(
+def show_application_error(
     parent: QWidget | None,
     exc: BaseException,
     details: str,
@@ -24,3 +24,12 @@ def show_load_error(
         box.setIcon(QMessageBox.Icon.Critical)
         box.setDetailedText(details)
     box.exec()
+
+
+def show_load_error(
+    parent: QWidget | None,
+    exc: BaseException,
+    details: str,
+) -> None:
+    """Compatibility alias used by the open-pedigree path."""
+    show_application_error(parent, exc, details)
