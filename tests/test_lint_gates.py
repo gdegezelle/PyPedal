@@ -98,6 +98,27 @@ class TestBlockingRuffSubset(unittest.TestCase):
         self.assertIn("windows-latest", text)
         self.assertIn('pytest tests/ -m "not integration"', text)
         self.assertIn("python-version: \"3.12\"", text)
+        self.assertIn('pip install -e ".[dev]"', text)
+
+    def test_ci_adds_dedicated_desktop_jobs_without_converting_library_jobs(self):
+        workflow = os.path.join(REPO, ".github", "workflows", "ci.yml")
+        text = open(workflow).read()
+        self.assertIn("desktop-test", text)
+        self.assertIn("QT_QPA_PLATFORM", text)
+        self.assertIn("tests/test_desktop/", text)
+        install_lines = [
+            line.strip()
+            for line in text.splitlines()
+            if "pip install -e" in line
+        ]
+        self.assertTrue(
+            any(line == 'pip install -e ".[dev]"' for line in install_lines),
+            install_lines,
+        )
+        self.assertTrue(
+            any("desktop-test" in line for line in install_lines),
+            install_lines,
+        )
 
 
 if __name__ == "__main__":

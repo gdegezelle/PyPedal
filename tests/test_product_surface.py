@@ -202,6 +202,11 @@ def test_wheel_contains_no_examples(tmp_path):
         or n.endswith("application/__init__.py")
         for n in names
     )
+    assert any(
+        n.endswith("PyPedal/desktop/__init__.py")
+        or n.endswith("desktop/__init__.py")
+        for n in names
+    )
     assert any("LICENSE" in n for n in names)
     assert wheel.stat().st_size > 1024
     assert any(

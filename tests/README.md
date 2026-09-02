@@ -35,7 +35,9 @@ These are **release gates**.
 Public API behaviour that is not a published scientific number: IDs,
 mutation, logging, GUI helpers, configuration, output files, error
 types. Examples: `test_core.py`, `test_error_contract.py`,
-`test_gui_ux.py`, `test_progress.py`, `tests/test_application/`.
+`test_gui_ux.py`, `test_progress.py`, `tests/test_application/`,
+`tests/test_desktop/` (PySide6; skipped when the desktop extra is
+absent; dedicated CI jobs use `QT_QPA_PLATFORM=offscreen`).
 
 These are **release gates**.
 
@@ -72,7 +74,9 @@ Linux CI. Examples: `test_examples_integration.py`, the Griffon load in
 `test_griffon_sample_contract.py`.
 
 These are **release gates** on the Ubuntu job. macOS/Windows CI runs the
-non-integration suite only.
+non-integration suite only. Dedicated desktop jobs also run
+`tests/test_desktop/`, including the Griffon table-scale integration
+test.
 
 ## Archaeology / legacy compatibility
 

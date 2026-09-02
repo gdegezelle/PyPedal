@@ -62,11 +62,26 @@ def test_ctk_open_options_still_omit_pedigree_summary():
     assert opts["pedname"] == "dogs.ped"
 
 
-def test_plain_pypedal_import_does_not_require_gui_extra():
-    import PyPedal
-    import PyPedal.application as application
-
-    assert PyPedal.__version__
-    assert application.PedigreeSession is not None
-    assert "customtkinter" not in sys.modules
-    assert "PySide6" not in sys.modules
+def test_plain_pypedal_import_does_not_require_gui_extra() -> None:
+    proc = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            """
+import sys
+import PyPedal
+import PyPedal.application as application
+assert PyPedal.__version__
+assert application.PedigreeSession is not None
+blocked = [name for name in ('customtkinter', 'tkinter', 'PySide6') if name in sys.modules]
+if blocked:
+    raise SystemExit('gui modules imported: ' + ', '.join(blocked))
+print('ok')
+""",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "ok" in proc.stdout
