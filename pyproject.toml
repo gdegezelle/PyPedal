@@ -171,6 +171,7 @@ ignore = [
 "tests/test_desktop/test_model.py" = ["E402"]
 "tests/test_desktop/test_widgets.py" = ["E402"]
 "tests/test_desktop/test_window.py" = ["E402"]
+"tests/test_desktop/test_identity.py" = ["E402"]
 "tests/test_desktop/test_griffon_scale.py" = ["E402"]
 
 [tool.ruff.format]

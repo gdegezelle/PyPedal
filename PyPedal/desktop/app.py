@@ -5,20 +5,39 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+from PySide6.QtCore import QCoreApplication
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import QApplication
 
 from PyPedal.__version__ import version as PYPEDAL_VERSION
 from PyPedal.desktop.main_window import MainWindow
-from PyPedal.desktop.settings import ORGANIZATION_NAME, DesktopSettings
+from PyPedal.desktop.settings import APPLICATION_NAME, ORGANIZATION_NAME, DesktopSettings
 
-APPLICATION_NAME = "PyPedal"
+
+def apply_application_identity() -> None:
+    """Set Qt application metadata used by menus, About, and QSettings.
+
+    Call this before constructing ``QApplication``. The constructor may
+    still copy ``argv[0]`` (``__main__.py`` under ``python -m``) into the
+    application name, so ``create_application`` reapplies the same values
+    on the instance afterwards. ``applicationDisplayName`` is what macOS
+    uses for About / Hide / Quit once Qt owns the menu.
+    """
+    QCoreApplication.setOrganizationName(ORGANIZATION_NAME)
+    QCoreApplication.setApplicationName(APPLICATION_NAME)
+    QCoreApplication.setApplicationVersion(PYPEDAL_VERSION)
+    QGuiApplication.setApplicationDisplayName(APPLICATION_NAME)
 
 
 def create_application(argv: list[str] | None = None) -> QApplication:
     """Return a QApplication using native platform style.
 
-    Does not force Fusion or install a custom theme.
+    Does not force Fusion or install a custom theme. Does not create
+    widgets. Identity is established before construction and again after
+    so a ``python -m PyPedal.desktop`` ``argv[0]`` cannot stick as the
+    application name.
     """
+    apply_application_identity()
     existing = QApplication.instance()
     if isinstance(existing, QApplication):
         app = existing
@@ -28,6 +47,7 @@ def create_application(argv: list[str] | None = None) -> QApplication:
         raise RuntimeError("A non-QApplication Qt application already exists")
     app.setOrganizationName(ORGANIZATION_NAME)
     app.setApplicationName(APPLICATION_NAME)
+    app.setApplicationDisplayName(APPLICATION_NAME)
     app.setApplicationVersion(PYPEDAL_VERSION)
     return app
 
