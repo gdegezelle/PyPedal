@@ -1,7 +1,7 @@
 """Qt-free application layer between a future desktop and the library.
 
-``PyPedal.application`` owns session/load orchestration and
-GUI-independent error presentation. It does not implement scientific
+``PyPedal.application`` owns session/load orchestration, browse access,
+and GUI-independent error presentation. It does not implement scientific
 formulas and it does not import GUI toolkits.
 
 The intended dependency direction is::
@@ -23,6 +23,11 @@ from PyPedal.application.errors import (
     describe_exception,
     exit_status_for,
 )
+from PyPedal.application.inbreeding import (
+    UNKNOWN_YEAR_TOKENS,
+    InbreedingByYearRow,
+    group_inbreeding_by_year,
+)
 from PyPedal.application.load import (
     PedigreeOpenOptions,
     load_into_session,
@@ -30,14 +35,25 @@ from PyPedal.application.load import (
     resolve_source_path,
 )
 from PyPedal.application.session import PedigreeSession
+from PyPedal.application.tables import (
+    BROWSE_COLUMNS,
+    PedigreeTableSource,
+    TableColumn,
+)
 
 __all__ = [
+    "BROWSE_COLUMNS",
     "EXIT_STATUS",
+    "UNKNOWN_YEAR_TOKENS",
     "ApplicationErrorInfo",
+    "InbreedingByYearRow",
     "PedigreeOpenOptions",
     "PedigreeSession",
+    "PedigreeTableSource",
+    "TableColumn",
     "describe_exception",
     "exit_status_for",
+    "group_inbreeding_by_year",
     "load_into_session",
     "normalize_sepchar",
     "resolve_source_path",
