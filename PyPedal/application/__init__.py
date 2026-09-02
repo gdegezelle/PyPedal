@@ -6,13 +6,15 @@ formulas and it does not import GUI toolkits.
 
 The intended dependency direction is::
 
-    PyPedal.desktop      (4.2-B, not present yet)
+    PyPedal.desktop
             ↓
     PyPedal.application
             ↓
     PyPedal scientific modules
 
-Scientific ``pyp_*.py`` modules must not import this package.
+Scientific ``pyp_*.py`` modules must not import this package or
+``PyPedal.desktop``. Application adapters in 4.2-C may call scientific
+APIs such as ``pyp_nrm``; that direction is allowed. The reverse is not.
 """
 
 from __future__ import annotations
