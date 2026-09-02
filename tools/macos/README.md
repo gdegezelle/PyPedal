@@ -15,7 +15,7 @@ python tools/macos/build_dmg.py \
 - Console: false (GUI bundle)
 - Version strings: `[project].version` in `pyproject.toml`
 - Canonical Griffon dataset: not included
-- CustomTkinter: excluded from the `.app` (source extra unchanged)
+- CustomTkinter / tkinter: excluded from the `.app`
 - Icon: `tools/macos/PyPedal.icns` when a maintainer supplies it
 
 See `docs/engineering/macos-distribution.md` for signing/notarization

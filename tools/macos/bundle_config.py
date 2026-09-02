@@ -114,8 +114,6 @@ def keep_submodule(name: str) -> bool:
     parts = name.split(".")
     if "examples" in parts:
         return False
-    if "pyp_app" in parts:
-        return False
     return True
 
 

@@ -1,9 +1,8 @@
 """Qt-free pedigree open options and load service.
 
-The desktop (and the temporary CustomTkinter app) pass user-facing open
-fields through ``PedigreeOpenOptions``. Loading a file into a
-``PedigreeSession`` happens here so GUI code does not own the
-replace-on-success / retain-on-failure contract.
+The desktop passes user-facing open fields through ``PedigreeOpenOptions``.
+Loading a file into a ``PedigreeSession`` happens here so GUI code does
+not own the replace-on-success / retain-on-failure contract.
 """
 
 from __future__ import annotations
@@ -43,10 +42,7 @@ class PedigreeOpenOptions:
 
     ``messages="quiet"`` and ``pedigree_summary=0`` are the intended
     application load configuration: no console chatter and no metadata
-    dump. The temporary CustomTkinter wrapper historically set
-    ``messages="quiet"`` without ``pedigree_summary=0``; that CTk dict
-    is unchanged. This dataclass is the contract future PySide6 loading
-    should use.
+    dump.
 
     ``separator`` is stored after ``normalize_sepchar`` when constructed
     through :meth:`normalized`. Callers may pass a raw field value and

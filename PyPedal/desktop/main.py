@@ -1,7 +1,6 @@
-"""Temporary Qt desktop entry point.
+"""Canonical PyPedal desktop process entry.
 
-``pypedal`` and ``pypedal-gui`` still launch CustomTkinter during 4.2-B.
-This module is the development PySide6 path.
+``pypedal``, ``pypedal-gui``, and ``python -m PyPedal`` all call ``main``.
 """
 
 from __future__ import annotations
@@ -18,16 +17,16 @@ from PyPedal.application import exit_status_for
 
 def _missing_pyside6_message(exc: BaseException) -> str:
     return (
-        "The PyPedal Qt desktop needs PySide6.\n"
-        "Install it with:  pip install 'PyPedal[desktop]'\n"
+        "The PyPedal desktop needs PySide6.\n"
+        "Install it with:  pip install 'PyPedal[gui]'\n"
         f"Original error: {exc}"
     )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="pypedal-qt",
-        description="PyPedal Qt desktop (development entry point).",
+        prog="pypedal",
+        description="PyPedal desktop application.",
     )
     parser.add_argument(
         "--version",
@@ -50,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _run_self_test(pedigree: Path) -> int:
-    """Load a tiny pedigree and exercise C analysis adapters. No GUI."""
+    """Load a tiny pedigree and exercise analysis adapters. No GUI."""
     from PyPedal.application import (
         PedigreeOpenOptions,
         PedigreeSession,
@@ -86,7 +85,7 @@ def _run_self_test(pedigree: Path) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Process-entry for the Qt desktop. Returns an exit status."""
+    """Process-entry for the desktop. Returns an exit status."""
     args = build_parser().parse_args(argv if argv is not None else sys.argv[1:])
     if args.version:
         print(PYPEDAL_VERSION)

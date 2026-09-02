@@ -3,7 +3,7 @@
 SPDX-License-Identifier: LGPL-2.1-or-later
 """
 
-from PyPedal.pyp_app import main
+from PyPedal.desktop.main import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

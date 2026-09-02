@@ -17,9 +17,9 @@ from PyPedal.pyp_results import AnimalId
 if TYPE_CHECKING:
     from PyPedal.pyp_newclasses import NewPedigree
 
-# Tokens the CustomTkinter GUI skipped when grouping by year. Unknown
-# chronology is ``None`` in PyPedal 4.x; ``0`` and ``-999`` are leftover
-# missing-year sentinels. Grouping must not treat those as birth years.
+# Tokens skipped when grouping by year. Unknown chronology is ``None`` in
+# PyPedal 4.x; ``0`` and ``-999`` are leftover missing-year sentinels.
+# Grouping must not treat those as birth years.
 UNKNOWN_YEAR_TOKENS: tuple[object, ...] = (None, "", 0, -999)
 
 

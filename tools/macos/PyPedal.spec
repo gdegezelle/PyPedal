@@ -68,7 +68,6 @@ a = Analysis(  # noqa: F821
         "matplotlib",
         "IPython",
         "pytest",
-        "PyPedal.pyp_app",
         "PyPedal.examples",
     ],
     noarchive=False,

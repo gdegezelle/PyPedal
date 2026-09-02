@@ -49,8 +49,8 @@ invariant means report a PyPedal bug. The CLI maps each to its own exit status
 so a wrapping script can branch on the difference.
 
 **Library code must never terminate the process.** Nothing under ``PyPedal/``
-raises ``SystemExit`` or calls ``sys.exit`` except the three top-level entry
-points (``pyp_app.py`` twice, ``__main__.py`` once). Deciding that the program
+raises ``SystemExit`` or calls ``sys.exit`` except the process launchers
+(``__main__.py`` guards). Deciding that the program
 is over belongs to the application, not to a library, and
 ``tests/test_error_contract.py`` enforces this with an AST scan so it cannot
 regress quietly.
