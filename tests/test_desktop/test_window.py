@@ -40,8 +40,8 @@ def test_main_window_smoke(qtbot: object, tmp_path: Path) -> None:
     qtbot.addWidget(window)
     window.show()
     assert window.windowTitle().startswith("PyPedal")
-    assert window.nav.count() == 2
-    assert window.stack.count() == 2
+    assert window.nav.count() == 8
+    assert window.stack.count() == 8
     assert window.open_action.text() == "Open…"
 
 
@@ -71,7 +71,7 @@ def test_failed_load_retains_previous_pedigree(
     qtbot: object, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
-        "PyPedal.desktop.main_window.show_load_error",
+        "PyPedal.desktop.main_window.show_application_error",
         lambda *args, **kwargs: None,
     )
     good = tmp_path / "good.ped"

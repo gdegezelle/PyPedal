@@ -121,6 +121,8 @@ def test_file_menu_open_contract(qtbot: object, tmp_path: Path) -> None:
     assert window.open_action.text() == "Open…"
     assert window.open_action.shortcut() == QKeySequence(QKeySequence.StandardKey.Open)
     assert window.recent_menu.title() == "Open Recent"
+    assert window.save_action.text() == "Save Pedigree As…"
+    assert window.save_action.shortcut() == QKeySequence(QKeySequence.StandardKey.SaveAs)
     assert window.close_action.isEnabled() is False
     assert window.quit_action.menuRole() == QAction.MenuRole.QuitRole
     assert window.about_action.menuRole() == QAction.MenuRole.AboutRole
