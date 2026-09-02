@@ -93,6 +93,12 @@ if not any("LICENSE" in n for n in names):
 if not any(n.endswith("pyp_newclasses.py") for n in names):
     sys.stderr.write("production module pyp_newclasses.py missing from wheel\n")
     sys.exit(1)
+if not any(n.endswith("application/__init__.py") for n in names):
+    sys.stderr.write("application package missing from wheel\n")
+    sys.exit(1)
+if not any(n.endswith("desktop/__init__.py") for n in names):
+    sys.stderr.write("desktop package missing from wheel\n")
+    sys.exit(1)
 genes = [n for n in names if "GENES.html" in n or n.endswith("/GENES.html") or "/GENES" in n]
 if genes:
     sys.stderr.write("stale GENES material present:\n")
