@@ -38,6 +38,10 @@ distribution license as `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only`
 in installed package metadata (`License:` field of `PySide6-6.11.2.dist-info/METADATA`).
 The project homepage listed there is https://pyside.org.
 
-PyInstaller, when used, is a development/build tool for the macOS
-application spike (`macos-app` extra). It is not a runtime dependency of
-the PyPedal library and is not distributed as source in this repository.
+PyInstaller is a development/build tool for the macOS application bundle
+(`macos-app` extra). It is not a runtime dependency of the PyPedal
+library and is not distributed as source in this repository. A built
+`PyPedal.app` embeds third-party runtimes (Python, PySide6/Qt, NumPy,
+pandas, SciPy, NetworkX, and optional ReportLab when present in the
+build environment). Those components keep their own licenses; this file
+does not restate them.

@@ -20,6 +20,11 @@ and PEP 440 (`4.1.0`).
   mating CoI (pair and explicit group), theoretical Ne from metadata,
   pedigree Save As, and explicit UTF-8 result export. Analysis jobs use
   `output=False`; `.dat` files are not written on Run.
+- Optional pedigree metadata and three-generation PDF export in the Qt
+  desktop (`File -> Export`), using existing `pyp_reports` APIs. ReportLab
+  remains the `reports` extra.
+- macOS `PyPedal.app` / engineering `PyPedal.dmg` packaging commands
+  (`tools/macos/build_app.py`, `tools/macos/build_dmg.py`).
 
 ### Changed
 
