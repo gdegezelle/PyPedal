@@ -79,6 +79,11 @@ def test_imports():
         print("  - Importing PyPedal core modules...")
         from PyPedal import pyp_newclasses, pyp_nrm, pyp_metrics, pyp_utils
         print("    [OK] Core modules imported")
+
+        print("  - Importing Qt-free application layer...")
+        from PyPedal import application
+        assert application.PedigreeSession is not None
+        print("    [OK] PyPedal.application imported")
         
         print("  - Testing NewPedigree class...")
         from PyPedal.pyp_newclasses import NewPedigree
