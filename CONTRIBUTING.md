@@ -63,6 +63,15 @@ python -m pip install -e ".[docs]"
 mkdocs build --strict -d /tmp/pypedal-user-manual
 ```
 
+## Application layer
+
+`PyPedal.application` is a Qt-free session and load layer between a future
+PySide6 desktop and the scientific library. Scientific modules
+(`PyPedal/pyp_*.py`, except the temporary CustomTkinter `pyp_app.py`) must
+not import it. The application package must not import GUI toolkits
+(`PySide6`, `tkinter`, `customtkinter`). Architecture tests under
+`tests/test_application/` enforce that direction.
+
 ## Lint
 
 Three Ruff rules are blocking:
@@ -72,7 +81,9 @@ ruff check --select F821,F811,F601 .
 ```
 
 Everything else Ruff reports, and all mypy output, is reporting-only.
-Do not run a whole-tree format on scientific modules.
+Do not run a whole-tree format on scientific modules. New
+`PyPedal/application` code and `tests/test_application` must pass
+`ruff format --check` and `ruff check` under the repository rules.
 
 ## Packaging smoke
 

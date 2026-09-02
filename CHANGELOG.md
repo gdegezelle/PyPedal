@@ -8,6 +8,11 @@ and PEP 440 (`4.1.0`).
 
 ## [Unreleased]
 
+### Added
+
+- Added a Qt-free application/session layer in preparation for the PySide6
+  desktop replacement.
+
 ## [4.1.0] — 2026-09-01
 
 Minor release. It has not been published to PyPI.
