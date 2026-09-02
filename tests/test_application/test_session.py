@@ -20,6 +20,9 @@ def test_session_starts_empty():
     assert session.source_path is None
     assert session.load_options is None
     assert session.inbreeding_result is None
+    assert session.effective_founders_result is None
+    assert session.relationship_result is None
+    assert session.theoretical_ne is None
 
 
 def test_successful_load_installs_pedigree_and_path(tmp_path: Path):
@@ -73,6 +76,8 @@ def test_successful_replacement_clears_inbreeding_cache(tmp_path: Path):
         close_owned_pypedal_log_handlers()
     assert session.pedigree is second
     assert session.inbreeding_result is None
+    assert session.effective_founders_result is None
+    assert session.theoretical_ne is None
     assert session.source_path == second_path.resolve()
 
 
@@ -88,5 +93,6 @@ def test_clear_returns_to_empty(tmp_path: Path):
     session.clear()
     assert session.is_empty
     assert session.inbreeding_result is None
+    assert session.effective_founders_result is None
     assert session.source_path is None
     assert session.load_options is None

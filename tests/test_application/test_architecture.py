@@ -26,24 +26,6 @@ GUI_ROOTS = frozenset(
     }
 )
 
-ANALYSIS_ROOTS = frozenset(
-    {
-        "pyp_nrm",
-        "pyp_metrics",
-        "pyp_demog",
-        "pyp_jbc",
-        "pyp_network",
-        "pyp_graphics",
-        "pyp_reports",
-        "pyp_snp",
-        "pyp_db",
-        "pyp_tests",
-        "pyp_utils",
-        "pyp_io",
-        "pyp_chronology",
-    }
-)
-
 QT_TYPE_TOKENS = frozenset(
     {
         "QWidget",
@@ -92,7 +74,7 @@ def _from_import_modules(tree: ast.AST) -> set[str]:
 
 def test_application_package_exists():
     assert (APPLICATION / "__init__.py").is_file()
-    for name in ("session.py", "load.py", "tables.py", "errors.py"):
+    for name in ("session.py", "load.py", "tables.py", "errors.py", "jobs.py", "export.py"):
         assert (APPLICATION / name).is_file(), name
 
 
@@ -117,20 +99,19 @@ def test_application_does_not_name_qt_types():
     assert offenders == []
 
 
-def test_application_does_not_import_analysis_modules():
-    """Application may call load APIs, not scientific recurrences."""
-    offenders: list[str] = []
-    for path in _iter_python(APPLICATION):
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        imported = _imported_names(tree) | _from_import_modules(tree)
-        hits = sorted(
-            name
-            for name in imported
-            if name in ANALYSIS_ROOTS or name.split(".")[-1] in ANALYSIS_ROOTS
-        )
-        if hits:
-            offenders.append(f"{path.relative_to(PACKAGE)}: {hits}")
-    assert offenders == []
+def test_application_job_adapters_may_import_scientific_modules():
+    """4.2-A forbade this because A had no job adapters.
+
+    4.2-C introduces explicit adapters in ``jobs.py``. Application MAY
+    import scientific modules. Scientific modules still MUST NOT import
+    application or desktop.
+    """
+    jobs = APPLICATION / "jobs.py"
+    tree = ast.parse(jobs.read_text(encoding="utf-8"), filename=str(jobs))
+    imported = _imported_names(tree) | _from_import_modules(tree)
+    scientific = {"pyp_nrm", "pyp_metrics"}
+    hits = {name.split(".")[-1] for name in imported} & scientific
+    assert hits == scientific
 
 
 def test_scientific_modules_do_not_import_application_or_desktop():

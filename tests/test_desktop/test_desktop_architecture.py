@@ -3,10 +3,10 @@
 Permanent rule: scientific modules must not import application or desktop.
 Application must not import GUI toolkits.
 
-The 4.2-A test that forbids application imports of analysis modules is an
-A-scope restriction. 4.2-C will add application adapters that call
-``pyp_nrm`` / ``pyp_metrics``. This file does not treat that A test as a
-permanent invariant.
+The 4.2-A test that forbade application imports of analysis modules was an
+A-scope restriction. 4.2-C adds application adapters that call
+``pyp_nrm`` / ``pyp_metrics``. Desktop still must not import those
+modules directly.
 """
 
 from __future__ import annotations

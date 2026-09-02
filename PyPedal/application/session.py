@@ -15,9 +15,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
+    from PyPedal.application.jobs import PairwiseResult
     from PyPedal.application.load import PedigreeOpenOptions
     from PyPedal.pyp_newclasses import NewPedigree
-    from PyPedal.pyp_results import InbreedingResult
+    from PyPedal.pyp_results import (
+        EffectiveFoundersResult,
+        InbreedingResult,
+        MatingCoIGroupResult,
+    )
 
 SessionLifecycle = Literal["empty", "loaded"]
 
@@ -44,6 +49,11 @@ class PedigreeSession:
         self.source_path: Path | None = None
         self.load_options: PedigreeOpenOptions | None = None
         self.inbreeding_result: InbreedingResult | None = None
+        self.effective_founders_result: EffectiveFoundersResult | None = None
+        self.relationship_result: PairwiseResult | None = None
+        self.mating_pair_result: PairwiseResult | None = None
+        self.mating_group_result: MatingCoIGroupResult | None = None
+        self.theoretical_ne: float | None = None
 
     @property
     def is_empty(self) -> bool:
@@ -63,11 +73,20 @@ class PedigreeSession:
         self.pedigree = pedigree
         self.source_path = source_path
         self.load_options = options
+        self.clear_analysis_cache()
+
+    def clear_analysis_cache(self) -> None:
+        """Drop pedigree-dependent analysis results. Pedigree stays loaded."""
         self.inbreeding_result = None
+        self.effective_founders_result = None
+        self.relationship_result = None
+        self.mating_pair_result = None
+        self.mating_group_result = None
+        self.theoretical_ne = None
 
     def clear(self) -> None:
         """Drop the current pedigree, path, options, and cached results."""
         self.pedigree = None
         self.source_path = None
         self.load_options = None
-        self.inbreeding_result = None
+        self.clear_analysis_cache()
