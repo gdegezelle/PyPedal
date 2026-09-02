@@ -18,42 +18,9 @@ from typing import Any, Optional
 
 from PyPedal import pyp_errors, pyp_io, pyp_metrics, pyp_newclasses, pyp_nrm
 from PyPedal.__version__ import version as PYPEDAL_VERSION
-
-
-# Exception class -> process exit status.
-#
-# PyPedal is a library: it raises, and never decides that the program is over.
-# Choosing a status is an APPLICATION decision, so it happens here and nowhere
-# else. Distinct codes let a wrapping shell script or CI job branch on the kind
-# of failure instead of parsing stderr.
-#
-# The values below 64 follow ordinary convention (2 = usage/input); those at 64
-# and above follow sysexits.h, where 70 is EX_SOFTWARE, an internal error.
-# Anything unrecognised gets 1. Zero is never used for a failure -- the whole
-# point is that these paths must never exit 0 and tell the shell they succeeded.
-EXIT_STATUS = (
-    (pyp_errors.PyPedalInputError, 2),
-    (pyp_errors.PyPedalUsageError, 2),
-    (pyp_errors.PyPedalConfigurationError, 3),
-    (pyp_errors.PyPedalDependencyError, 4),
-    (pyp_errors.PyPedalNotImplementedError, 5),
-    (pyp_errors.PyPedalValidationError, 65),
-    (pyp_errors.PyPedalInternalError, 70),
-    # 73 is EX_CANTCREAT: the output file could not be produced. Distinct from
-    # 70 because it is not a PyPedal defect in the general case -- the value
-    # genuinely does not fit the declared format -- and distinct from 2 because
-    # the caller's pedigree file is usually not what is wrong.
-    (pyp_errors.PyPedalExportFormatError, 73),
-    (pyp_errors.PyPedalError, 1),
-)
-
-
-def exit_status_for(exc: BaseException) -> int:
-    """Map a PyPedal exception to the process exit status the CLI should use."""
-    for klass, status in EXIT_STATUS:
-        if isinstance(exc, klass):
-            return status
-    return 1
+from PyPedal.application.errors import EXIT_STATUS as EXIT_STATUS
+from PyPedal.application.errors import exit_status_for as exit_status_for
+from PyPedal.application.load import normalize_sepchar as normalize_sepchar
 
 
 def _require_customtkinter():
@@ -69,33 +36,20 @@ def _require_customtkinter():
     return ctk, filedialog, messagebox
 
 
-def normalize_sepchar(raw: Optional[str]) -> str:
-    """Map the GUI separator field to a ``sepchar``.
-
-    The field defaults to empty (meaning a space). A comma with leftover
-    spaces from that default -- ``', '`` or ``' ,'`` -- must still be a
-    comma, or a CSV with no space after the delimiter is read as one
-    column. A tab is kept. Only spaces are trimmed, so a tab is not
-    stripped to empty and then replaced by a space.
-    """
-    if raw is None:
-        return " "
-    text = str(raw)
-    if text == "\t":
-        return "\t"
-    stripped = text.strip(" ")
-    if stripped == "":
-        return " "
-    return stripped
-
-
 def pedigree_open_options(
     path: str,
     pedformat: str,
     sepchar: str,
     renumber: bool,
 ) -> dict:
-    """Options dict the desktop app passes to ``NewPedigree``."""
+    """Options dict the desktop app passes to ``NewPedigree``.
+
+    Separator normalisation lives in ``PyPedal.application``. This wrapper
+    keeps the CustomTkinter dict shape, including omitting
+    ``pedigree_summary`` so the library default (1) is unchanged. The
+    application-layer ``PedigreeOpenOptions`` default is
+    ``pedigree_summary=0`` for future PySide6 loads.
+    """
     return {
         "pedfile": path,
         "pedformat": (pedformat or "").strip() or "asd",

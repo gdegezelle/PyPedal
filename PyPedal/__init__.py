@@ -19,6 +19,7 @@ import logging
 logging.getLogger("PyPedal").addHandler(logging.NullHandler())
 
 __all__ = [
+    "application",
     "pyp_chronology",
     "pyp_db",
     "pyp_demog",
