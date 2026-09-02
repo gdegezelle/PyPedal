@@ -49,15 +49,16 @@ def test_open_options_empty_pedformat_falls_back_to_asd():
     assert PedigreeOpenOptions(pedformat="").normalized().pedformat == "asd"
 
 
-def test_application_load_uses_quiet_and_no_summary():
+def test_application_load_uses_quiet_and_no_summary(tmp_path: Path):
     options = PedigreeOpenOptions()
     assert options.messages == "quiet"
     assert options.pedigree_summary == 0
-    payload = options.to_library_options(Path("/tmp/dogs.ped"))
+    source = tmp_path / "dogs.ped"
+    payload = options.to_library_options(source)
     assert payload["messages"] == "quiet"
     assert payload["pedigree_summary"] == 0
-    assert payload["pedname"] == "dogs.ped"
-    assert payload["pedfile"] == "/tmp/dogs.ped"
+    assert payload["pedname"] == source.name
+    assert Path(payload["pedfile"]) == source
 
 
 def test_resolve_source_path_is_absolute(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
