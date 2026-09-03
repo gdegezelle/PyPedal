@@ -64,6 +64,13 @@ except PyPedalUsageError:
     print("unresolved")
 ```
 
+Pairwise `relationship()` computes an exact selected *a<sub>ij</sub>*
+from the ancestors of the requested animals. It does **not** build an
+ancestor sub-pedigree numerator relationship matrix for one pair, and it
+does not attach a pedigree-wide NRM. On a large studbook that makes a
+single pair suitable without forming a dense NRM. Very large explicit
+mating *groups* still scale with the number of pairs.
+
 ## The full matrix
 
 `pyp_nrm.inbreeding(..., rels=1)` can return relationship summaries when

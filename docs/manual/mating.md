@@ -85,4 +85,10 @@ call names.
 - Not a write to the pedigree
 - Not a reason to form a dense NRM for a large file
 
+`mating_coi` and `mating_coi_group` use the same exact selected
+relationship calculation as `relationship()` (half of *A<sub>ij</sub>*
+for a distinct pair). They do not build an ancestor sub-NRM per pair.
+A single test mating is suitable on large pedigrees; an explicit group
+still costs one calculation per supplied pair.
+
 See [Relationships](relationships.md) for *A<sub>ij</sub>* itself.

@@ -35,6 +35,9 @@ signed or notarized.
   `PyPedal.desktop`.
 - Open is **File → Open…** only. There is no Open toolbar or in-window
   Open button.
+- Fixed severe Relationship and Mating performance on deep,
+  highly-collapsed pedigrees by replacing the historical ancestor-path /
+  sub-NRM calculation with an exact selected-pair calculation.
 
 ### Removed
 

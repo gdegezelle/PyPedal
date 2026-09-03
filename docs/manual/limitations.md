@@ -31,6 +31,8 @@ See [Test mating](mating.md).
 - The functions evaluate the pair or list of pairs you supply. They are
   not a mate-selection engine and do not form a Cartesian product.
 - They do not automatically form a dense NRM.
+- Each pair uses the same exact selected relationship calculation as
+  `relationship()`; they do not build an ancestor sub-NRM for one pair.
 
 ### PDF pedigree reports
 

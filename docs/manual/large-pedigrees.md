@@ -8,8 +8,8 @@ method. A population of tens of thousands of animals cannot.
 | Task | Small pedigree | Large pedigree |
 |---|---|---|
 | Inbreeding *F* | `method="tabular"` | `method="meu_luo"` |
-| One pairwise relationship | `relationship()` | `relationship()` (do not form a full NRM) |
-| Test mating | `mating_coi` | `mating_coi` (still read-only; still no dense NRM) |
+| One pairwise relationship | `relationship()` | `relationship()` (exact selected pair; no full or sub-NRM) |
+| Test mating | `mating_coi` | `mating_coi` (same selected path; still read-only; no dense NRM) |
 | Lacy *f<sub>e</sub>* | `effective_founders_lacy` | same function; work in a temp directory. Do not use `a_effective_founders_lacy` (dense NRM) |
 | Gene-drop N<sub>g</sub> | modest `rounds` | more RAM/time; do not also form a dense NRM |
 
@@ -113,6 +113,7 @@ result.
 |---|---|---|
 | Meuwissen–Luo inbreeding | approximately 16 minutes | approximately 80 seconds |
 | `effective_founders_lacy` | more than 20 minutes without completing | approximately 11 seconds |
+| One pairwise `relationship` (recent pair) | more than 11 minutes / timed out | about 1.5 seconds (selected-pair calculation) |
 
 ## Performance notes
 

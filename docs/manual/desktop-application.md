@@ -88,7 +88,9 @@ Loads and long analyses run on a background thread. The window stays
 usable enough to show progress; Open and analysis actions are disabled
 until the job finishes. Typed errors appear in a dialog; they do not
 shut the process down with a zero exit status. There is no cancel
-button.
+button. Single-pair Relationship and Mating use an exact selected
+calculation and are interactive on the curated Griffon sample; they do
+not construct a dense or ancestor sub-NRM for one pair.
 
 ## Animal identifiers in Relationship and Mating
 
