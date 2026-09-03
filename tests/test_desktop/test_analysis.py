@@ -135,14 +135,16 @@ def test_year_analysis_reuses_cache_without_second_ml(
 def test_relationship_and_mating_and_ne(qtbot: object, tmp_path: Path) -> None:
     window = _load_mrode(qtbot, tmp_path)
     try:
-        window.relationship_page.id_a.setText("4")
-        window.relationship_page.id_b.setText("3")
+        window.relationship_page.selector_a.select_animal_id(4)
+        window.relationship_page.selector_b.select_animal_id(3)
+        assert window.relationship_page.run_button.isEnabled() is True
         window.run_relationship_analysis()
         _wait_idle(qtbot, window)
         assert window.relationship_page.result is not None
         assert window.relationship_page.result.coefficient == 0.25
-        window.mating_page.id_a.setText("4")
-        window.mating_page.id_b.setText("3")
+        window.mating_page.selector_a.select_animal_id(4)
+        window.mating_page.selector_b.select_animal_id(3)
+        assert window.mating_page.run_button.isEnabled() is True
         window.run_mating_pair()
         _wait_idle(qtbot, window)
         assert window.mating_page.pair_result is not None
@@ -154,23 +156,21 @@ def test_relationship_and_mating_and_ne(qtbot: object, tmp_path: Path) -> None:
         close_owned_pypedal_log_handlers()
 
 
-def test_typed_error_dialog_for_missing_id(
-    qtbot: object, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_compute_stays_disabled_without_explicit_selection(
+    qtbot: object, tmp_path: Path
 ) -> None:
-    notices: list[str] = []
-
-    def fake_exec(self: QMessageBox) -> int:  # noqa: ARG001
-        notices.append(self.text())
-        return 0
-
-    monkeypatch.setattr(QMessageBox, "exec", fake_exec)
     window = _load_mrode(qtbot, tmp_path)
     try:
         window.relationship_page.id_a.setText("4")
         window.relationship_page.id_b.setText("99")
+        window.relationship_page.selector_a.apply_search_now()
+        window.relationship_page.selector_b.apply_search_now()
+        assert window.relationship_page.selected_animal_a() is None
+        assert window.relationship_page.selected_animal_b() is None
+        assert window.relationship_page.run_button.isEnabled() is False
         window.run_relationship_analysis()
         _wait_idle(qtbot, window)
-        assert notices
+        assert window.relationship_page.result is None
     finally:
         close_owned_pypedal_log_handlers()
 

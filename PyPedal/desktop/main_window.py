@@ -408,11 +408,12 @@ class MainWindow(QMainWindow):
             self.inbreeding_page.run_button,
             self.year_page.run_button,
             self.founders_page.run_button,
-            self.relationship_page.run_button,
-            self.mating_page.run_button,
-            self.mating_page.run_group_button,
             self.population_page.run_button,
         )
+
+    def _sync_selector_pages(self, *, armed: bool) -> None:
+        self.relationship_page.set_armed(armed)
+        self.mating_page.set_armed(armed)
 
     def _set_busy(self, busy: bool, operation: str) -> None:
         self._busy = busy
@@ -425,6 +426,7 @@ class MainWindow(QMainWindow):
         self.close_action.setEnabled(not busy and not empty)
         for button in self._analysis_buttons():
             button.setEnabled(not busy and not empty)
+        self._sync_selector_pages(armed=not busy and not empty)
         self.status_operation.setText(operation)
         if busy:
             self.progress.setRange(0, 0)
@@ -442,6 +444,8 @@ class MainWindow(QMainWindow):
         self.animals_page.search.clear()
         self.animals_page.apply_filter_now()
         self.metadata_page.show_empty()
+        self.relationship_page.set_lookup(None)
+        self.mating_page.set_lookup(None)
         self._clear_analysis_pages()
         self._sync_empty_state()
 
@@ -457,8 +461,11 @@ class MainWindow(QMainWindow):
         pedigree = self.session.pedigree
         if pedigree is None:
             return
+        self.session.rebuild_animal_lookup()
         self.animals_page.model.set_source(PedigreeTableSource(pedigree))
         self.metadata_page.show_session(self.session)
+        self.relationship_page.set_lookup(self.session.animal_lookup)
+        self.mating_page.set_lookup(self.session.animal_lookup)
         self._clear_analysis_pages()
         self._sync_empty_state()
 
@@ -473,6 +480,7 @@ class MainWindow(QMainWindow):
         self.pdf_three_gen_action.setEnabled(not empty and not self._busy)
         for button in self._analysis_buttons():
             button.setEnabled(not empty and not self._busy)
+        self._sync_selector_pages(armed=not empty and not self._busy)
         if empty:
             self.status_file.setText("No pedigree")
             self.status_count.setText("")
@@ -547,11 +555,9 @@ class MainWindow(QMainWindow):
             self.founders_page.show_outcome(outcome)
 
     def run_relationship_analysis(self) -> None:
-        try:
-            animal_a = parse_animal_id(self.relationship_page.id_a.text(), label="Animal A")
-            animal_b = parse_animal_id(self.relationship_page.id_b.text(), label="Animal B")
-        except Exception as exc:
-            show_application_error(self, exc, "")
+        animal_a = self.relationship_page.selected_animal_a()
+        animal_b = self.relationship_page.selected_animal_b()
+        if animal_a is None or animal_b is None:
             return
         session = self.session
         self._start_analysis(
@@ -565,11 +571,9 @@ class MainWindow(QMainWindow):
             self.relationship_page.show_result(result)
 
     def run_mating_pair(self) -> None:
-        try:
-            animal_a = parse_animal_id(self.mating_page.id_a.text(), label="Animal A")
-            animal_b = parse_animal_id(self.mating_page.id_b.text(), label="Animal B")
-        except Exception as exc:
-            show_application_error(self, exc, "")
+        animal_a = self.mating_page.selected_animal_a()
+        animal_b = self.mating_page.selected_animal_b()
+        if animal_a is None or animal_b is None:
             return
         session = self.session
         self._start_analysis(
