@@ -165,7 +165,8 @@ def test_unknown_chronology_is_none():
 
 def test_griffon_sample_and_dense_nrm_warning():
     text = (MANUAL / "large-pedigrees.md").read_text(encoding="utf-8")
-    assert "griffonbruxellois_2026_pyp.ped" in text
+    assert "griffonbruxellois_2026_named_pyp.ped" in text
+    assert "asdxbn" in text
     assert "98,001" in text
     assert "6,689" in text
     assert "915" in text

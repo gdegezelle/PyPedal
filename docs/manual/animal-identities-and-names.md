@@ -32,6 +32,10 @@ may both be called “Max”. PyPedal will not use `n` to find an animal in
 
 If you omit `n`, the animal ID is used as the name field.
 
+The desktop Relationship and Mating selectors search call names, original
+IDs, and current IDs. They do not use `ped.namemap`. Duplicate names
+require an explicit choice.
+
 ## Sire and dam names
 
 `S` / `D` (uppercase) are unique string **identities** for sire and dam.

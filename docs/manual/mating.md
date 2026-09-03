@@ -19,7 +19,10 @@ For a **self** mating (*i* with *i*):
 > *F*<sub>offspring</sub> = (1 + *F<sub>i</sub>*) / 2
 
 IDs are current `animalID` values. The pedigree must already be
-renumbered (the default load).
+renumbered (the default load). The desktop Mating page selects those
+IDs through the same name / original ID / current ID search as
+Relationship. Duplicate names must be disambiguated explicitly. Sex is
+shown in the match list; PyPedal does not swap the two animals.
 
 ## One pair: `mating_coi`
 

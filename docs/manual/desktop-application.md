@@ -61,12 +61,16 @@ pedigree.
    cached inbreeding result. It does not rerun Meuwissen–Luo when
    coefficients are already available.
 5. **Effective Founders** — Lacy’s *f<sub>e</sub>*.
-6. **Relationship** — coefficient of relationship for two **current
-   (renumbered) animal IDs**. This is not a pedigree-wide matrix. Name
-   lookup is not provided in 4.2.
+6. **Relationship** — coefficient of relationship for two animals. Search
+   by **display name**, **original ID**, or **current animal ID**, then
+   choose a result. Duplicate names are not unique identities; the popup
+   lists every match so you can pick the right animal. This is not a
+   pedigree-wide matrix.
 7. **Mating** — prospective offspring inbreeding for an explicit pair,
    or for an explicit small group of pairs you add. It does not mate
-   every animal with every other animal. IDs are current animal IDs.
+   every animal with every other animal. The pair selectors are the same
+   name/ID search used on Relationship. Sex is shown in the match list;
+   animals are not swapped automatically.
 8. **Population** — theoretical Ne from pedigree metadata.
 
 **File → Save Pedigree As…** writes the loaded pedigree to a path you
@@ -94,10 +98,23 @@ not construct a dense or ancestor sub-NRM for one pair.
 
 ## Animal identifiers in Relationship and Mating
 
-Relationship and Mating currently require the **current animal ID**
-after renumbering. That is the identifier the scientific functions use.
-Original IDs and names are visible on the Animals page; they are not a
-lookup field on those analysis pages in 4.2.
+Relationship and Mating let you **search** for an animal by display/call
+name, original ID, or current (renumbered) animal ID. Choosing a result
+commits that animal. Typing in the search box without choosing a result
+does not select an animal, and Compute stays disabled until both sides
+have an explicit choice.
+
+Names are **not** unique identities. Two animals can share a call name;
+the match list shows original ID, sex, birth year, and current ID so you
+can tell them apart. The scientific functions still receive current
+`animalID` values.
+
+Pedigrees need an `n` column only for name search. Original ID and
+current ID selection work on files without names (including the
+scientific Griffon `asdxb` sample).
+
+A pedigree reload clears selected animals because current IDs may
+change.
 
 ## What it does not do
 

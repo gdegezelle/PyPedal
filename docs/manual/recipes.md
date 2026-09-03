@@ -284,6 +284,8 @@ print(pyp_reports.pdf_three_gen_ped(
 
 **Input.** `PyPedal/examples/griffonbruxellois_2026_pyp.ped` —
 **checkout / sdist only**. Comma-separated `asdxb` (no name column).
+The named desktop companion is `griffonbruxellois_2026_named_pyp.ped`
+(`asdxbn`); genealogy matches this file.
 **Code.** Load with `asdxb` and `sepchar=","`, then print counts.
 **Output.** 98,001 records, 6,689 founders, 915 half-founders, 3,997
 unknown dates. **Interpretation.** Griffon Bruxellois 2026 export

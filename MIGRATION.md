@@ -192,12 +192,14 @@ assuming a scientific regression.
 
 ## Large pedigrees
 
-The repository ships one Griffon sample,
-`PyPedal/examples/griffonbruxellois_2026_pyp.ped` (checkout/sdist only;
-not in the wheel). It is a 2026 export with recorded births through 2025.
-Load with `pedformat="asdxb"` and `sepchar=","`. Observed load: 98,001
-records, 6,689 founders, 915 half-founders, 3,997 unknown chronology
-dates, `igen` 1…70. Use `meu_luo` for inbreeding. See the
+The repository ships two Griffon samples (checkout/sdist only; not in
+the wheel). `PyPedal/examples/griffonbruxellois_2026_pyp.ped` is the
+canonical scientific `asdxb` file. `griffonbruxellois_2026_named_pyp.ped`
+is the same genealogy with display names (`asdxbn`) for desktop animal
+selection. Load the scientific file with `pedformat="asdxb"` and
+`sepchar=","`. Observed load: 98,001 records, 6,689 founders, 915
+half-founders, 3,997 unknown chronology dates, `igen` 1…70. Use
+`meu_luo` for inbreeding. See the
 [large pedigrees](docs/manual/large-pedigrees.md) chapter.
 
 ## PyPedal 4.0.x to PyPedal 4.1.0

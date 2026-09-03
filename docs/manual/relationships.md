@@ -57,6 +57,12 @@ allocation failure raises `PyPedalError`.
 An ID that is missing, non-integral, or an original file ID that is not
 also a current ID raises `PyPedalUsageError`.
 
+The desktop app does not ask you to type current IDs. Relationship
+searches by name, original ID, or current ID, then calls
+`relationship()` with the two selected current IDs. Duplicate names
+require an explicit choice; names are not identities. See
+[Desktop application](desktop-application.md).
+
 ```python
 try:
     pyp_metrics.relationship(99999, 3, ped)

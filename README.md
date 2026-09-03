@@ -67,9 +67,11 @@ print(result["fx"][5])  # 0.125
 ```
 
 For large files use `method="meu_luo"`. There is no automatic switch at
-10,000 animals. The repository ships one curated Griffon sample
-(`PyPedal/examples/griffonbruxellois_2026_pyp.ped`; checkout/sdist only;
-comma-separated `asdxb`, 2026 export with recorded births through 2025).
+10,000 animals. The repository ships two curated Griffon samples
+(checkout/sdist only): scientific `griffonbruxellois_2026_pyp.ped`
+(comma-separated `asdxb`) and named `griffonbruxellois_2026_named_pyp.ped`
+(`asdxbn`, same genealogy plus display names; 2026 export with recorded
+births through 2025).
 
 Desktop app: `python -m PyPedal` or `pypedal` (requires `PyPedal[gui]`).
 

@@ -18,6 +18,14 @@ signed or notarized.
 
 - Qt-free application/session layer between the desktop and the scientific
   library.
+- Desktop Relationship and Mating select animals by display name, original
+  ID, or current animal ID. Duplicate names require an explicit choice;
+  names are not unique identities. Pedigrees need an `n` field only for
+  name search.
+- Second Griffon example pedigree,
+  `PyPedal/examples/griffonbruxellois_2026_named_pyp.ped` (`asdxbn`), with
+  the same genealogy as the scientific `asdxb` sample plus display names.
+  Both examples ship in the sdist and are excluded from the wheel.
 - PySide6 desktop: native File menu, scalable animal table (including the
   ~98k Griffon sample), background load/progress, Meuwissen–Luo inbreeding,
   inbreeding by year from the inbreeding cache, Lacy effective founders,

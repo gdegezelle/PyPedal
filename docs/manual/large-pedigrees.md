@@ -49,24 +49,41 @@ before offspring. Default `renumber=True` establishes that. Calling
 pedigree that does not satisfy the numbering raises `PyPedalUsageError`
 rather than returning silently wrong coefficients.
 
-## The Griffon sample
+## The Griffon samples
 
-The repository ships **one** Griffon Bruxellois pedigree file:
+The repository ships **two** Griffon Bruxellois pedigree files with the
+same genealogical structure (animal, sire, dam, sex, birth date). Both
+are **checkout / sdist only**. Wheels do not install `PyPedal/examples`.
+They are **curated project data**, not an independently authoritative
+registry or studbook dump.
 
-`PyPedal/examples/griffonbruxellois_2026_pyp.ped`
+| File | Format | Role |
+|---|---|---|
+| `PyPedal/examples/griffonbruxellois_2026_pyp.ped` | comma `asdxb` | Canonical **scientific** regression sample (no name column) |
+| `PyPedal/examples/griffonbruxellois_2026_named_pyp.ped` | comma `asdxbn` | Canonical **desktop / animal-selection** sample (adds display names) |
 
-It is a **Griffon Bruxellois 2026 export** (sample updated/exported in
-2026, with recorded births through 2025). It is **checkout / sdist
-only**. Wheels do not install `PyPedal/examples`. It is **curated project
-data**, not an independently authoritative registry or studbook dump.
+The named file does not change pedigree structure. The extra `n` column
+is a display/call name. Names are not unique identities.
 
-Load it as comma-separated `asdxb` with no padded delimiters and no
-name column:
+Load the scientific file as comma-separated `asdxb` with no padded
+delimiters and no name column:
 
 ```python
 ped = load_pedigree(options={
     "pedfile": "griffonbruxellois_2026_pyp.ped",
     "pedformat": "asdxb",
+    "sepchar": ",",
+    "messages": "quiet",
+    "pedigree_summary": 0,
+})
+```
+
+The named desktop sample is the same genealogy plus a name column:
+
+```python
+ped = load_pedigree(options={
+    "pedfile": "griffonbruxellois_2026_named_pyp.ped",
+    "pedformat": "asdxbn",
     "sepchar": ",",
     "messages": "quiet",
     "pedigree_summary": 0,
