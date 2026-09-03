@@ -1156,6 +1156,192 @@ def _require_meuwissen_luo_numbering(pedigree, missing_parent):
                 )
 
 
+def _is_missing_parent_id(parent_id, missing_parent):
+    return parent_id == missing_parent or str(parent_id) == str(missing_parent)
+
+
+def _meuwissen_luo_pass(
+    sire_idx,
+    dam_idx,
+    *,
+    progress: ProgressCallback | None = None,
+    debug_messages: bool = False,
+    animal_ids=None,
+    routine: str = "_meuwissen_luo_pass",
+):
+    """Shared Meuwissen-Luo (1992) inner pass over compact parent-index arrays.
+
+    ``sire_idx`` and ``dam_idx`` are parallel lists of length *n* with local
+    indices 0..n-1 and ``-1`` for unknown parents. Returns a length-*n*
+    list of inbreeding coefficients ``F`` (not ``A_ii - 1`` semantics for
+    callers that need ``A_ii``, add 1.0).
+    """
+    n = len(sire_idx)
+    if n != len(dam_idx):
+        raise pyp_errors.PyPedalError(
+            "%s: sire_idx and dam_idx must have the same length." % (routine,)
+        )
+
+    try:
+        lvec = _alloc_float_list(n)
+        dvec = _alloc_float_list(n)
+        fvec = _alloc_float_list(n)
+    except MemoryError as e:
+        raise pyp_errors.PyPedalError(
+            "%s: unable to allocate working vectors for "
+            "%d animals (approximately %d bytes)." % (routine, n, n * 8 * 3)
+        ) from e
+
+    if debug_messages:
+        print("[DEBUG]: Starting Meuwissen-Luo pass over", n, "animals")
+
+    heappush = heapq.heappush
+    heappop = heapq.heappop
+
+    for i in range(n):
+        if debug_messages and animal_ids is not None:
+            print(f"\t[DEBUG]: Initializing for animal {animal_ids[i]} (idx: {i})")
+
+        si = sire_idx[i]
+        di = dam_idx[i]
+        if si >= 0 and di >= 0:
+            dvec[i] = 0.5 - 0.25 * (fvec[si] + fvec[di])
+        elif si < 0 and di < 0:
+            dvec[i] = 1.0
+        elif si >= 0:
+            dvec[i] = 0.5 - 0.25 * (fvec[si] - 1.0)
+        else:
+            dvec[i] = 0.5 - 0.25 * (fvec[di] - 1.0)
+
+        lvec[i] = 1.0
+        queued = {i}
+        heap = [-i]
+        touched = [i]
+        aii = 0.0
+
+        while heap:
+            jidx = -heappop(heap)
+            if jidx not in queued:
+                continue
+            queued.remove(jidx)
+
+            lj = lvec[jidx]
+            parent_sire = sire_idx[jidx]
+            if parent_sire >= 0:
+                if lvec[parent_sire] == 0.0:
+                    touched.append(parent_sire)
+                lvec[parent_sire] += 0.5 * lj
+                if parent_sire not in queued:
+                    queued.add(parent_sire)
+                    heappush(heap, -parent_sire)
+            parent_dam = dam_idx[jidx]
+            if parent_dam >= 0:
+                if lvec[parent_dam] == 0.0:
+                    touched.append(parent_dam)
+                lvec[parent_dam] += 0.5 * lj
+                if parent_dam not in queued:
+                    queued.add(parent_dam)
+                    heappush(heap, -parent_dam)
+
+            aii += lj * lj * dvec[jidx]
+
+        fvec[i] = aii - 1.0
+        for idx in touched:
+            lvec[idx] = 0.0
+        if progress is not None:
+            progress(i + 1, n)
+
+    return fvec
+
+
+def _collect_pair_ancestor_closure(pedobj, anim_a, anim_b):
+    """Iteratively collect unique ancestors for one or two current animalIDs."""
+    missing_parent = pedobj.kw["missing_parent"]
+    anim_a = int(anim_a)
+    anim_b = int(anim_b)
+    seen = set()
+    stack = [anim_a]
+    if anim_b != anim_a:
+        stack.append(anim_b)
+    while stack:
+        aid = stack.pop()
+        if aid <= 0 or aid in seen:
+            continue
+        seen.add(aid)
+        animal = pedobj.pedigree[aid - 1]
+        sire_id = animal.sireID
+        dam_id = animal.damID
+        if not _is_missing_parent_id(sire_id, missing_parent):
+            stack.append(int(sire_id))
+        if not _is_missing_parent_id(dam_id, missing_parent):
+            stack.append(int(dam_id))
+    return sorted(seen)
+
+
+def _compact_parent_indices_for_closure(pedobj, closure):
+    """Build local sire/dam index arrays for an ancestor-closed ID list."""
+    missing_parent = pedobj.kw["missing_parent"]
+    id_to_local = {aid: idx for idx, aid in enumerate(closure)}
+    n = len(closure)
+    sire_idx = [-1] * n
+    dam_idx = [-1] * n
+    for local_i, aid in enumerate(closure):
+        animal = pedobj.pedigree[aid - 1]
+        sire_id = animal.sireID
+        dam_id = animal.damID
+        if not _is_missing_parent_id(sire_id, missing_parent):
+            pid = int(sire_id)
+            if pid not in id_to_local:
+                raise pyp_errors.PyPedalError(
+                    "pairwise relationship: sire %d of animal %d is outside "
+                    "the ancestor closure." % (pid, aid)
+                )
+            sire_idx[local_i] = id_to_local[pid]
+        if not _is_missing_parent_id(dam_id, missing_parent):
+            pid = int(dam_id)
+            if pid not in id_to_local:
+                raise pyp_errors.PyPedalError(
+                    "pairwise relationship: dam %d of animal %d is outside "
+                    "the ancestor closure." % (pid, aid)
+                )
+            dam_idx[local_i] = id_to_local[pid]
+    return sire_idx, dam_idx, id_to_local
+
+
+def _pairwise_additive_relationship(pedobj, anim_a, anim_b):
+    """Return the true additive numerator relationship ``A_ij``.
+
+    For ``i == j`` this is ``1 + F_i``. For distinct animals it uses one
+    synthetic array-only offspring and the shared Meuwissen-Luo pass. Read-only
+    on ``pedobj``; does not use ``animal.fa`` or attach an NRM.
+    """
+    anim_a = int(anim_a)
+    anim_b = int(anim_b)
+
+    if anim_a == anim_b:
+        closure = _collect_pair_ancestor_closure(pedobj, anim_a, anim_b)
+        sire_idx, dam_idx, id_to_local = _compact_parent_indices_for_closure(
+            pedobj, closure
+        )
+        fvec = _meuwissen_luo_pass(
+            sire_idx, dam_idx, routine="_pairwise_additive_relationship"
+        )
+        return 1.0 + float(fvec[id_to_local[anim_a]])
+
+    closure = _collect_pair_ancestor_closure(pedobj, anim_a, anim_b)
+    sire_idx, dam_idx, id_to_local = _compact_parent_indices_for_closure(
+        pedobj, closure
+    )
+    local_a = id_to_local[anim_a]
+    local_b = id_to_local[anim_b]
+    sire_idx.append(local_a)
+    dam_idx.append(local_b)
+    fvec = _meuwissen_luo_pass(
+        sire_idx, dam_idx, routine="_pairwise_additive_relationship"
+    )
+    return 2.0 * float(fvec[-1])
+
+
 def inbreeding_meuwissen_luo(pedobj, gens=0, *, progress: ProgressCallback | None = None, **kw):
     """
     inbreeding_meuwissen_luo() computes CoI using the method of Meuwissen and
@@ -1201,75 +1387,20 @@ def inbreeding_meuwissen_luo(pedobj, gens=0, *, progress: ProgressCallback | Non
 
     try:
         logger.info("Allocating vectors in inbreeding_meuwissen_luo().")
-        lvec = _alloc_float_list(n)
-        dvec = _alloc_float_list(n)
-        fvec = _alloc_float_list(n)
-    except MemoryError as e:
-        raise pyp_errors.PyPedalError(
-            "inbreeding_meuwissen_luo: unable to allocate working vectors for "
-            "%d animals (approximately %d bytes)." % (n, n * 8 * 3)
-        ) from e
+    except Exception:
+        pass
 
     if pedobj.kw.get("debug_messages", False):
         print("[DEBUG]: Starting loop over pedigree with", n, "animals")
 
-    heappush = heapq.heappush
-    heappop = heapq.heappop
-
-    for i in range(n):
-        if pedobj.kw.get("debug_messages", False):
-            print(f"\t[DEBUG]: Initializing for animal {animal_id[i]} (idx: {i})")
-
-        si = sire_idx[i]
-        di = dam_idx[i]
-        if si >= 0 and di >= 0:
-            dvec[i] = 0.5 - 0.25 * (fvec[si] + fvec[di])
-        elif si < 0 and di < 0:
-            dvec[i] = 1.0
-        elif si >= 0:
-            dvec[i] = 0.5 - 0.25 * (fvec[si] - 1.0)
-        else:
-            dvec[i] = 0.5 - 0.25 * (fvec[di] - 1.0)
-
-        lvec[i] = 1.0
-        # Each ancestor is processed once. If already queued, only L is updated
-        # (Meuwissen and Luo 1992).
-        queued = {i}
-        heap = [-i]
-        touched = [i]
-        aii = 0.0
-
-        while heap:
-            jidx = -heappop(heap)
-            if jidx not in queued:
-                continue
-            queued.remove(jidx)
-
-            lj = lvec[jidx]
-            parent_sire = sire_idx[jidx]
-            if parent_sire >= 0:
-                if lvec[parent_sire] == 0.0:
-                    touched.append(parent_sire)
-                lvec[parent_sire] += 0.5 * lj
-                if parent_sire not in queued:
-                    queued.add(parent_sire)
-                    heappush(heap, -parent_sire)
-            parent_dam = dam_idx[jidx]
-            if parent_dam >= 0:
-                if lvec[parent_dam] == 0.0:
-                    touched.append(parent_dam)
-                lvec[parent_dam] += 0.5 * lj
-                if parent_dam not in queued:
-                    queued.add(parent_dam)
-                    heappush(heap, -parent_dam)
-
-            aii += lj * lj * dvec[jidx]
-
-        fvec[i] = aii - 1.0
-        for idx in touched:
-            lvec[idx] = 0.0
-        if progress is not None:
-            progress(i + 1, n)
+    fvec = _meuwissen_luo_pass(
+        sire_idx,
+        dam_idx,
+        progress=progress,
+        debug_messages=pedobj.kw.get("debug_messages", False),
+        animal_ids=animal_id,
+        routine="inbreeding_meuwissen_luo",
+    )
 
     fx = {animal_id[i]: fvec[i] for i in range(n)}
 

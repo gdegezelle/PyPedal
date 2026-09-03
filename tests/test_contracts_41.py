@@ -1,4 +1,5 @@
 """4.1-B contracts: refuse plausible-wrong scientific sentinels and invalid args."""
+
 import os
 import tempfile
 import warnings
@@ -33,10 +34,7 @@ def _memory_error(*_args, **_kwargs):
 
 
 def _assert_no_memmap_residue(directory):
-    leftover = [
-        name for name in MEMMAP_NAMES
-        if os.path.exists(os.path.join(directory, name))
-    ]
+    leftover = [name for name in MEMMAP_NAMES if os.path.exists(os.path.join(directory, name))]
     assert leftover == [], leftover
 
 
@@ -49,8 +47,12 @@ def test_relationship_unrelated_pair_is_zero():
 def test_relationship_allocation_failure_raises(monkeypatch):
     with chdir_tmp() as tmp:
         ped = load_corpus("mrode.ped")
-        monkeypatch.setattr(pyp_nrm, "lil_matrix", _memory_error)
-        with pytest.raises(PyPedalError, match="fast_a_matrix"):
+
+        def boom(_n):
+            raise MemoryError("simulated allocation failure")
+
+        monkeypatch.setattr(pyp_nrm, "_alloc_float_list", boom)
+        with pytest.raises(PyPedalError, match="_pairwise_additive_relationship"):
             pyp_metrics.relationship(1, 2, ped)
         _assert_no_memmap_residue(tmp)
 
@@ -147,8 +149,7 @@ def test_fast_partial_a_matrix_memoryerror_no_float32_memmap(monkeypatch):
         ped = load_corpus("mrode.ped")
         monkeypatch.setattr(pyp_nrm.np, "zeros", _memory_error)
         with pytest.raises(PyPedalError, match="fast_partial_a_matrix"):
-            pyp_nrm.fast_partial_a_matrix(
-                ped.pedigree, 1, [1, 2], ped.kw, method="dense")
+            pyp_nrm.fast_partial_a_matrix(ped.pedigree, 1, [1, 2], ped.kw, method="dense")
         _assert_no_memmap_residue(tmp)
 
 
@@ -242,7 +243,8 @@ def test_lacy_already_renumbered_emits_no_deprecation():
             warnings.simplefilter("always", DeprecationWarning)
             result = pyp_metrics.effective_founders_lacy(ped, output=False)
         matching = [
-            item for item in caught
+            item
+            for item in caught
             if issubclass(item.category, DeprecationWarning)
             and "renumber" in str(item.message).lower()
         ]
@@ -253,8 +255,9 @@ def test_lacy_already_renumbered_emits_no_deprecation():
 def test_lacy_auto_renumber_warns_and_keeps_result():
     with chdir_tmp():
         numbered = load_corpus("new_lacy.ped")
-        expected = pyp_metrics.effective_founders_lacy(
-            numbered, output=False)["fa_effective_founders"]
+        expected = pyp_metrics.effective_founders_lacy(numbered, output=False)[
+            "fa_effective_founders"
+        ]
         ped = load_corpus(
             "new_lacy.ped",
             renumber=False,
@@ -314,4 +317,3 @@ def test_inbreeding_method_literal_matches_runtime_contract():
     )
     assert get_args(MatrixMethod) == ("dense", "sparse")
     assert not hasattr(InbreedingMethod, "__members__")
-

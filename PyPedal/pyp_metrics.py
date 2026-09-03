@@ -15,7 +15,6 @@ pyp_metrics.py
 Metrics calculations for PyPedal.
 """
 
-import copy
 import logging
 
 import numbers
@@ -2509,45 +2508,7 @@ def relationship(anim_a, anim_b, pedobj, renumber=False):
     except Exception:
         pass
 
-    _ped_a = pyp_nrm.recurse_pedigree(pedobj, anim_a, [])
-    _ped_b = pyp_nrm.recurse_pedigree(pedobj, anim_b, [])
-    _ped = []
-    _seen = {}
-
-    for _a in _ped_a:
-        if _a.animalID not in _seen:
-            _ped.append(_a)
-            _seen[_a.animalID] = _a.animalID
-
-    for _b in _ped_b:
-        if _b.animalID not in _seen:
-            _ped.append(_b)
-            _seen[_b.animalID] = _b.animalID
-
-    _tag = f"{pedobj.kw['filetag']}"
-    _reord = [copy.deepcopy(animal) for animal in _ped]
-
-    if pedobj.kw['slow_reorder']:
-        _reord = pyp_utils.reorder(_reord, _tag, debug=pedobj.kw['debug_messages'],
-                                   missingparent=pedobj.kw['missing_parent'])
-    else:
-        _reord = pyp_utils.fast_reorder(_reord, _tag,
-                                        missingparent=pedobj.kw['missing_parent'])
-
-    _s, _map = pyp_utils.renumber(_reord, _tag, returnmap=True,
-                                  debug=pedobj.kw['debug_messages'],
-                                  missingparent=pedobj.kw['missing_parent'],
-                                  animaltype=pedobj.kw['animal_type'])
-
-    _opts = copy.deepcopy(pedobj.kw)
-    _opts['filetag'] = _tag
-
-    if pedobj.kw['nrm_method'] == 'nrm':
-        _a = pyp_nrm.fast_a_matrix(_s, _opts)
-    else:
-        _a = pyp_nrm.fast_a_matrix_r(_s, _opts)
-
-    return pyp_nrm._matrix_value(_a, _map[anim_a] - 1, _map[anim_b] - 1)
+    return float(pyp_nrm._pairwise_additive_relationship(pedobj, int(anim_a), int(anim_b)))
 
 
 def _mating_require_gens(gens, routine):
@@ -2621,53 +2582,14 @@ def _mating_attached_nrm(pedobj):
 
 
 def _local_additive_relationship(pedobj, anim_a, anim_b):
-    """A_ij from an ancestor sub-pedigree, including a true A_ii diagonal.
+    """A_ij from the selected-pair Meuwissen-Luo core, including a true A_ii diagonal.
 
-    Uses the same copy/reorder/renumber/fast_a_matrix construction as
-    :func:`relationship` for distinct animals, but never the self shortcut
-    that returns 1.0. Operates only on copies; does not attach an NRM to
-    ``pedobj`` and does not mutate the caller's pedigree.
+    Operates read-only on ``pedobj``; does not attach an NRM and does not
+    mutate the caller's pedigree.
     """
-    _ped_a = pyp_nrm.recurse_pedigree(pedobj, anim_a, [])
-    if anim_a == anim_b:
-        _ped_b = []
-    else:
-        _ped_b = pyp_nrm.recurse_pedigree(pedobj, anim_b, [])
-    _ped = []
-    _seen = {}
-    for _a in _ped_a:
-        if _a.animalID not in _seen:
-            _ped.append(_a)
-            _seen[_a.animalID] = _a.animalID
-    for _b in _ped_b:
-        if _b.animalID not in _seen:
-            _ped.append(_b)
-            _seen[_b.animalID] = _b.animalID
-
-    _tag = '%s' % (pedobj.kw['filetag'],)
-    _reord = [copy.deepcopy(animal) for animal in _ped]
-    _missing = pedobj.kw.get('missing_parent', 0)
-    if pedobj.kw.get('slow_reorder'):
-        _reord = pyp_utils.reorder(
-            _reord, _tag, debug=pedobj.kw.get('debug_messages', False),
-            missingparent=_missing,
-        )
-    else:
-        _reord = pyp_utils.fast_reorder(_reord, _tag, missingparent=_missing)
-
-    _s, _map = pyp_utils.renumber(
-        _reord, _tag, returnmap=True,
-        debug=pedobj.kw.get('debug_messages', False),
-        missingparent=_missing,
-        animaltype=pedobj.kw.get('animal_type', 'default'),
+    return float(
+        pyp_nrm._pairwise_additive_relationship(pedobj, int(anim_a), int(anim_b))
     )
-    _opts = copy.deepcopy(pedobj.kw)
-    _opts['filetag'] = _tag
-    if pedobj.kw.get('nrm_method', 'nrm') == 'nrm':
-        _a = pyp_nrm.fast_a_matrix(_s, _opts)
-    else:
-        _a = pyp_nrm.fast_a_matrix_r(_s, _opts)
-    return float(pyp_nrm._matrix_value(_a, _map[anim_a] - 1, _map[anim_b] - 1))
 
 
 def mating_coi(anim_a, anim_b, pedobj, gens=0):
