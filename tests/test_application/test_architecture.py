@@ -74,7 +74,7 @@ def _from_import_modules(tree: ast.AST) -> set[str]:
 
 def test_application_package_exists():
     assert (APPLICATION / "__init__.py").is_file()
-    for name in ("session.py", "load.py", "tables.py", "errors.py", "jobs.py", "export.py"):
+    for name in ("session.py", "load.py", "tables.py", "errors.py", "jobs.py", "export.py", "lookup.py"):
         assert (APPLICATION / name).is_file(), name
 
 

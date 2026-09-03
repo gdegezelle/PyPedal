@@ -14,6 +14,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
+from PyPedal.application.lookup import AnimalLookupIndex
+
 if TYPE_CHECKING:
     from PyPedal.application.jobs import PairwiseResult
     from PyPedal.application.load import PedigreeOpenOptions
@@ -54,6 +56,7 @@ class PedigreeSession:
         self.mating_pair_result: PairwiseResult | None = None
         self.mating_group_result: MatingCoIGroupResult | None = None
         self.theoretical_ne: float | None = None
+        self.animal_lookup: AnimalLookupIndex | None = None
 
     @property
     def is_empty(self) -> bool:
@@ -73,6 +76,7 @@ class PedigreeSession:
         self.pedigree = pedigree
         self.source_path = source_path
         self.load_options = options
+        self.rebuild_animal_lookup()
         self.clear_analysis_cache()
 
     def clear_analysis_cache(self) -> None:
@@ -84,9 +88,17 @@ class PedigreeSession:
         self.mating_group_result = None
         self.theoretical_ne = None
 
+    def rebuild_animal_lookup(self) -> None:
+        """Rebuild the name/ID search index for the loaded pedigree."""
+        if self.pedigree is None:
+            self.animal_lookup = None
+            return
+        self.animal_lookup = AnimalLookupIndex.from_pedigree(self.pedigree)
+
     def clear(self) -> None:
         """Drop the current pedigree, path, options, and cached results."""
         self.pedigree = None
         self.source_path = None
         self.load_options = None
+        self.animal_lookup = None
         self.clear_analysis_cache()

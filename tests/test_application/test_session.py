@@ -23,6 +23,7 @@ def test_session_starts_empty():
     assert session.effective_founders_result is None
     assert session.relationship_result is None
     assert session.theoretical_ne is None
+    assert session.animal_lookup is None
 
 
 def test_successful_load_installs_pedigree_and_path(tmp_path: Path):
@@ -40,6 +41,8 @@ def test_successful_load_installs_pedigree_and_path(tmp_path: Path):
     assert session.load_options.pedformat == "asd"
     assert session.load_options.separator == " "
     assert session.state == "loaded"
+    assert session.animal_lookup is not None
+    assert len(session.animal_lookup) == 3
     assert len(pedigree.pedigree) == 3
 
 
@@ -94,5 +97,6 @@ def test_clear_returns_to_empty(tmp_path: Path):
     assert session.is_empty
     assert session.inbreeding_result is None
     assert session.effective_founders_result is None
+    assert session.animal_lookup is None
     assert session.source_path is None
     assert session.load_options is None

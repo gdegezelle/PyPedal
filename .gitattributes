@@ -8,3 +8,4 @@
 # contract (tests/test_griffon_sample_contract.py). Keep LF on every
 # checkout so Windows core.autocrlf cannot change the hash.
 PyPedal/examples/griffonbruxellois_2026_pyp.ped text eol=lf
+PyPedal/examples/griffonbruxellois_2026_named_pyp.ped text eol=lf

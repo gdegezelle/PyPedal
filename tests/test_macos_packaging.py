@@ -51,6 +51,7 @@ def test_qt_webengine_and_griffon_are_dropped() -> None:
     assert config.drop_collected_path("PySide6/QtWidgets") is False
     assert config.drop_collected_path("plugins/sqldrivers/libqsqlite.dylib") is True
     assert config.drop_collected_path("griffonbruxellois_2026_pyp.ped") is True
+    assert config.drop_collected_path("griffonbruxellois_2026_named_pyp.ped") is True
     assert config.drop_collected_path("customtkinter/windows.py") is True
 
 

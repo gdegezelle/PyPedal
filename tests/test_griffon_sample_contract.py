@@ -1,30 +1,33 @@
-"""Single checked-in Griffon Bruxellois pedigree dataset.
+"""Checked-in Griffon Bruxellois pedigree datasets.
 
-The repository ships exactly one Griffon pedigree file:
+The repository ships two Griffon pedigree files with identical genealogy:
 
-    PyPedal/examples/griffonbruxellois_2026_pyp.ped
+    PyPedal/examples/griffonbruxellois_2026_pyp.ped       (asdxb, science)
+    PyPedal/examples/griffonbruxellois_2026_named_pyp.ped  (asdxbn, desktop names)
 
 Scientific tests that historically used smaller extracts derive those
-extracts into a temporary directory from that file. Those subsets are not
-committed.
+extracts into a temporary directory from the scientific file. Those
+subsets are not committed.
 """
 import hashlib
 import os
 import tarfile
 
 import pytest
-
-from PyPedal import pyp_chronology, pyp_metrics, pyp_nrm, pyp_utils
 from _pedhelpers import (
     CANONICAL_GRIFFON_PED,
     GRIFFON_1871_1890_IDS,
     GRIFFON_TEST_SMALL_IDS,
+    NAMED_GRIFFON_PED,
     REPO,
     canonical_griffon_path,
     load_canonical_griffon,
     load_griffon_1871_1890,
+    named_griffon_path,
     write_canonical_griffon_subset,
 )
+
+from PyPedal import pyp_chronology, pyp_metrics, pyp_nrm, pyp_utils
 
 
 def _griffon_data_files(root):
@@ -45,9 +48,15 @@ def _griffon_data_files(root):
     return sorted(hits)
 
 
-def test_repository_has_exactly_one_griffon_pedigree_dataset():
+def test_repository_has_exactly_two_griffon_pedigree_datasets():
     hits = _griffon_data_files(REPO)
-    assert hits == [os.path.join("PyPedal", "examples", CANONICAL_GRIFFON_PED)], hits
+    expected = sorted(
+        [
+            os.path.join("PyPedal", "examples", CANONICAL_GRIFFON_PED),
+            os.path.join("PyPedal", "examples", NAMED_GRIFFON_PED),
+        ]
+    )
+    assert hits == expected, hits
     examples = os.path.join(REPO, "PyPedal", "examples")
     assert not os.path.exists(os.path.join(examples, "test_descendants.txt"))
     ini_hits = []
@@ -117,18 +126,19 @@ def test_1871_1890_load_still_materializes_one_implicit_parent():
     assert distribution == {1: 124, 2: 20, 3: 8, 4: 12, 5: 3}
 
 
-def test_sdist_contains_exactly_one_griffon_pedigree_dataset(tmp_path):
+def test_sdist_contains_both_griffon_pedigree_datasets(tmp_path):
     from test_product_surface import _build_setuptools_artifact
 
     sdist = _build_setuptools_artifact(tmp_path / "dist", "sdist")
     with tarfile.open(sdist) as archive:
         names = archive.getnames()
-    griffon_peds = [
+    griffon_peds = sorted(
         name for name in names
         if "griffon" in name.lower() and name.endswith(".ped")
-    ]
-    assert len(griffon_peds) == 1, griffon_peds
-    assert griffon_peds[0].endswith("griffonbruxellois_2026_pyp.ped")
+    )
+    assert len(griffon_peds) == 2, griffon_peds
+    assert any(name.endswith(CANONICAL_GRIFFON_PED) for name in griffon_peds)
+    assert any(name.endswith(NAMED_GRIFFON_PED) for name in griffon_peds)
     leftover = [
         name for name in names
         if "griffon" in name.lower()
@@ -159,6 +169,50 @@ def test_canonical_griffon_is_comma_asdxb_without_padded_delimiters():
             assert len(fields) == 5, text
     assert digest.hexdigest() == CANONICAL_SHA256
     assert records == 98001
+
+
+def _parse_named_asdxbn(path):
+    records = {}
+    names = []
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            animal, sire, dam, sex, bdate, name = line.rstrip("\n").split(",")
+            records[str(int(animal))] = (sire, dam, sex, bdate)
+            names.append(name)
+    return records, names
+
+
+def test_named_griffon_matches_scientific_genealogy_and_adds_names():
+    scientific = _parse_asdxb(canonical_griffon_path())
+    named, names = _parse_named_asdxbn(named_griffon_path())
+    assert len(scientific) == 98001
+    assert len(named) == 98001
+    assert set(scientific) == set(named)
+    for animal_id, fields in scientific.items():
+        assert named[animal_id] == fields
+    nonempty = [name for name in names if name.strip()]
+    assert len(nonempty) == 98001
+    unique = set(nonempty)
+    assert len(unique) == 97999
+    counts: dict[str, int] = {}
+    for name in nonempty:
+        counts[name] = counts.get(name, 0) + 1
+    duplicated = sum(1 for count in counts.values() if count > 1)
+    assert duplicated == 2
+    assert max(counts.values()) == 2
+    assert named["98685"] == scientific["98685"]
+    assert named["98667"] == scientific["98667"]
+    with open(named_griffon_path(), encoding="utf-8") as handle:
+        by_id = {}
+        for line in handle:
+            if not line.strip():
+                continue
+            animal, _sire, _dam, _sex, _bdate, name = line.rstrip("\n").split(",")
+            by_id[str(int(animal))] = name
+    assert by_id["98685"] == "Hierners Heartbreaker"
+    assert by_id["98667"] == "Morning Bell Virgine"
 
 
 @pytest.mark.integration

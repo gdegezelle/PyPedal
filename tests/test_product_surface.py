@@ -226,8 +226,9 @@ def test_sdist_may_include_examples(tmp_path):
     griffon_peds = [
         n for n in names if "griffon" in n.lower() and n.endswith(".ped")
     ]
-    assert len(griffon_peds) == 1, griffon_peds
-    assert griffon_peds[0].endswith("griffonbruxellois_2026_pyp.ped")
+    assert len(griffon_peds) == 2, griffon_peds
+    assert any(n.endswith("griffonbruxellois_2026_pyp.ped") for n in griffon_peds)
+    assert any(n.endswith("griffonbruxellois_2026_named_pyp.ped") for n in griffon_peds)
 
 
 def test_wheel_install_runs_inline_mrode(tmp_path):

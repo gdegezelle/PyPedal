@@ -188,16 +188,30 @@ def nrm_value(a, i, j):
 # ---------------------------------------------------------------------------
 # Griffon Bruxellois sample
 # ---------------------------------------------------------------------------
-# The repository ships exactly one Griffon pedigree dataset:
-#     PyPedal/examples/griffonbruxellois_2026_pyp.ped
+# The repository ships two Griffon pedigree datasets with identical
+# genealogical structure:
+#     PyPedal/examples/griffonbruxellois_2026_pyp.ped      (asdxb, science)
+#     PyPedal/examples/griffonbruxellois_2026_named_pyp.ped (asdxbn, desktop names)
 # Scientific tests that historically used a small extract derive that extract
-# into a temporary directory from the canonical file. The ID sets below are
-# the animals that were present in the deleted checked-in extracts; they are
-# not a year-window rule. Do not invent parents. Dangling references that
-# existed in the old extracts are preserved so load-time implicit-parent
+# into a temporary directory from the canonical scientific file. The ID sets
+# below are the animals that were present in the deleted checked-in extracts;
+# they are not a year-window rule. Do not invent parents. Dangling references
+# that existed in the old extracts are preserved so load-time implicit-parent
 # behaviour stays identical.
 
 CANONICAL_GRIFFON_PED = "griffonbruxellois_2026_pyp.ped"
+NAMED_GRIFFON_PED = "griffonbruxellois_2026_named_pyp.ped"
+
+# Tiny named pedigree used by animal-lookup tests. Two animals share the
+# display name "Bella" with different original IDs, current IDs, and birth years.
+NAMED_DUPLICATE_PED = """\
+101,0,0,f,01012019,Bella
+102,0,0,m,01012020,Max
+103,101,102,f,01012021,Bella
+104,101,102,m,01012023,Spot
+105,0,0,m,01012018,
+"""
+
 
 # Former griffons-1871-1890.ped. Animal 32240 is a dangling sire of 28806
 # (present in the canonical file, omitted here) so a default load still
@@ -312,3 +326,17 @@ def load_canonical_griffon(options=None):
     if options:
         opts.update(options)
     return load_example(CANONICAL_GRIFFON_PED, opts)
+
+
+def named_griffon_path():
+    return os.path.join(EXAMPLES, NAMED_GRIFFON_PED)
+
+
+def load_named_griffon(options=None):
+    """Load the named Griffon 2026 export (``asdxbn`` display names)."""
+    opts = dict(_GRIFFON_ASDXB)
+    opts["pedformat"] = "asdxbn"
+    if options:
+        opts.update(options)
+    return load_example(NAMED_GRIFFON_PED, opts)
+

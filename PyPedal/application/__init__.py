@@ -61,6 +61,14 @@ from PyPedal.application.load import (
     normalize_sepchar,
     resolve_source_path,
 )
+from PyPedal.application.lookup import (
+    DEFAULT_RESULT_LIMIT,
+    AnimalLookupHit,
+    AnimalLookupIndex,
+    AnimalLookupResult,
+    format_animal_label,
+    normalize_query,
+)
 from PyPedal.application.session import PedigreeSession
 from PyPedal.application.tables import (
     BROWSE_COLUMNS,
@@ -75,8 +83,12 @@ from PyPedal.pyp_results import (
 
 __all__ = [
     "BROWSE_COLUMNS",
+    "DEFAULT_RESULT_LIMIT",
     "EXIT_STATUS",
     "UNKNOWN_YEAR_TOKENS",
+    "AnimalLookupHit",
+    "AnimalLookupIndex",
+    "AnimalLookupResult",
     "ApplicationErrorInfo",
     "EffectiveFoundersResult",
     "FoundersOutcome",
@@ -97,8 +109,10 @@ __all__ = [
     "export_metadata_pdf",
     "export_three_gen_pdf",
     "export_year_inbreeding_csv",
+    "format_animal_label",
     "group_inbreeding_by_year",
     "load_into_session",
+    "normalize_query",
     "normalize_sepchar",
     "parse_animal_id",
     "require_pedigree",
