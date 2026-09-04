@@ -5,7 +5,7 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QLineEdit, QTableView, QVBoxLayout, QWidget
 
-from PyPedal.application import BROWSE_COLUMNS
+from PyPedal.application import BROWSE_COLUMNS, PedigreeTableSource
 from PyPedal.desktop.models.pedigree_table import PedigreeFilterProxy, PedigreeTableModel
 
 FILTER_DEBOUNCE_MS = 250
@@ -42,11 +42,25 @@ class AnimalsPage(QWidget):
         self.view.verticalHeader().setVisible(False)
         header = self.view.horizontalHeader()
         header.setStretchLastSection(True)
+        # Sorting stays available on header click. An active sort column
+        # makes QSortFilterProxyModel re-sort every row on model reset
+        # (millions of Python lessThan calls on a 98k pedigree).
+        self.show_source_order()
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.addWidget(self.search)
         layout.addWidget(self.view)
+
+    def show_source_order(self) -> None:
+        """Show pedigree/source order. Header-click sorting remains enabled."""
+        self.proxy.sort(-1)
+        self.view.horizontalHeader().setSortIndicator(-1, Qt.SortOrder.AscendingOrder)
+
+    def set_source(self, source: PedigreeTableSource | None) -> None:
+        """Attach ``source`` in pedigree order. Does not sort on reset."""
+        self.show_source_order()
+        self.model.set_source(source)
 
     def _schedule_filter(self, _text: str) -> None:
         self._debounce.start()

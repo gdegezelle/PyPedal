@@ -1671,14 +1671,19 @@ class NewPedigree:
                     except Exception as exc:
                         raise _ProgressCallbackError(exc) from exc
 
+                # Per-record DEBUG is for explicit verbose/debug loads.
+                # Quiet application/desktop loads must not write 2N raw-line
+                # records (196k writes / ~20 MB on the 98k Griffon file).
+                log_each_record = self.kw.get('messages') != 'quiet'
+
                 while True:
                     line = source.readline(line_counter, logger)
                     if line is False:
                         break
 
-                    # Log the raw line
-                    logger.debug(f"Raw line read: {repr(line)}")
-                    
+                    if log_each_record:
+                        logger.debug('Raw line read: %r', line)
+
                     if not line or line.strip() == '':
                         logger.info('Skipping empty or null line. Reached end-of-line in %s after reading %s lines.', self.kw['pedfile'], line_counter)
                         # logger.info('Skipping empty or null line.')
@@ -1687,7 +1692,8 @@ class NewPedigree:
                         break
 
                     else:
-                        logger.debug(f"Processing line: {line.strip()}")
+                        if log_each_record:
+                            logger.debug('Processing line: %s', line.strip())
                         # Handling and processing each line
                         line_counter += 1
                         if line_counter <= self.kw['log_ped_lines']:

@@ -140,7 +140,8 @@ def run_effective_founders(session: PedigreeSession) -> FoundersOutcome:
     """Lacy effective founders with ``output=False``.
 
     If the library actually auto-renumbers, pedigree-dependent caches other
-    than this result are cleared because animal IDs changed.
+    than this result are cleared because animal IDs changed, and the animal
+    lookup index is rebuilt once.
     """
     pedigree = require_pedigree(session)
     with warnings.catch_warnings(record=True) as caught:
@@ -152,6 +153,7 @@ def run_effective_founders(session: PedigreeSession) -> FoundersOutcome:
     )
     if implicit:
         session.clear_analysis_cache()
+        session.rebuild_animal_lookup()
     session.effective_founders_result = result
     return FoundersOutcome(result=result, implicit_renumber=implicit)
 

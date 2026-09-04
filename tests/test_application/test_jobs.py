@@ -131,12 +131,14 @@ def test_ensure_inbreeding_returns_cached_object(tmp_path: Path) -> None:
 
 def test_lacy_founders_output_false_and_cache(tmp_path: Path) -> None:
     session = _load(tmp_path)
+    lookup_before = session.animal_lookup
     try:
         outcome = run_effective_founders(session)
         assert outcome.implicit_renumber is False
         assert outcome.result.fa_effective_founders > 0
         assert session.effective_founders_result is outcome.result
         assert list(tmp_path.glob("*.dat")) == []
+        assert session.animal_lookup is lookup_before
     finally:
         close_owned_pypedal_log_handlers()
 
@@ -152,10 +154,19 @@ def test_lacy_implicit_renumber_clears_inbreeding_cache(tmp_path: Path) -> None:
             PedigreeOpenOptions(separator=" ", renumber=False),
         )
         session.inbreeding_result = InbreedingResult({"fx": {1: 0.0}, "metadata": {}})
+        lookup_before = session.animal_lookup
         outcome = run_effective_founders(session)
         assert outcome.implicit_renumber is True
         assert session.inbreeding_result is None
         assert session.effective_founders_result is outcome.result
+        assert session.animal_lookup is not None
+        assert session.animal_lookup is not lookup_before
+        pedigree = session.pedigree
+        assert pedigree is not None
+        for animal in pedigree.pedigree:
+            hit = session.animal_lookup.hit_for_animal_id(int(animal.animalID))
+            assert hit is not None
+            assert hit.original_id == animal.originalID
     finally:
         close_owned_pypedal_log_handlers()
 

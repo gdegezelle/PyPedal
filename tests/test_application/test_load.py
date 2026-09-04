@@ -128,3 +128,18 @@ def test_comma_csv_loads_with_normalized_separator(tmp_path: Path):
     assert named[0].name == "A Day Before Sunrise de Mar&Mar"
     assert session.load_options is not None
     assert session.load_options.separator == ","
+
+
+def test_quiet_application_load_omits_per_record_debug(tmp_path: Path) -> None:
+    source = tmp_path / "quiet.ped"
+    source.write_text("1 0 0\n2 0 0\n3 1 2\n", encoding="utf-8")
+    session = PedigreeSession()
+    try:
+        pedigree = load_into_session(session, source, PedigreeOpenOptions(separator=" "))
+        logfile = Path(pedigree.kw["logfile"])
+        text = logfile.read_text(encoding="utf-8")
+        assert "Raw line read" not in text
+        assert "Processing line:" not in text
+        assert len(text) < 50_000
+    finally:
+        close_owned_pypedal_log_handlers()

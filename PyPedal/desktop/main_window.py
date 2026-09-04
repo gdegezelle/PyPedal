@@ -440,7 +440,7 @@ class MainWindow(QMainWindow):
         if self._busy or self.session.is_empty:
             return
         self.session.clear()
-        self.animals_page.model.set_source(None)
+        self.animals_page.set_source(None)
         self.animals_page.search.clear()
         self.animals_page.apply_filter_now()
         self.metadata_page.show_empty()
@@ -461,8 +461,7 @@ class MainWindow(QMainWindow):
         pedigree = self.session.pedigree
         if pedigree is None:
             return
-        self.session.rebuild_animal_lookup()
-        self.animals_page.model.set_source(PedigreeTableSource(pedigree))
+        self.animals_page.set_source(PedigreeTableSource(pedigree))
         self.metadata_page.show_session(self.session)
         self.relationship_page.set_lookup(self.session.animal_lookup)
         self.mating_page.set_lookup(self.session.animal_lookup)

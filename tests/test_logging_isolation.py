@@ -99,6 +99,84 @@ def test_quiet_does_not_emit_root_info_on_stderr(tmp_path):
     assert "SNP data is not available" not in result.stderr
 
 
+def test_quiet_load_does_not_log_raw_records(tmp_path):
+    pedfile = tmp_path / "t.ped"
+    pedfile.write_text("1 0 0\n2 0 0\n3 1 2\n", encoding="utf-8")
+    script = textwrap.dedent(
+        f"""
+        import os
+        os.chdir({str(tmp_path)!r})
+        from PyPedal.pyp_newclasses import load_pedigree
+        ped = load_pedigree(options={{
+            "pedfile": {str(pedfile)!r},
+            "pedformat": "asd",
+            "messages": "quiet",
+            "pedigree_summary": 0,
+            "renumber": True,
+        }})
+        text = open(ped.kw["logfile"], encoding="utf-8").read()
+        assert "Raw line read" not in text, text
+        assert "Processing line:" not in text, text
+        assert "instantiated" in text
+        print(len(text.splitlines()))
+        """
+    )
+    result = _run(script)
+    line_count = int(result.stdout.strip().splitlines()[-1])
+    assert line_count < 50
+
+
+def test_verbose_load_still_logs_raw_records(tmp_path):
+    pedfile = tmp_path / "t.ped"
+    pedfile.write_text("1 0 0\n2 0 0\n3 1 2\n", encoding="utf-8")
+    script = textwrap.dedent(
+        f"""
+        import os
+        os.chdir({str(tmp_path)!r})
+        from PyPedal.pyp_newclasses import load_pedigree
+        ped = load_pedigree(options={{
+            "pedfile": {str(pedfile)!r},
+            "pedformat": "asd",
+            "messages": "verbose",
+            "pedigree_summary": 0,
+            "renumber": True,
+        }})
+        text = open(ped.kw["logfile"], encoding="utf-8").read()
+        assert "Raw line read" in text, text
+        assert "Processing line:" in text, text
+        print("ok")
+        """
+    )
+    result = _run(script)
+    assert "ok" in result.stdout
+
+
+def test_quiet_load_still_records_warnings(tmp_path):
+    pedfile = tmp_path / "t.ped"
+    pedfile.write_text("1 0 0\n2 0 0\n3 1 2\n", encoding="utf-8")
+    script = textwrap.dedent(
+        f"""
+        import logging
+        import os
+        os.chdir({str(tmp_path)!r})
+        from PyPedal.pyp_newclasses import PYPEDAL_LOGGER_NAME, load_pedigree
+        ped = load_pedigree(options={{
+            "pedfile": {str(pedfile)!r},
+            "pedformat": "asd",
+            "messages": "quiet",
+            "pedigree_summary": 0,
+            "renumber": True,
+        }})
+        logging.getLogger(PYPEDAL_LOGGER_NAME).warning("quiet-load-warning-probe")
+        text = open(ped.kw["logfile"], encoding="utf-8").read()
+        assert "quiet-load-warning-probe" in text, text
+        print("ok")
+        """
+    )
+    result = _run(script)
+    assert "ok" in result.stdout
+
+
 def test_host_root_handlers_are_not_removed(tmp_path):
     pedfile = tmp_path / "t.ped"
     pedfile.write_text("1 0 0\n2 0 0\n3 1 2\n", encoding="utf-8")

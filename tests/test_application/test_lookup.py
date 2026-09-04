@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 from _pedhelpers import NAMED_DUPLICATE_PED, close_owned_pypedal_log_handlers
 
 from PyPedal.application import PedigreeOpenOptions, PedigreeSession, load_into_session
@@ -195,5 +196,27 @@ def test_session_replacement_invalidates_lookup(tmp_path: Path) -> None:
         assert current.hits[0].original_id == 1
         session.clear()
         assert session.animal_lookup is None
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_ordinary_load_builds_lookup_once(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    builds: list[int] = []
+    original = AnimalLookupIndex.from_pedigree.__func__
+
+    def counted(cls: type[AnimalLookupIndex], pedigree: object) -> AnimalLookupIndex:
+        builds.append(1)
+        return original(cls, pedigree)
+
+    monkeypatch.setattr(AnimalLookupIndex, "from_pedigree", classmethod(counted))
+    source = tmp_path / "demo.ped"
+    source.write_text("1 0 0\n2 0 0\n3 1 2\n", encoding="utf-8")
+    session = PedigreeSession()
+    try:
+        load_into_session(session, source, PedigreeOpenOptions(separator=" "))
+        assert len(builds) == 1
+        assert session.animal_lookup is not None
+        session.rebuild_animal_lookup()
+        assert len(builds) == 2
     finally:
         close_owned_pypedal_log_handlers()
