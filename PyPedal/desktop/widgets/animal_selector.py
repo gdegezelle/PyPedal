@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QListView,
     QPushButton,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -25,6 +26,7 @@ SEARCH_DEBOUNCE_MS = 200
 _MORE_MATCHES_TEXT = "More matches exist — refine the search"
 _HIT_ROLE = Qt.ItemDataRole.UserRole
 _NONE_SELECTED = "No animal selected"
+_SEX_SYMBOLS = {"f": "♀", "female": "♀", "m": "♂", "male": "♂"}
 
 
 def primary_display_text(hit: AnimalLookupHit) -> str:
@@ -36,6 +38,24 @@ def primary_display_text(hit: AnimalLookupHit) -> str:
     if original:
         return original
     return str(hit.animal_id)
+
+
+def selection_detail_text(hit: AnimalLookupHit) -> str:
+    """Committed metadata line. Does not repeat the editor's primary value."""
+    primary = primary_display_text(hit)
+    parts: list[str] = []
+    original = str(hit.original_id).strip()
+    if original and original != primary:
+        parts.append(original)
+    sex = _SEX_SYMBOLS.get(hit.sex.strip().casefold())
+    if sex:
+        parts.append(sex)
+    if hit.birth_year is not None:
+        parts.append(str(hit.birth_year))
+    current = f"ID {hit.animal_id}"
+    if str(hit.animal_id) != primary:
+        parts.append(current)
+    return " — ".join(parts)
 
 
 class CompleterHitModel(QStandardItemModel):
@@ -86,7 +106,11 @@ class AnimalSelector(QWidget):
 
         self.summary = QLabel(_NONE_SELECTED)
         self.summary.setObjectName(f"{search_object_name}_summary")
-        self.summary.setWordWrap(True)
+        self.summary.setWordWrap(False)
+        self.summary.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Preferred,
+        )
 
         self.clear_button = QPushButton("Clear")
         self.clear_button.setObjectName(f"{search_object_name}_clear")
@@ -117,15 +141,15 @@ class AnimalSelector(QWidget):
         popup.installEventFilter(self)
         self._completer.activated.connect(self._on_completer_activated)
 
-        selected_row = QHBoxLayout()
-        selected_row.addWidget(self.summary, 1)
-        selected_row.addWidget(self.clear_button, 0)
+        editor_row = QHBoxLayout()
+        editor_row.addWidget(self.search, 1)
+        editor_row.addWidget(self.clear_button, 0)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
-        layout.addWidget(self.search)
-        layout.addLayout(selected_row)
+        layout.addLayout(editor_row)
+        layout.addWidget(self.summary)
 
     def set_index(self, index: AnimalLookupIndex | None) -> None:
         """Install a lookup index and drop any previous selection."""
@@ -342,7 +366,7 @@ class AnimalSelector(QWidget):
         self.search.blockSignals(True)
         self.search.setText(primary_display_text(hit))
         self.search.blockSignals(False)
-        self.summary.setText(hit.label)
+        self.summary.setText(selection_detail_text(hit))
         self.clear_button.setEnabled(True)
         self._hide_popup()
         self.selection_changed.emit()

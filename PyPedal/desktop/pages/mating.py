@@ -16,8 +16,7 @@ from PySide6.QtWidgets import (
 )
 
 from PyPedal.application import AnimalLookupIndex, MatingCoIGroupResult, PairwiseResult
-from PyPedal.desktop.models.analysis_tables import MatingResultTableModel
-from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_value
+from PyPedal.desktop.models.analysis_tables import MatingResultTableModel, format_inbreeding_percent
 from PyPedal.desktop.pages.analysis_chrome import (
     add_analysis_header,
     configure_result_table,
@@ -52,7 +51,7 @@ class MatingPage(QWidget):
         form = QFormLayout()
         form.addRow("Animal A", self.selector_a)
         form.addRow("Animal B", self.selector_b)
-        form.addRow("Offspring F", self.value_label)
+        form.addRow("Offspring inbreeding", self.value_label)
 
         self.pair_list = QListWidget()
         self.pair_list.setObjectName("mating_pairs")
@@ -161,7 +160,7 @@ class MatingPage(QWidget):
 
     def show_pair(self, result: PairwiseResult) -> None:
         self.pair_result = result
-        self.value_label.setText(format_display_value(FA_COLUMN, result.coefficient))
+        self.value_label.setText(format_inbreeding_percent(result.coefficient))
         self._update_export()
 
     def show_group(self, result: MatingCoIGroupResult) -> None:

@@ -10,7 +10,7 @@ from _pedhelpers import close_owned_pypedal_log_handlers
 pytest.importorskip("PySide6")
 pytest.importorskip("pytestqt")
 
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from PyPedal.application import PedigreeOpenOptions
@@ -20,8 +20,10 @@ from PyPedal.desktop.main_window import (
     PAGE_YEAR,
     MainWindow,
 )
+from PyPedal.desktop.models.analysis_tables import MatingResultTableModel, format_inbreeding_percent
 from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_value
 from PyPedal.desktop.settings import DesktopSettings
+from PyPedal.pyp_results import MatingCoIGroupResult
 
 if QApplication.instance() is None:
     QApplication(["pypedal-desktop-tests"])
@@ -149,6 +151,7 @@ def test_relationship_and_mating_and_ne(qtbot: object, tmp_path: Path) -> None:
         _wait_idle(qtbot, window)
         assert window.mating_page.pair_result is not None
         assert window.mating_page.pair_result.coefficient == 0.125
+        assert window.mating_page.value_label.text() == "12.50%"
         window.run_theoretical_ne_analysis()
         assert window.population_page.value is not None
         assert window.population_page.export_button.isEnabled() is True
@@ -217,7 +220,7 @@ def test_mating_pair_result_clears_but_group_is_kept(qtbot: object, tmp_path: Pa
         _wait_idle(qtbot, window)
         assert page.pair_result is not None
         assert page.pair_result.coefficient == 0.125
-        assert page.value_label.text() != "—"
+        assert page.value_label.text() == "12.50%"
 
         page.selector_a.clear_selection()
         assert page.pair_result is None
@@ -237,6 +240,38 @@ def test_mating_pair_result_clears_but_group_is_kept(qtbot: object, tmp_path: Pa
         assert page.pair_list.count() == 1
     finally:
         close_owned_pypedal_log_handlers()
+
+
+def test_mating_pair_displays_percent_not_fraction(qtbot: object, tmp_path: Path) -> None:
+    window = _load_mrode(qtbot, tmp_path)
+    try:
+        page = window.mating_page
+        assert page.value_label.text() == "—"
+        page.selector_a.select_animal_id(4)
+        page.selector_b.select_animal_id(3)
+        window.run_mating_pair()
+        _wait_idle(qtbot, window)
+        assert page.pair_result is not None
+        assert page.pair_result.coefficient == 0.125
+        assert page.value_label.text() == "12.50%"
+        page.selector_a.clear_selection()
+        assert page.value_label.text() == "—"
+        assert "0%" not in page.value_label.text()
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_mating_group_table_displays_percent() -> None:
+    raw = 0.10095650884805218
+    assert format_inbreeding_percent(raw) == "10.10%"
+    assert format_inbreeding_percent(None) == "—"
+    model = MatingResultTableModel()
+    model.set_result(MatingCoIGroupResult({"matings": {(98001, 97984): raw}, "metadata": {}}))
+    header = model.headerData(2, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+    assert header == "F (%)"
+    index = model.index(0, 2)
+    assert model.data(index) == "10.10%"
+    assert model.data(index, Qt.ItemDataRole.UserRole) == raw
 
 
 def test_compute_stays_disabled_without_explicit_selection(qtbot: object, tmp_path: Path) -> None:

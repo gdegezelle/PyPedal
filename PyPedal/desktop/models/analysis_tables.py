@@ -19,6 +19,15 @@ from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_valu
 ModelIndex = QModelIndex | QPersistentModelIndex
 
 
+def format_inbreeding_percent(raw: object) -> str:
+    """Breeder-facing mating *F* as a percentage. Raw coefficients are unchanged."""
+    if raw is None:
+        return "—"
+    if not isinstance(raw, int | float):
+        return str(raw)
+    return f"{float(raw) * 100:.2f}%"
+
+
 class InbreedingResultTableModel(QAbstractTableModel):
     """Virtual table over ``InbreedingResult.fx`` (id list + mapping)."""
 
@@ -171,7 +180,7 @@ class MatingResultTableModel(QAbstractTableModel):
         if role != Qt.ItemDataRole.DisplayRole:
             return None
         if orientation == Qt.Orientation.Horizontal:
-            titles = ("Animal A", "Animal B", "F")
+            titles = ("Animal A", "Animal B", "F (%)")
             return titles[section] if 0 <= section < 3 else None
         return str(section + 1)
 
@@ -188,5 +197,5 @@ class MatingResultTableModel(QAbstractTableModel):
         if role != Qt.ItemDataRole.DisplayRole:
             return None
         if index.column() == 2:
-            return format_display_value(FA_COLUMN, raw)
+            return format_inbreeding_percent(raw)
         return str(raw)

@@ -98,6 +98,8 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         qtbot.keyClick(rel.selector_a.search, Qt.Key.Key_Return)
         assert rel.selected_animal_a() == CURRENT_A
         assert rel.selector_a.search.text() == NAME_A
+        assert rel.selector_a.summary.text() == "98685 — ♂ — 2024 — ID 98001"
+        assert NAME_A not in rel.selector_a.summary.text()
         qtbot.waitUntil(lambda: not rel.selector_a.popup_is_visible(), timeout=2000)
         qtbot.keyClick(rel.selector_a.search, Qt.Key.Key_Tab)
         _type_query(qtbot, rel.selector_b, "Morning Bell Virg")
@@ -106,6 +108,8 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         qtbot.keyClick(rel.selector_b.search, Qt.Key.Key_Return)
         assert rel.selected_animal_b() == CURRENT_B
         assert rel.selector_b.search.text() == NAME_B
+        assert rel.selector_b.summary.text() == "98667 — ♀ — 2022 — ID 97984"
+        assert NAME_B not in rel.selector_b.summary.text()
         assert rel.run_button.isEnabled() is True
         window.run_relationship_analysis()
         qtbot.waitUntil(
@@ -143,6 +147,7 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         )
         assert mating.pair_result is not None
         assert abs(mating.pair_result.coefficient - F_EXPECTED) < 1e-12
+        assert mating.value_label.text() == "10.10%"
         mating.selector_b.clear_selection()
         assert mating.pair_result is None
         assert mating.value_label.text() == "—"

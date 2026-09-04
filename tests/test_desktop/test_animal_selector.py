@@ -21,7 +21,11 @@ from PyPedal.application.lookup import (
 )
 from PyPedal.desktop.main_window import MainWindow
 from PyPedal.desktop.settings import DesktopSettings
-from PyPedal.desktop.widgets.animal_selector import AnimalSelector, primary_display_text
+from PyPedal.desktop.widgets.animal_selector import (
+    AnimalSelector,
+    primary_display_text,
+    selection_detail_text,
+)
 
 if QApplication.instance() is None:
     QApplication(["pypedal-desktop-tests"])
@@ -138,7 +142,8 @@ def test_enter_commits_named_hit_into_editor(qtbot: object) -> None:
     qtbot.keyClick(selector.search, Qt.Key.Key_Return)
     assert selector.selected_animal_id() == 98001
     assert selector.search.text() == "Hierners Heartbreaker"
-    assert "98685" in selector.summary.text()
+    assert selector.summary.text() == "98685 — ♂ — 2024 — ID 98001"
+    assert "Hierners Heartbreaker" not in selector.summary.text()
     assert selector.popup_is_visible() is False
 
 
@@ -168,6 +173,24 @@ def test_unnamed_commit_shows_original_id(qtbot: object) -> None:
     assert selector.selected_animal_id() == 4
     assert selector.search.text() == "40"
     assert primary_display_text(selector.selected_hit()) == "40"
+    detail = selector.summary.text()
+    assert not detail.startswith("40")
+    assert "ID 4" in detail
+
+
+def test_committed_named_detail_omits_name(qtbot: object) -> None:
+    hit = _hit(98001, 98685, "Hierners Heartbreaker", sex="m", birth_year=2024)
+    selector = _selector(qtbot, [hit])
+    assert selector.select_animal_id(98001) is True
+    assert selector.search.text() == "Hierners Heartbreaker"
+    detail = selector.summary.text()
+    assert detail == "98685 — ♂ — 2024 — ID 98001"
+    assert "Hierners Heartbreaker" not in detail
+    assert "98685" in detail
+    assert "♂" in detail
+    assert "2024" in detail
+    assert "98001" in detail
+    assert detail == selection_detail_text(hit)
 
 
 def test_editing_committed_text_invalidates_selection(qtbot: object) -> None:
@@ -231,11 +254,14 @@ def test_duplicate_names_are_independently_selectable(qtbot: object) -> None:
     assert selector.selected_animal_id() == 2
     assert selector.search.text() == "Colette"
     assert "20209" in selector.summary.text()
+    assert "Colette" not in selector.summary.text()
     selector.search.setText("Colette")
     selector.apply_search_now()
     assert selector.choose_result_row(0) is True
     assert selector.selected_animal_id() == 1
+    assert selector.search.text() == "Colette"
     assert "20196" in selector.summary.text()
+    assert "Colette" not in selector.summary.text()
 
 
 def test_relationship_select_by_name_enables_compute(qtbot: object, tmp_path: Path) -> None:
