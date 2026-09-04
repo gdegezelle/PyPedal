@@ -156,9 +156,90 @@ def test_relationship_and_mating_and_ne(qtbot: object, tmp_path: Path) -> None:
         close_owned_pypedal_log_handlers()
 
 
-def test_compute_stays_disabled_without_explicit_selection(
-    qtbot: object, tmp_path: Path
-) -> None:
+def test_relationship_result_clears_when_selection_changes(qtbot: object, tmp_path: Path) -> None:
+    window = _load_mrode(qtbot, tmp_path)
+    try:
+        page = window.relationship_page
+        page.selector_a.select_animal_id(4)
+        page.selector_b.select_animal_id(3)
+        window.run_relationship_analysis()
+        _wait_idle(qtbot, window)
+        assert page.result is not None
+        assert page.value_label.text() != "—"
+        assert page.export_button.isEnabled() is True
+
+        page.selector_a.clear_selection()
+        assert page.result is None
+        assert page.value_label.text() == "—"
+        assert page.run_button.isEnabled() is False
+        assert page.export_button.isEnabled() is False
+
+        page.selector_a.select_animal_id(4)
+        page.selector_b.select_animal_id(3)
+        window.run_relationship_analysis()
+        _wait_idle(qtbot, window)
+        assert page.result is not None
+        page.selector_b.clear_selection()
+        assert page.result is None
+        assert page.value_label.text() == "—"
+
+        page.selector_a.select_animal_id(4)
+        page.selector_b.select_animal_id(3)
+        window.run_relationship_analysis()
+        _wait_idle(qtbot, window)
+        page.selector_a.search.setText("5")
+        assert page.selected_animal_a() is None
+        assert page.result is None
+        assert page.value_label.text() == "—"
+
+        page.selector_a.select_animal_id(5)
+        page.selector_b.select_animal_id(3)
+        window.run_relationship_analysis()
+        _wait_idle(qtbot, window)
+        assert page.result is not None
+        page.selector_a.select_animal_id(4)
+        assert page.result is None
+        assert page.value_label.text() == "—"
+        assert page.selected_animal_a() == 4
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_mating_pair_result_clears_but_group_is_kept(qtbot: object, tmp_path: Path) -> None:
+    window = _load_mrode(qtbot, tmp_path)
+    try:
+        page = window.mating_page
+        page.selector_a.select_animal_id(4)
+        page.selector_b.select_animal_id(3)
+        page.add_pair_button.click()
+        assert page.pair_list.count() == 1
+        window.run_mating_pair()
+        _wait_idle(qtbot, window)
+        assert page.pair_result is not None
+        assert page.pair_result.coefficient == 0.125
+        assert page.value_label.text() != "—"
+
+        page.selector_a.clear_selection()
+        assert page.pair_result is None
+        assert page.value_label.text() == "—"
+        assert page.run_button.isEnabled() is False
+        assert page.add_pair_button.isEnabled() is False
+        assert page.pair_list.count() == 1
+
+        page.selector_a.select_animal_id(4)
+        window.run_mating_pair()
+        _wait_idle(qtbot, window)
+        assert page.pair_result is not None
+        page.selector_b.search.setText("2")
+        assert page.selected_animal_b() is None
+        assert page.pair_result is None
+        assert page.value_label.text() == "—"
+        assert page.pair_list.count() == 1
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_compute_stays_disabled_without_explicit_selection(qtbot: object, tmp_path: Path) -> None:
     window = _load_mrode(qtbot, tmp_path)
     try:
         window.relationship_page.id_a.setText("4")

@@ -31,8 +31,8 @@ class RelationshipPage(QWidget):
         self.selector_b = AnimalSelector(search_object_name="relationship_id_b")
         self.id_a = self.selector_a.search
         self.id_b = self.selector_b.search
-        self.selector_a.selection_changed.connect(self._update_run_enabled)
-        self.selector_b.selection_changed.connect(self._update_run_enabled)
+        self.selector_a.selection_changed.connect(self._on_selection_changed)
+        self.selector_b.selection_changed.connect(self._on_selection_changed)
         self.value_label = QLabel(_ABSENT)
         self.value_label.setObjectName("relationship_value")
         form = QFormLayout()
@@ -85,6 +85,15 @@ class RelationshipPage(QWidget):
         self.result = result
         self.value_label.setText(format_display_value(FA_COLUMN, result.coefficient))
         self.export_button.setEnabled(True)
+
+    def _on_selection_changed(self) -> None:
+        self._invalidate_result()
+        self._update_run_enabled()
+
+    def _invalidate_result(self) -> None:
+        self.result = None
+        self.value_label.setText(_ABSENT)
+        self.export_button.setEnabled(False)
 
     def _update_run_enabled(self) -> None:
         ready = (

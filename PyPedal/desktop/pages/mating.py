@@ -45,8 +45,8 @@ class MatingPage(QWidget):
         self.selector_b = AnimalSelector(search_object_name="mating_id_b")
         self.id_a = self.selector_a.search
         self.id_b = self.selector_b.search
-        self.selector_a.selection_changed.connect(self._update_actions)
-        self.selector_b.selection_changed.connect(self._update_actions)
+        self.selector_a.selection_changed.connect(self._on_selection_changed)
+        self.selector_b.selection_changed.connect(self._on_selection_changed)
         self.value_label = QLabel(_ABSENT)
         self.value_label.setObjectName("mating_value")
         form = QFormLayout()
@@ -162,12 +162,24 @@ class MatingPage(QWidget):
     def show_pair(self, result: PairwiseResult) -> None:
         self.pair_result = result
         self.value_label.setText(format_display_value(FA_COLUMN, result.coefficient))
-        self.export_button.setEnabled(True)
+        self._update_export()
 
     def show_group(self, result: MatingCoIGroupResult) -> None:
         self.group_result = result
         self.group_model.set_result(result)
-        self.export_button.setEnabled(True)
+        self._update_export()
+
+    def _on_selection_changed(self) -> None:
+        self._invalidate_pair_result()
+        self._update_actions()
+
+    def _invalidate_pair_result(self) -> None:
+        self.pair_result = None
+        self.value_label.setText(_ABSENT)
+        self._update_export()
+
+    def _update_export(self) -> None:
+        self.export_button.setEnabled(self.pair_result is not None or self.group_result is not None)
 
     def _update_actions(self) -> None:
         both = (
@@ -177,3 +189,4 @@ class MatingPage(QWidget):
         self.add_pair_button.setEnabled(self._armed and both)
         self.run_button.setEnabled(self._armed and both)
         self.run_group_button.setEnabled(self._armed and self.pair_list.count() > 0)
+        self._update_export()

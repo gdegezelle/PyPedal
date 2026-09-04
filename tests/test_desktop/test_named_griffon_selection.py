@@ -11,11 +11,15 @@ from _pedhelpers import close_owned_pypedal_log_handlers, named_griffon_path
 pytest.importorskip("PySide6")
 pytest.importorskip("pytestqt")
 
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import QApplication
 
 from PyPedal.application import PedigreeOpenOptions
-from PyPedal.desktop.main_window import MainWindow
+from PyPedal.desktop.main_window import (
+    PAGE_MATING,
+    PAGE_RELATIONSHIP,
+    MainWindow,
+)
 from PyPedal.desktop.settings import DesktopSettings
 
 if QApplication.instance() is None:
@@ -34,6 +38,31 @@ CURRENT_B = 97984
 def _settings(tmp_path: Path) -> DesktopSettings:
     ini = tmp_path / "desktop.ini"
     return DesktopSettings(QSettings(str(ini), QSettings.Format.IniFormat))
+
+
+def _focus_editor(qtbot: object, selector: object) -> None:
+    editor = selector.search
+    window = editor.window()
+    if window is not None:
+        window.activateWindow()
+    if QApplication.focusWidget() is editor:
+        return
+    qtbot.mouseClick(editor, Qt.MouseButton.LeftButton)
+    if QApplication.focusWidget() is not editor:
+        editor.setFocus(Qt.FocusReason.MouseFocusReason)
+    qtbot.waitUntil(lambda: QApplication.focusWidget() is editor, timeout=5000)
+
+
+def _type_query(qtbot: object, selector: object, text: str) -> None:
+    editor = selector.search
+    _focus_editor(qtbot, selector)
+    qtbot.keyClicks(editor, text[0])
+    qtbot.waitUntil(selector.popup_is_visible, timeout=5000)
+    focused = QApplication.focusWidget()
+    assert focused is editor
+    if len(text) > 1:
+        qtbot.keyClicks(focused, text[1:])
+    assert editor.text() == text
 
 
 @pytest.mark.integration
@@ -56,14 +85,27 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         assert len(pedigree.pedigree) == 98_001
 
         rel = window.relationship_page
-        rel.selector_a.search.setText(NAME_A)
+        window.show()
+        qtbot.waitExposed(window)
+        window.nav.setCurrentRow(PAGE_RELATIONSHIP)
+        qtbot.waitUntil(
+            lambda: window.stack.currentWidget() is rel and rel.selector_a.search.isVisible(),
+            timeout=5000,
+        )
+        _type_query(qtbot, rel.selector_a, "Hierners Heart")
         rel.selector_a.apply_search_now()
-        assert rel.selector_a.choose_result_row(0) is True
+        qtbot.waitUntil(rel.selector_a.popup_is_visible, timeout=5000)
+        qtbot.keyClick(rel.selector_a.search, Qt.Key.Key_Return)
         assert rel.selected_animal_a() == CURRENT_A
-        rel.selector_b.search.setText(NAME_B)
+        assert rel.selector_a.search.text() == NAME_A
+        qtbot.waitUntil(lambda: not rel.selector_a.popup_is_visible(), timeout=2000)
+        qtbot.keyClick(rel.selector_a.search, Qt.Key.Key_Tab)
+        _type_query(qtbot, rel.selector_b, "Morning Bell Virg")
         rel.selector_b.apply_search_now()
-        assert rel.selector_b.choose_result_row(0) is True
+        qtbot.waitUntil(rel.selector_b.popup_is_visible, timeout=5000)
+        qtbot.keyClick(rel.selector_b.search, Qt.Key.Key_Return)
         assert rel.selected_animal_b() == CURRENT_B
+        assert rel.selector_b.search.text() == NAME_B
         assert rel.run_button.isEnabled() is True
         window.run_relationship_analysis()
         qtbot.waitUntil(
@@ -72,14 +114,27 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         )
         assert rel.result is not None
         assert abs(rel.result.coefficient - A_EXPECTED) < 1e-12
+        rel.selector_a.clear_selection()
+        assert rel.result is None
+        assert rel.value_label.text() == "—"
+        assert rel.run_button.isEnabled() is False
 
         mating = window.mating_page
-        mating.selector_a.search.setText(NAME_A)
+        window.nav.setCurrentRow(PAGE_MATING)
+        qtbot.waitUntil(
+            lambda: window.stack.currentWidget() is mating and mating.selector_a.search.isVisible(),
+            timeout=5000,
+        )
+        _type_query(qtbot, mating.selector_a, "Hierners Heart")
         mating.selector_a.apply_search_now()
-        assert mating.selector_a.choose_result_row(0) is True
-        mating.selector_b.search.setText(NAME_B)
+        qtbot.waitUntil(mating.selector_a.popup_is_visible, timeout=5000)
+        qtbot.keyClick(mating.selector_a.search, Qt.Key.Key_Return)
+        qtbot.waitUntil(lambda: not mating.selector_a.popup_is_visible(), timeout=2000)
+        qtbot.keyClick(mating.selector_a.search, Qt.Key.Key_Tab)
+        _type_query(qtbot, mating.selector_b, "Morning Bell Virg")
         mating.selector_b.apply_search_now()
-        assert mating.selector_b.choose_result_row(0) is True
+        qtbot.waitUntil(mating.selector_b.popup_is_visible, timeout=5000)
+        qtbot.keyClick(mating.selector_b.search, Qt.Key.Key_Return)
         assert mating.run_button.isEnabled() is True
         window.run_mating_pair()
         qtbot.waitUntil(
@@ -88,5 +143,9 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         )
         assert mating.pair_result is not None
         assert abs(mating.pair_result.coefficient - F_EXPECTED) < 1e-12
+        mating.selector_b.clear_selection()
+        assert mating.pair_result is None
+        assert mating.value_label.text() == "—"
+        assert mating.run_button.isEnabled() is False
     finally:
         close_owned_pypedal_log_handlers()
