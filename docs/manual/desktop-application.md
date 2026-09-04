@@ -18,7 +18,7 @@ pypedal
 
 `pypedal` and `pypedal-gui` are the same desktop. `gui` is a
 compatibility alias for the `desktop` extra; both install PySide6.
-PyPedal 4.2.0 does not provide a command-oriented analysis CLI.
+PyPedal 4.2 does not provide a command-oriented analysis CLI.
 
 PySide6 is imported only when the window starts. The library remains
 importable without the GUI extra. Starting the app without PySide6
@@ -63,8 +63,8 @@ pedigree.
 5. **Effective Founders** — Lacy’s *f<sub>e</sub>*.
 6. **Relationship** — coefficient of relationship for two animals. Search
    by **display name**, **original ID**, or **current animal ID**, then
-   choose a result. Duplicate names are not unique identities; the popup
-   lists every match so you can pick the right animal. This is not a
+   choose a result. Duplicate names are not unique identities; the match
+   list includes each matching animal so you can pick the right one. This is not a
    pedigree-wide matrix.
 7. **Mating** — prospective offspring inbreeding for an explicit pair,
    or for an explicit small group of pairs you add. It does not mate

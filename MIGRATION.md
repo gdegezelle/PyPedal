@@ -6,6 +6,8 @@ already on PyPedal 4.0.x should skip to
 [PyPedal 4.0.x to PyPedal 4.1.0](#pypedal-40x-to-pypedal-410).
 Callers already on 4.1.x should skip to
 [PyPedal 4.1.x to PyPedal 4.2.0](#pypedal-41x-to-pypedal-420).
+Callers already on 4.2.0 should skip to
+[PyPedal 4.2.0 to PyPedal 4.2.1](#pypedal-420-to-pypedal-421).
 
 PyPedal 4 is a Python 3 reimplementation of Cole’s 2.0.4 library. Some
 results match 2.0.4 exactly. Some differ because the 4.0 behaviour is the
@@ -285,8 +287,19 @@ PySide6.
 
 ### Relationship and Mating IDs
 
-Those desktop pages use **current (renumbered) animal IDs**. Name and
-original-ID lookup are not provided in 4.2.
+Those desktop pages select animals by display name, original ID, or
+current animal ID. Duplicate names require an explicit choice. Scientific
+`relationship` / `mating_coi` APIs stay ID-based.
+
+## PyPedal 4.2.0 to PyPedal 4.2.1
+
+Scientific formulas and 4.2.0 result/`output=` behaviour are unchanged.
+No migration step is required for library callers.
+
+Desktop load of large pedigrees is faster. Relationship and Mating
+selectors still search by name, original ID, or current ID; Clear then
+reselect is the supported workflow. GUI founder and inbreeding displays
+use breeder-facing rounding and percentages; exports remain raw.
 
 ## Where to read next
 

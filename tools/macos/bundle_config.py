@@ -2,7 +2,7 @@
 
 PyInstaller executes ``PyPedal.spec`` in a separate process. This module
 is the single place for bundle identifier, version lookup, icon discovery,
-and exclusion filters so E can rebuild at 4.2.0 by bumping project metadata.
+and exclusion filters so a patch rebuild only needs to bump project metadata.
 """
 
 from __future__ import annotations

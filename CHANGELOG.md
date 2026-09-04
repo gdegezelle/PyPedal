@@ -4,9 +4,46 @@ All notable changes to PyPedal are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 where practical. Version identifiers follow [Semantic Versioning](https://semver.org/)
-and PEP 440 (`4.2.0`).
+and PEP 440 (`4.2.1`).
 
 ## [Unreleased]
+
+## [4.2.1] — 2026-09-04
+
+Patch release. It has not been published to PyPI. Engineering macOS
+`.app` packaging exists; the development artifacts are not signed or
+notarized.
+
+### Fixed
+
+- Opening a pedigree no longer sorts every Animals-table row. On the
+  98,001-animal named Griffon sample, native desktop load dropped from
+  roughly 28–33 seconds to about 3 seconds on the validation machine.
+- `AnimalLookupIndex` is built once during a normal pedigree load instead
+  of twice.
+- Quiet desktop and application loads no longer write per-record DEBUG
+  lines, which had produced 16–20 MB logs beside large pedigree files.
+- Relationship and Mating animal selectors stay usable after Clear, so a
+  breeder can select a pair, calculate, clear, select another pair, and
+  calculate again.
+- Suggestions are a bounded inline list instead of a Qt popup window that
+  could intercept input on macOS. The native QLineEdit clear control is
+  removed; the explicit Clear button is the only clear control.
+- Duplicate-name disambiguation is unchanged: two animals that share a
+  call name remain independently selectable.
+
+### Changed
+
+- Relationship and Mating animal selectors expand to show long pedigree
+  names.
+- Effective founders are shown with two decimal places in the GUI (for
+  example 193.31). The raw `fa_effective_founders` value and text exports
+  are unchanged.
+- Inbreeding summary and table values are percentages in the GUI. CSV
+  export remains raw coefficients.
+- Mating prospective offspring inbreeding remains percentage-formatted.
+- Full-pedigree inbreeding reports truthful processed-animal progress.
+  The Meuwissen–Luo calculation itself is not faster in this release.
 
 ## [4.2.0] — 2026-09-02
 

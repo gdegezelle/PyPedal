@@ -4,7 +4,7 @@
 Build with ``python tools/macos/build_app.py``. Output stays outside the
 repository. Bundle identifier: org.pypedal.PyPedal
 
-Version strings are read from pyproject.toml so a 4.2.0 rebuild does not
+Version strings are read from pyproject.toml so a patch rebuild does not
 need a separate spec edit.
 
 Analysis, PYZ, EXE, COLLECT, and BUNDLE are provided by PyInstaller when

@@ -53,7 +53,7 @@ internal helper.
 ## Desktop
 
 `python -m PyPedal`, `pypedal`, and `pypedal-gui` launch the PySide6
-desktop application (`gui` extra). PyPedal 4.2.0 does not provide a
+desktop application (`gui` extra). PyPedal 4.2 does not provide a
 command-oriented CLI and has no analysis subcommands.
 
 The type alias `ProgressCallback` lives in `pyp_results`. It is

@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PyPedal"
-version = "4.2.0"
+version = "4.2.1"
 description = "Tools for pedigree analysis"
 readme = "README.md"
 # This project follows Semantic Versioning. 4.0.0 is a MAJOR release because
 # the Python floor, exception contract, unknown-chronology model, and several
 # scientific corrections differ from PyPedal 2.0.4. The current PEP 440
-# identity is 4.2.0. See CHANGELOG.md and MIGRATION.md.
+# identity is 4.2.1. See CHANGELOG.md and MIGRATION.md.
 requires-python = ">=3.12"
 authors = [
     { name = "John B. Cole, PhD", email = "john.b.cole@gmail.com" }
