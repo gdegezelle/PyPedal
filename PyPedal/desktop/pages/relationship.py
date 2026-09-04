@@ -9,6 +9,7 @@ from PyPedal.application import AnimalLookupIndex, PairwiseResult
 from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_value
 from PyPedal.desktop.pages.analysis_chrome import (
     add_analysis_header,
+    configure_growing_form,
     make_export_button,
     make_run_button,
 )
@@ -36,6 +37,7 @@ class RelationshipPage(QWidget):
         self.value_label = QLabel(_ABSENT)
         self.value_label.setObjectName("relationship_value")
         form = QFormLayout()
+        configure_growing_form(form)
         form.addRow("Animal A", self.selector_a)
         form.addRow("Animal B", self.selector_b)
         form.addRow("Relationship", self.value_label)

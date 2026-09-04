@@ -20,12 +20,47 @@ ModelIndex = QModelIndex | QPersistentModelIndex
 
 
 def format_inbreeding_percent(raw: object) -> str:
-    """Breeder-facing mating *F* as a percentage. Raw coefficients are unchanged."""
+    """Breeder-facing inbreeding *F* as a percentage. Raw coefficients are unchanged."""
     if raw is None:
         return "—"
     if not isinstance(raw, int | float):
         return str(raw)
-    return f"{float(raw) * 100:.2f}%"
+    percent = round(float(raw) * 100, 2)
+    if percent == 0.0:
+        percent = 0.0
+    return f"{percent:.2f}%"
+
+
+def format_effective_founders(raw: object) -> str:
+    """Two-decimal effective-founder display. The scientific value is unchanged."""
+    if raw is None:
+        return "—"
+    if not isinstance(raw, int | float):
+        return str(raw)
+    return f"{float(raw):.2f}"
+
+
+def format_count(raw: object) -> str:
+    """Integer count with locale-independent thousands separators."""
+    if raw is None:
+        return "—"
+    if isinstance(raw, bool) or not isinstance(raw, int):
+        return str(raw)
+    return f"{raw:,}"
+
+
+def _id_sort_key(animal_id: object) -> tuple[int, float | str]:
+    if isinstance(animal_id, bool):
+        return (2, str(animal_id))
+    if isinstance(animal_id, int | float):
+        return (0, float(animal_id))
+    return (1, str(animal_id).casefold())
+
+
+def _coef_sort_key(value: object) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return float("-inf")
+    return float(value)
 
 
 class InbreedingResultTableModel(QAbstractTableModel):
@@ -68,7 +103,7 @@ class InbreedingResultTableModel(QAbstractTableModel):
         if role != Qt.ItemDataRole.DisplayRole:
             return None
         if orientation == Qt.Orientation.Horizontal:
-            return ("Animal ID", "F")[section] if 0 <= section < 2 else None
+            return ("Animal ID", "F (%)")[section] if 0 <= section < 2 else None
         return str(section + 1)
 
     @override
@@ -83,7 +118,22 @@ class InbreedingResultTableModel(QAbstractTableModel):
             return None
         if index.column() == 0:
             return str(animal_id)
-        return format_display_value(FA_COLUMN, coef)
+        return format_inbreeding_percent(coef)
+
+    @override
+    def sort(
+        self,
+        column: int,
+        order: Qt.SortOrder = Qt.SortOrder.AscendingOrder,
+    ) -> None:
+        reverse = order == Qt.SortOrder.DescendingOrder
+        self.layoutAboutToBeChanged.emit()
+        if column == 0:
+            self._ids.sort(key=_id_sort_key, reverse=reverse)
+        else:
+            fx = self._fx
+            self._ids.sort(key=lambda animal_id: _coef_sort_key(fx.get(animal_id)), reverse=reverse)
+        self.layoutChanged.emit()
 
 
 class YearInbreedingTableModel(QAbstractTableModel):

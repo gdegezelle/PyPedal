@@ -97,6 +97,7 @@ class MainWindow(QMainWindow):
         self.session = PedigreeSession()
         self._job: LoadJob | AnalysisJob | None = None
         self._busy = False
+        self._track_inbreeding_progress = False
         self._analysis_success: Callable[[object], None] | None = None
 
         self._build_pages()
@@ -367,6 +368,8 @@ class MainWindow(QMainWindow):
             return
         self.progress.setRange(0, total)
         self.progress.setValue(done)
+        if self._track_inbreeding_progress:
+            self.status_operation.setText(f"Calculating inbreeding… {done:,} / {total:,}")
 
     def _on_load_succeeded(self, session: object) -> None:
         if not isinstance(session, PedigreeSession):
@@ -417,6 +420,8 @@ class MainWindow(QMainWindow):
 
     def _set_busy(self, busy: bool, operation: str) -> None:
         self._busy = busy
+        if not busy:
+            self._track_inbreeding_progress = False
         empty = self.session.is_empty
         self.open_action.setEnabled(not busy)
         self.recent_menu.setEnabled(not busy)
@@ -493,10 +498,16 @@ class MainWindow(QMainWindow):
         count = len(pedigree.pedigree) if pedigree is not None else 0
         self.status_count.setText(f"{count:,} animals")
 
+    def _inbreeding_busy_text(self) -> str:
+        pedigree = self.session.pedigree
+        count = len(pedigree.pedigree) if pedigree is not None else 0
+        return f"Calculating inbreeding for {count:,} animals…"
+
     def run_inbreeding_analysis(self) -> None:
         session = self.session
+        self._track_inbreeding_progress = True
         self._start_analysis(
-            "Calculating inbreeding",
+            self._inbreeding_busy_text(),
             lambda progress: run_inbreeding(session, progress=progress),
             self._apply_inbreeding_result,
         )
@@ -517,8 +528,9 @@ class MainWindow(QMainWindow):
                 return
             self._apply_year_outcome(outcome)
             return
+        self._track_inbreeding_progress = True
         self._start_analysis(
-            "Calculating inbreeding",
+            self._inbreeding_busy_text(),
             lambda progress: run_inbreeding_by_year(session, progress=progress),
             self._apply_year_outcome,
         )

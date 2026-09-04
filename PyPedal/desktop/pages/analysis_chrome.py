@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtWidgets import QHeaderView, QLabel, QPushButton, QTableView, QVBoxLayout
+from PySide6.QtWidgets import QFormLayout, QHeaderView, QLabel, QPushButton, QTableView, QVBoxLayout
 
 
 def add_analysis_header(layout: QVBoxLayout, title: str, explanation: str) -> None:
@@ -13,6 +13,11 @@ def add_analysis_header(layout: QVBoxLayout, title: str, explanation: str) -> No
     note.setObjectName("analysis_explanation")
     layout.addWidget(heading)
     layout.addWidget(note)
+
+
+def configure_growing_form(form: QFormLayout) -> None:
+    """Let expanding fields (animal selectors) use leftover window width."""
+    form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
 
 
 def configure_result_table(view: QTableView) -> None:

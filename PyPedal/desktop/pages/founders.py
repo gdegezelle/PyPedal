@@ -6,7 +6,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QFormLayout, QLabel, QVBoxLayout, QWidget
 
 from PyPedal.application import EffectiveFoundersResult, FoundersOutcome
-from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_value
+from PyPedal.desktop.models.analysis_tables import format_count, format_effective_founders
 from PyPedal.desktop.pages.analysis_chrome import (
     add_analysis_header,
     make_export_button,
@@ -66,8 +66,8 @@ class FoundersPage(QWidget):
     def show_outcome(self, outcome: FoundersOutcome) -> None:
         self.result = outcome.result
         result = outcome.result
-        self.value_label.setText(format_display_value(FA_COLUMN, result.fa_effective_founders))
-        self.animals_label.setText(str(result.fa_animal_count))
-        self.founder_count_label.setText(str(result.fa_founder_count))
-        self.descendant_label.setText(str(result.fa_descendant_count))
+        self.value_label.setText(format_effective_founders(result.fa_effective_founders))
+        self.animals_label.setText(format_count(result.fa_animal_count))
+        self.founder_count_label.setText(format_count(result.fa_founder_count))
+        self.descendant_label.setText(format_count(result.fa_descendant_count))
         self.export_button.setEnabled(True)

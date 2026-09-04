@@ -19,6 +19,7 @@ from PyPedal.application import AnimalLookupIndex, MatingCoIGroupResult, Pairwis
 from PyPedal.desktop.models.analysis_tables import MatingResultTableModel, format_inbreeding_percent
 from PyPedal.desktop.pages.analysis_chrome import (
     add_analysis_header,
+    configure_growing_form,
     configure_result_table,
     make_export_button,
     make_run_button,
@@ -49,6 +50,7 @@ class MatingPage(QWidget):
         self.value_label = QLabel(_ABSENT)
         self.value_label.setObjectName("mating_value")
         form = QFormLayout()
+        configure_growing_form(form)
         form.addRow("Animal A", self.selector_a)
         form.addRow("Animal B", self.selector_b)
         form.addRow("Offspring inbreeding", self.value_label)

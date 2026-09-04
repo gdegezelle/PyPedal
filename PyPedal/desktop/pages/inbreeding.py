@@ -6,8 +6,11 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QFormLayout, QLabel, QTableView, QVBoxLayout, QWidget
 
 from PyPedal.application import InbreedingResult
-from PyPedal.desktop.models.analysis_tables import InbreedingResultTableModel
-from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_value
+from PyPedal.desktop.models.analysis_tables import (
+    InbreedingResultTableModel,
+    format_count,
+    format_inbreeding_percent,
+)
 from PyPedal.desktop.pages.analysis_chrome import (
     add_analysis_header,
     configure_result_table,
@@ -43,12 +46,12 @@ class InbreedingPage(QWidget):
         ):
             widget.setObjectName(name)
 
-        form = QFormLayout()
-        form.addRow("Animals with results", self.count_label)
-        form.addRow("Mean F", self.mean_label)
-        form.addRow("Min F", self.min_label)
-        form.addRow("Max F", self.max_label)
-        form.addRow("Count F > 0", self.positive_label)
+        self.form = QFormLayout()
+        self.form.addRow("Animals with results", self.count_label)
+        self.form.addRow("Mean inbreeding", self.mean_label)
+        self.form.addRow("Minimum inbreeding", self.min_label)
+        self.form.addRow("Maximum inbreeding", self.max_label)
+        self.form.addRow("Animals with F > 0", self.positive_label)
 
         self.view = QTableView()
         self.view.setObjectName("inbreeding_table")
@@ -67,7 +70,7 @@ class InbreedingPage(QWidget):
             "Inbreeding",
             "Meuwissen–Luo coefficients of inbreeding. This updates each animal's F.",
         )
-        layout.addLayout(form)
+        layout.addLayout(self.form)
         layout.addWidget(self.run_button)
         layout.addWidget(self.export_button)
         layout.addWidget(self.view)
@@ -90,9 +93,9 @@ class InbreedingPage(QWidget):
         self.model.set_result(result)
         all_stats = result.metadata.get("all", {})
         nonzero = result.metadata.get("nonzero", {})
-        self.count_label.setText(str(all_stats.get("f_count", _ABSENT)))
-        self.mean_label.setText(format_display_value(FA_COLUMN, all_stats.get("f_avg")))
-        self.min_label.setText(format_display_value(FA_COLUMN, all_stats.get("f_min")))
-        self.max_label.setText(format_display_value(FA_COLUMN, all_stats.get("f_max")))
-        self.positive_label.setText(str(nonzero.get("f_count", _ABSENT)))
+        self.count_label.setText(format_count(all_stats.get("f_count")))
+        self.mean_label.setText(format_inbreeding_percent(all_stats.get("f_avg")))
+        self.min_label.setText(format_inbreeding_percent(all_stats.get("f_min")))
+        self.max_label.setText(format_inbreeding_percent(all_stats.get("f_max")))
+        self.positive_label.setText(format_count(nonzero.get("f_count")))
         self.export_button.setEnabled(True)

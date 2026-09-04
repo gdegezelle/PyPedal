@@ -11,7 +11,7 @@ pytest.importorskip("PySide6")
 pytest.importorskip("pytestqt")
 
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QSizePolicy
 
 from PyPedal.application import PedigreeOpenOptions
 from PyPedal.application.lookup import (
@@ -22,6 +22,7 @@ from PyPedal.application.lookup import (
 from PyPedal.desktop.main_window import MainWindow
 from PyPedal.desktop.settings import DesktopSettings
 from PyPedal.desktop.widgets.animal_selector import (
+    EDITOR_MINIMUM_WIDTH,
     AnimalSelector,
     primary_display_text,
     selection_detail_text,
@@ -392,3 +393,26 @@ def test_reload_clears_animal_selections(qtbot: object, tmp_path: Path) -> None:
         assert window.relationship_page.value_label.text() == "—"
     finally:
         close_owned_pypedal_log_handlers()
+
+
+def test_animal_selector_editor_expands_with_minimum_width() -> None:
+    selector = AnimalSelector()
+    assert selector.search.sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Expanding
+    assert selector.sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Expanding
+    assert selector.search.minimumWidth() == EDITOR_MINIMUM_WIDTH
+    assert 380 <= selector.search.minimumWidth() <= 420
+    assert selector.clear_button.sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Maximum
+
+
+def test_relationship_and_mating_share_expanding_selector(qtbot: object, tmp_path: Path) -> None:
+    window = MainWindow(_settings(tmp_path))
+    qtbot.addWidget(window)
+    for selector in (
+        window.relationship_page.selector_a,
+        window.relationship_page.selector_b,
+        window.mating_page.selector_a,
+        window.mating_page.selector_b,
+    ):
+        assert isinstance(selector, AnimalSelector)
+        assert selector.search.sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Expanding
+        assert selector.search.minimumWidth() == EDITOR_MINIMUM_WIDTH

@@ -23,6 +23,7 @@ from PyPedal.application.lookup import (
 )
 
 SEARCH_DEBOUNCE_MS = 200
+EDITOR_MINIMUM_WIDTH = 400
 _MORE_MATCHES_TEXT = "More matches exist — refine the search"
 _HIT_ROLE = Qt.ItemDataRole.UserRole
 _NONE_SELECTED = "No animal selected"
@@ -97,11 +98,14 @@ class AnimalSelector(QWidget):
         self._index: AnimalLookupIndex | None = None
         self._selected: AnimalLookupHit | None = None
         self._hits: tuple[AnimalLookupHit, ...] = ()
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         self.search = QLineEdit()
         self.search.setObjectName(search_object_name)
         self.search.setPlaceholderText("Name, original ID, or current ID")
         self.search.setClearButtonEnabled(True)
+        self.search.setMinimumWidth(EDITOR_MINIMUM_WIDTH)
+        self.search.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.search.installEventFilter(self)
 
         self.summary = QLabel(_NONE_SELECTED)
@@ -116,6 +120,7 @@ class AnimalSelector(QWidget):
         self.clear_button.setObjectName(f"{search_object_name}_clear")
         self.clear_button.setEnabled(False)
         self.clear_button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self.clear_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         self.clear_button.clicked.connect(self.clear_selection)
 
         self._debounce = QTimer(self)

@@ -11,19 +11,25 @@ pytest.importorskip("PySide6")
 pytest.importorskip("pytestqt")
 
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QFormLayout, QMessageBox
 
-from PyPedal.application import PedigreeOpenOptions
+from PyPedal.application import FoundersOutcome, PedigreeOpenOptions
 from PyPedal.application.tables import BROWSE_COLUMNS
 from PyPedal.desktop.main_window import (
     PAGE_INBREEDING,
     PAGE_YEAR,
     MainWindow,
 )
-from PyPedal.desktop.models.analysis_tables import MatingResultTableModel, format_inbreeding_percent
+from PyPedal.desktop.models.analysis_tables import (
+    InbreedingResultTableModel,
+    MatingResultTableModel,
+    format_inbreeding_percent,
+)
 from PyPedal.desktop.models.pedigree_table import FA_COLUMN, format_display_value
+from PyPedal.desktop.pages.founders import FoundersPage
+from PyPedal.desktop.pages.inbreeding import InbreedingPage
 from PyPedal.desktop.settings import DesktopSettings
-from PyPedal.pyp_results import MatingCoIGroupResult
+from PyPedal.pyp_results import EffectiveFoundersResult, InbreedingResult, MatingCoIGroupResult
 
 if QApplication.instance() is None:
     QApplication(["pypedal-desktop-tests"])
@@ -82,6 +88,10 @@ def test_inbreeding_run_refreshes_f_column_and_enables_export(
         assert window.inbreeding_page.export_button.isEnabled() is False
         window.run_inbreeding_analysis()
         assert window._busy is True
+        status = window.status_operation.text()
+        assert "Calculating inbreeding" in status
+        assert "6" in status
+        assert window.progress.isHidden() is False
         assert window.inbreeding_page.run_button.isEnabled() is False
         assert window.about_action.isEnabled() is True
         _wait_idle(qtbot, window)
@@ -372,3 +382,91 @@ def test_close_clears_analysis_cache_and_pages(qtbot: object, tmp_path: Path) ->
         assert window.inbreeding_page.run_button.isEnabled() is False
     finally:
         close_owned_pypedal_log_handlers()
+
+
+def _form_labels(form: QFormLayout) -> list[str]:
+    labels: list[str] = []
+    for row in range(form.rowCount()):
+        item = form.itemAt(row, QFormLayout.ItemRole.LabelRole)
+        widget = None if item is None else item.widget()
+        if widget is not None:
+            labels.append(widget.text())
+    return labels
+
+
+def test_founders_page_displays_two_decimals_not_raw() -> None:
+    raw = 193.31434658869796
+    result = EffectiveFoundersResult(
+        {
+            "fa_animal_count": 98001,
+            "fa_founder_count": 7604,
+            "fa_descendant_count": 91312,
+            "fa_effective_founders": raw,
+        }
+    )
+    page = FoundersPage()
+    page.show_outcome(FoundersOutcome(result=result, implicit_renumber=False))
+    assert page.result is result
+    assert page.result.fa_effective_founders == raw
+    assert page.value_label.text() == "193.31"
+    assert page.animals_label.text() == "98,001"
+    assert page.founder_count_label.text() == "7,604"
+    assert page.descendant_label.text() == "91,312"
+
+
+def test_inbreeding_summary_uses_percentages_and_breeder_labels() -> None:
+    mean = 0.09313044278029989
+    minimum = 0.0
+    maximum = 0.546875
+    result = InbreedingResult(
+        {
+            "fx": {1: 0.125, 2: 0.0},
+            "metadata": {
+                "all": {
+                    "f_count": 98001,
+                    "f_avg": mean,
+                    "f_min": minimum,
+                    "f_max": maximum,
+                },
+                "nonzero": {"f_count": 84442},
+            },
+        }
+    )
+    page = InbreedingPage()
+    page.show_result(result)
+    assert page.result is result
+    assert page.result.metadata["all"]["f_avg"] == mean
+    assert _form_labels(page.form) == [
+        "Animals with results",
+        "Mean inbreeding",
+        "Minimum inbreeding",
+        "Maximum inbreeding",
+        "Animals with F > 0",
+    ]
+    assert page.count_label.text() == "98,001"
+    assert page.mean_label.text() == "9.31%"
+    assert page.min_label.text() == "0.00%"
+    assert page.max_label.text() == "54.69%"
+    assert page.positive_label.text() == "84,442"
+
+
+def test_inbreeding_table_displays_percent_and_sorts_numerically() -> None:
+    result = InbreedingResult(
+        {
+            "fx": {1: 0.09, 2: 0.125, 3: 0.0},
+            "metadata": {},
+        }
+    )
+    model = InbreedingResultTableModel()
+    model.set_result(result)
+    header = model.headerData(1, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+    assert header == "F (%)"
+    sample = model.index(1, 1)
+    assert model.data(sample) == "12.50%"
+    assert model.data(sample, Qt.ItemDataRole.UserRole) == 0.125
+    model.sort(1, Qt.SortOrder.AscendingOrder)
+    displayed = [model.data(model.index(row, 1)) for row in range(3)]
+    raw = [model.data(model.index(row, 1), Qt.ItemDataRole.UserRole) for row in range(3)]
+    assert displayed == ["0.00%", "9.00%", "12.50%"]
+    assert raw == [0.0, 0.09, 0.125]
+    assert "12.50%" < "9.00%"
