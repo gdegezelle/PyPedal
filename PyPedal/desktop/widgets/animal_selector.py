@@ -1,11 +1,11 @@
-"""Reusable animal selector: QLineEdit plus bounded QCompleter popup."""
+"""Reusable animal selector: QLineEdit plus an inline bounded results list."""
 
 from __future__ import annotations
 
 from PySide6.QtCore import QEvent, QModelIndex, QObject, Qt, QTimer, Signal
 from PySide6.QtGui import QKeyEvent, QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import (
-    QCompleter,
+    QApplication,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -28,6 +28,7 @@ _MORE_MATCHES_TEXT = "More matches exist — refine the search"
 _HIT_ROLE = Qt.ItemDataRole.UserRole
 _NONE_SELECTED = "No animal selected"
 _SEX_SYMBOLS = {"f": "♀", "female": "♀", "m": "♂", "male": "♂"}
+_MAX_VISIBLE_ROWS = 12
 
 
 def primary_display_text(hit: AnimalLookupHit) -> str:
@@ -81,9 +82,9 @@ class CompleterHitModel(QStandardItemModel):
 class AnimalSelector(QWidget):
     """Search by name, original ID, or current ID; commit only on explicit choice.
 
-    Suggestions come from ``AnimalLookupIndex`` into a bounded QCompleter
-    model (at most 50 hits). The completer popup is a non-focus view with
-    this editor as its focus proxy, so typing continues in the QLineEdit.
+    Suggestions come from ``AnimalLookupIndex`` into a bounded list (at most
+    50 hits). The list is an inline child with no focus, so typing continues
+    in the QLineEdit and the editor is never covered by a Qt popup window.
     """
 
     selection_changed = Signal()
@@ -98,12 +99,13 @@ class AnimalSelector(QWidget):
         self._index: AnimalLookupIndex | None = None
         self._selected: AnimalLookupHit | None = None
         self._hits: tuple[AnimalLookupHit, ...] = ()
+        self._updating_editor = False
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         self.search = QLineEdit()
         self.search.setObjectName(search_object_name)
         self.search.setPlaceholderText("Name, original ID, or current ID")
-        self.search.setClearButtonEnabled(True)
+        self.search.setClearButtonEnabled(False)
         self.search.setMinimumWidth(EDITOR_MINIMUM_WIDTH)
         self.search.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.search.installEventFilter(self)
@@ -119,7 +121,7 @@ class AnimalSelector(QWidget):
         self.clear_button = QPushButton("Clear")
         self.clear_button.setObjectName(f"{search_object_name}_clear")
         self.clear_button.setEnabled(False)
-        self.clear_button.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self.clear_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.clear_button.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
         self.clear_button.clicked.connect(self.clear_selection)
 
@@ -130,21 +132,21 @@ class AnimalSelector(QWidget):
         self.search.textChanged.connect(self._on_text_changed)
 
         self._model = CompleterHitModel(self)
-        self._completer = QCompleter(self._model, self)
-        self._completer.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
-        self._completer.setMaxVisibleItems(12)
-        self._completer.setWidget(self.search)
-        popup = QListView()
-        popup.setObjectName(f"{search_object_name}_results")
-        popup.setUniformItemSizes(True)
-        popup.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
-        popup.setSelectionMode(QListView.SelectionMode.SingleSelection)
-        popup.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        popup.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        popup.setFocusProxy(self.search)
-        self._completer.setPopup(popup)
-        popup.installEventFilter(self)
-        self._completer.activated.connect(self._on_completer_activated)
+        self._results = QListView()
+        self._results.setObjectName(f"{search_object_name}_results")
+        self._results.setModel(self._model)
+        self._results.setUniformItemSizes(True)
+        self._results.setEditTriggers(QListView.EditTrigger.NoEditTriggers)
+        self._results.setSelectionMode(QListView.SelectionMode.SingleSelection)
+        self._results.setSelectionBehavior(QListView.SelectionBehavior.SelectRows)
+        self._results.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._results.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._results.setFocusProxy(self.search)
+        self._results.pressed.connect(self._on_result_clicked)
+        self._results.hide()
+        app = QApplication.instance()
+        if isinstance(app, QApplication):
+            app.focusChanged.connect(self._on_app_focus_changed)
 
         editor_row = QHBoxLayout()
         editor_row.addWidget(self.search, 1)
@@ -155,6 +157,7 @@ class AnimalSelector(QWidget):
         layout.setSpacing(4)
         layout.addLayout(editor_row)
         layout.addWidget(self.summary)
+        layout.addWidget(self._results)
 
     def set_index(self, index: AnimalLookupIndex | None) -> None:
         """Install a lookup index and drop any previous selection."""
@@ -211,8 +214,7 @@ class AnimalSelector(QWidget):
         return [hit.label for hit in self._hits]
 
     def popup_is_visible(self) -> bool:
-        popup = self._completer.popup()
-        return popup is not None and popup.isVisible()
+        return self._results.isVisible()
 
     def choose_result_row(self, row: int) -> bool:
         """Commit the selectable popup row ``row`` (tests)."""
@@ -222,26 +224,32 @@ class AnimalSelector(QWidget):
         return self._selected is not None
 
     def clear_selection(self) -> None:
-        """Clear editor, popup, summary, and committed ID."""
+        """Clear editor, results, summary, and committed ID."""
         self._debounce.stop()
         self._hide_popup()
         self._hits = ()
         self._model.set_hits((), truncated=False)
-        self.search.blockSignals(True)
-        self.search.clear()
-        self.search.blockSignals(False)
+        self._updating_editor = True
+        try:
+            self.search.clear()
+        finally:
+            self._updating_editor = False
         changed = self._selected is not None
         self._selected = None
         self.summary.setText(_NONE_SELECTED)
         self.clear_button.setEnabled(False)
+        if self.sender() is self.clear_button:
+            host = self.window()
+            if host is not None:
+                host.activateWindow()
+            self.search.setFocus(Qt.FocusReason.OtherFocusReason)
         if changed:
             self.selection_changed.emit()
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
-        popup = self._completer.popup()
-        if event.type() != QEvent.Type.KeyPress or not isinstance(event, QKeyEvent):
+        if watched is not self.search or event.type() != QEvent.Type.KeyPress:
             return super().eventFilter(watched, event)
-        if watched is not self.search and watched is not popup:
+        if not isinstance(event, QKeyEvent):
             return super().eventFilter(watched, event)
         key = event.key()
         if key == Qt.Key.Key_Down:
@@ -269,8 +277,16 @@ class AnimalSelector(QWidget):
         return super().eventFilter(watched, event)
 
     def _on_text_changed(self, text: str) -> None:
+        if self._updating_editor:
+            return
         if self._selected is not None and text != primary_display_text(self._selected):
             self._forget_selection()
+        if not text.strip():
+            self._debounce.stop()
+            self._hits = ()
+            self._model.set_hits((), truncated=False)
+            self._hide_popup()
+            return
         self._debounce.start()
 
     def _forget_selection(self) -> None:
@@ -282,33 +298,30 @@ class AnimalSelector(QWidget):
         self.selection_changed.emit()
 
     def _show_popup(self) -> None:
-        popup = self._completer.popup()
-        if popup is None:
+        rows = self._model.rowCount()
+        if rows <= 0:
+            self._hide_popup()
             return
-        popup.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
-        popup.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        popup.setFocusProxy(self.search)
-        self._completer.setCompletionPrefix("")
-        width = max(self.search.width(), 360)
-        popup.setMinimumWidth(width)
-        self._completer.complete()
-        popup.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        popup.setFocusProxy(self.search)
-        model = popup.model()
-        if model is not None and model.rowCount() > 0:
-            popup.setCurrentIndex(model.index(0, 0))
+        visible = min(rows, _MAX_VISIBLE_ROWS)
+        row_h = self._results.sizeHintForRow(0)
+        if row_h <= 0:
+            row_h = 24
+        self._results.setFixedHeight(visible * row_h + 2 * self._results.frameWidth())
+        self._results.show()
+        self._results.setCurrentIndex(self._model.index(0, 0))
 
     def _hide_popup(self) -> None:
-        popup = self._completer.popup()
-        if popup is None:
+        self._results.hide()
+
+    def _on_app_focus_changed(self, _old: QWidget | None, new: QWidget | None) -> None:
+        if not self.popup_is_visible() or new is None:
             return
-        popup.hide()
-        if popup.isVisible():
-            popup.close()
+        if new is self.search or self.isAncestorOf(new):
+            return
+        self._hide_popup()
 
     def _move_current(self, step: int) -> None:
-        popup = self._completer.popup()
-        if popup is None or not self.popup_is_visible() or self._model.rowCount() == 0:
+        if not self.popup_is_visible() or self._model.rowCount() == 0:
             return
         selectable = [
             row
@@ -317,12 +330,9 @@ class AnimalSelector(QWidget):
         ]
         if not selectable:
             return
-        model = popup.model()
-        if model is None:
-            return
-        current = popup.currentIndex().row()
+        current = self._results.currentIndex().row()
         if current < 0:
-            popup.setCurrentIndex(model.index(selectable[0], 0))
+            self._results.setCurrentIndex(self._model.index(selectable[0], 0))
             return
         target = current + step
         if target not in selectable:
@@ -332,19 +342,12 @@ class AnimalSelector(QWidget):
             else:
                 earlier = [row for row in selectable if row < current]
                 target = earlier[-1] if earlier else selectable[0]
-        popup.setCurrentIndex(model.index(target, 0))
+        self._results.setCurrentIndex(self._model.index(target, 0))
 
     def _choose_current(self) -> None:
-        popup = self._completer.popup()
-        if popup is None:
-            return
-        self._choose_index(popup.currentIndex())
+        self._choose_index(self._results.currentIndex())
 
-    def _on_completer_activated(self, value: object) -> None:
-        index = value if isinstance(value, QModelIndex) else None
-        if index is None or not index.isValid():
-            popup = self._completer.popup()
-            index = popup.currentIndex() if popup is not None else QModelIndex()
+    def _on_result_clicked(self, index: QModelIndex) -> None:
         self._choose_index(index)
 
     def _choose_index(self, index: QModelIndex) -> None:
@@ -364,14 +367,15 @@ class AnimalSelector(QWidget):
 
     def _commit(self, hit: AnimalLookupHit) -> None:
         self._debounce.stop()
+        self._hide_popup()
         self._hits = ()
         self._model.set_hits((), truncated=False)
-        self._hide_popup()
         self._selected = hit
-        self.search.blockSignals(True)
-        self.search.setText(primary_display_text(hit))
-        self.search.blockSignals(False)
+        self._updating_editor = True
+        try:
+            self.search.setText(primary_display_text(hit))
+        finally:
+            self._updating_editor = False
         self.summary.setText(selection_detail_text(hit))
         self.clear_button.setEnabled(True)
-        self._hide_popup()
         self.selection_changed.emit()

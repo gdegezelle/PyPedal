@@ -11,15 +11,16 @@ pytest.importorskip("PySide6")
 pytest.importorskip("pytestqt")
 
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QApplication, QSizePolicy
+from PySide6.QtWidgets import QApplication, QSizePolicy, QToolButton
 
 from PyPedal.application import PedigreeOpenOptions
 from PyPedal.application.lookup import (
+    DEFAULT_RESULT_LIMIT,
     AnimalLookupHit,
     AnimalLookupIndex,
     format_animal_label,
 )
-from PyPedal.desktop.main_window import MainWindow
+from PyPedal.desktop.main_window import PAGE_MATING, PAGE_RELATIONSHIP, MainWindow
 from PyPedal.desktop.settings import DesktopSettings
 from PyPedal.desktop.widgets.animal_selector import (
     EDITOR_MINIMUM_WIDTH,
@@ -96,7 +97,7 @@ def _hit(
 def _selector(qtbot: object, hits: list[AnimalLookupHit]) -> AnimalSelector:
     selector = AnimalSelector(search_object_name="test_animal_search")
     qtbot.addWidget(selector)
-    selector.resize(480, 90)
+    selector.resize(480, 280)
     selector.show()
     qtbot.waitExposed(selector)
     selector.set_index(AnimalLookupIndex(hits))
@@ -116,6 +117,14 @@ def _type_continuously(qtbot: object, selector: AnimalSelector, text: str) -> No
         qtbot.keyClicks(focused, text[1:])
     assert editor.text() == text
     assert editor.hasFocus() is True
+
+
+def _assert_editor_ready_to_type(qtbot: object, selector: AnimalSelector) -> None:
+    editor = selector.search
+    qtbot.waitUntil(
+        lambda: editor.hasFocus() or QApplication.focusWidget() is editor,
+        timeout=2000,
+    )
 
 
 def test_continuous_typing_keeps_editor_while_popup_is_visible(qtbot: object) -> None:
@@ -157,7 +166,7 @@ def test_mouse_click_commits_result(qtbot: object) -> None:
     qtbot.keyClicks(selector.search, "Heart")
     selector.apply_search_now()
     qtbot.waitUntil(selector.popup_is_visible, timeout=2000)
-    popup = selector._completer.popup()
+    popup = selector._results
     assert popup is not None
     index = popup.model().index(0, 0)
     rect = popup.visualRect(index)
@@ -220,6 +229,49 @@ def test_clear_empties_editor_and_committed_id(qtbot: object) -> None:
     assert selector.summary.text() == "No animal selected"
     assert selector.popup_is_visible() is False
     assert selector.clear_button.isEnabled() is False
+    assert selector.search.findChildren(QToolButton) == []
+    assert selector.search.isEnabled() is True
+    assert selector.search.isReadOnly() is False
+
+
+def test_editor_has_no_native_clear_overlay(qtbot: object) -> None:
+    selector = _selector(
+        qtbot,
+        [_hit(98001, 98685, "Hierners Heartbreaker", sex="m", birth_year=2024)],
+    )
+    assert selector.search.findChildren(QToolButton) == []
+    selector.select_animal_id(98001)
+    assert selector.search.findChildren(QToolButton) == []
+    selector.clear_button.click()
+    assert selector.search.findChildren(QToolButton) == []
+
+
+def test_clear_after_popup_commit_allows_a_new_search(qtbot: object) -> None:
+    selector = _selector(
+        qtbot,
+        [
+            _hit(98001, 98685, "Hierners Heartbreaker", sex="m", birth_year=2024),
+            _hit(97984, 98667, "Morning Bell Virgine", sex="f", birth_year=2022),
+        ],
+    )
+    _type_continuously(qtbot, selector, "Hierners Heart")
+    selector.apply_search_now()
+    qtbot.waitUntil(selector.popup_is_visible, timeout=2000)
+    qtbot.keyClick(selector.search, Qt.Key.Key_Return)
+    assert selector.selected_animal_id() == 98001
+    assert selector.popup_is_visible() is False
+    selector.clear_button.click()
+    assert selector.selected_animal_id() is None
+    assert selector.search.text() == ""
+    assert selector.popup_is_visible() is False
+    assert selector.search.isEnabled() is True
+    _type_continuously(qtbot, selector, "Morning Bell")
+    selector.apply_search_now()
+    labels = selector.result_labels()
+    assert any("Morning Bell Virgine" in label for label in labels)
+    assert selector.choose_result_row(0) is True
+    assert selector.selected_animal_id() == 97984
+    assert selector.search.text() == "Morning Bell Virgine"
 
 
 def test_escape_dismisses_popup_without_erasing_query(qtbot: object) -> None:
@@ -256,7 +308,11 @@ def test_duplicate_names_are_independently_selectable(qtbot: object) -> None:
     assert selector.search.text() == "Colette"
     assert "20209" in selector.summary.text()
     assert "Colette" not in selector.summary.text()
-    selector.search.setText("Colette")
+    selector.clear_button.click()
+    assert selector.selected_animal_id() is None
+    assert selector.search.text() == ""
+    _assert_editor_ready_to_type(qtbot, selector)
+    _type_continuously(qtbot, selector, "Colette")
     selector.apply_search_now()
     assert selector.choose_result_row(0) is True
     assert selector.selected_animal_id() == 1
@@ -328,6 +384,25 @@ def test_mating_select_by_name_and_duplicates(qtbot: object, tmp_path: Path) -> 
         assert page.pair_result is not None
         assert page.pair_result.animal_a == bella_young
         assert page.pair_result.animal_b == max_id
+        page.selector_a.clear_button.click()
+        page.selector_b.clear_button.click()
+        assert page.selected_animal_a() is None
+        assert page.selected_animal_b() is None
+        assert page.run_button.isEnabled() is False
+        assert page.selector_a.search.text() == ""
+        assert page.selector_b.search.text() == ""
+        assert page.selector_a.popup_is_visible() is False
+        assert page.selector_b.popup_is_visible() is False
+        page.selector_a.search.setFocus(Qt.FocusReason.OtherFocusReason)
+        qtbot.keyClicks(page.selector_a.search, "spot")
+        assert page.selector_a.search.text() == "spot"
+        page.selector_a.apply_search_now()
+        assert page.selector_a.choose_result_row(0) is True
+        page.selector_b.search.setFocus(Qt.FocusReason.OtherFocusReason)
+        qtbot.keyClicks(page.selector_b.search, "max")
+        page.selector_b.apply_search_now()
+        assert page.selector_b.choose_result_row(0) is True
+        assert page.run_button.isEnabled() is True
     finally:
         close_owned_pypedal_log_handlers()
 
@@ -339,6 +414,14 @@ def test_enter_selects_highlighted_result(qtbot: object, tmp_path: Path) -> None
         selector = window.relationship_page.selector_a
         window.show()
         qtbot.waitExposed(window)
+        window.nav.setCurrentRow(PAGE_RELATIONSHIP)
+        qtbot.waitUntil(
+            lambda: (
+                window.stack.currentWidget() is window.relationship_page
+                and selector.search.isVisible()
+            ),
+            timeout=5000,
+        )
         selector.search.setFocus(Qt.FocusReason.OtherFocusReason)
         selector.search.setText("Max")
         selector.apply_search_now()
@@ -395,8 +478,294 @@ def test_reload_clears_animal_selections(qtbot: object, tmp_path: Path) -> None:
         close_owned_pypedal_log_handlers()
 
 
+def _show_analysis_page(qtbot: object, window: MainWindow, page: object, row: int) -> None:
+    window.show()
+    qtbot.waitExposed(window)
+    window.nav.setCurrentRow(row)
+    qtbot.waitUntil(
+        lambda: window.stack.currentWidget() is page and page.selector_a.search.isVisible(),
+        timeout=5000,
+    )
+
+
+def _query_and_choose(qtbot: object, selector: AnimalSelector, text: str, row: int = 0) -> None:
+    selector.search.setFocus(Qt.FocusReason.OtherFocusReason)
+    qtbot.keyClicks(selector.search, text)
+    selector.apply_search_now()
+    assert selector.choose_result_row(row) is True
+
+
+def test_arrow_keys_move_highlight_and_enter_commits(qtbot: object) -> None:
+    selector = _selector(
+        qtbot,
+        [
+            _hit(1, 20196, "Colette", sex="f", birth_year=1899),
+            _hit(2, 20209, "Colette", sex="f", birth_year=1978),
+        ],
+    )
+    _type_continuously(qtbot, selector, "Colette")
+    selector.apply_search_now()
+    qtbot.waitUntil(selector.popup_is_visible, timeout=2000)
+    qtbot.keyClick(selector.search, Qt.Key.Key_Down)
+    qtbot.keyClick(selector.search, Qt.Key.Key_Return)
+    assert selector.selected_animal_id() == 2
+    assert selector.search.text() == "Colette"
+    assert "20209" in selector.summary.text()
+    selector.clear_button.click()
+    _type_continuously(qtbot, selector, "Colette")
+    selector.apply_search_now()
+    qtbot.waitUntil(selector.popup_is_visible, timeout=2000)
+    qtbot.keyClick(selector.search, Qt.Key.Key_Down)
+    qtbot.keyClick(selector.search, Qt.Key.Key_Up)
+    qtbot.keyClick(selector.search, Qt.Key.Key_Return)
+    assert selector.selected_animal_id() == 1
+    assert "20196" in selector.summary.text()
+
+
+def test_mouse_commit_clear_and_mouse_commit_again(qtbot: object) -> None:
+    selector = _selector(
+        qtbot,
+        [
+            _hit(98001, 98685, "Hierners Heartbreaker", sex="m", birth_year=2024),
+            _hit(97984, 98667, "Morning Bell Virgine", sex="f", birth_year=2022),
+        ],
+    )
+    selector.search.setFocus(Qt.FocusReason.OtherFocusReason)
+    qtbot.keyClicks(selector.search, "Heart")
+    selector.apply_search_now()
+    qtbot.waitUntil(selector.popup_is_visible, timeout=2000)
+    first = selector._results
+    qtbot.mouseClick(
+        first.viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=first.visualRect(first.model().index(0, 0)).center(),
+    )
+    assert selector.selected_animal_id() == 98001
+    selector.clear_button.click()
+    assert selector.selected_animal_id() is None
+    _assert_editor_ready_to_type(qtbot, selector)
+    qtbot.keyClicks(selector.search, "Morning")
+    selector.apply_search_now()
+    qtbot.waitUntil(selector.popup_is_visible, timeout=2000)
+    again = selector._results
+    qtbot.mouseClick(
+        again.viewport(),
+        Qt.MouseButton.LeftButton,
+        pos=again.visualRect(again.model().index(0, 0)).center(),
+    )
+    assert selector.selected_animal_id() == 97984
+    assert selector.search.text() == "Morning Bell Virgine"
+    assert selector.search.findChildren(QToolButton) == []
+
+
+def test_clear_button_focuses_editor_for_immediate_typing(qtbot: object) -> None:
+    selector = _selector(
+        qtbot,
+        [_hit(98001, 98685, "Hierners Heartbreaker", sex="m", birth_year=2024)],
+    )
+    assert selector.select_animal_id(98001) is True
+    selector.clear_button.click()
+    _assert_editor_ready_to_type(qtbot, selector)
+    qtbot.keyClicks(selector.search, "Heart")
+    assert selector.search.text() == "Heart"
+    selector.apply_search_now()
+    assert selector.choose_result_row(0) is True
+
+
+def test_inline_suggestions_stay_bounded(qtbot: object) -> None:
+    hits = [_hit(i, 1000 + i, f"Shared {i:02d}") for i in range(1, 61)]
+    selector = _selector(qtbot, hits)
+    selector.search.setText("Shared")
+    selector.apply_search_now()
+    assert len(selector.result_labels()) == DEFAULT_RESULT_LIMIT
+    assert selector._model.rowCount() == DEFAULT_RESULT_LIMIT + 1
+    assert selector.search.isClearButtonEnabled() is False
+
+
+def test_clear_does_not_rebuild_animal_lookup(
+    qtbot: object, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    builds: list[int] = []
+    original = AnimalLookupIndex.from_pedigree.__func__
+
+    def counted(cls: type[AnimalLookupIndex], pedigree: object) -> AnimalLookupIndex:
+        builds.append(1)
+        return original(cls, pedigree)
+
+    monkeypatch.setattr(AnimalLookupIndex, "from_pedigree", classmethod(counted))
+    window = _load_named(qtbot, tmp_path)
+    try:
+        assert builds == [1]
+        lookup = window.session.animal_lookup
+        max_id = _current_id(window, 102)
+        window.mating_page.selector_a.select_animal_id(max_id)
+        window.mating_page.selector_a.clear_button.click()
+        window.relationship_page.selector_b.select_animal_id(max_id)
+        window.relationship_page.selector_b.clear_button.click()
+        assert builds == [1]
+        assert window.session.animal_lookup is lookup
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_mating_can_replace_a_pair_twice_after_clear(qtbot: object, tmp_path: Path) -> None:
+    window = _load_named(qtbot, tmp_path)
+    try:
+        bella_young = _current_id(window, 103)
+        bella_old = _current_id(window, 101)
+        max_id = _current_id(window, 102)
+        spot_id = _current_id(window, 104)
+        page = window.mating_page
+        _show_analysis_page(qtbot, window, page, PAGE_MATING)
+
+        _query_and_choose(qtbot, page.selector_a, "Bella", 1)
+        _query_and_choose(qtbot, page.selector_b, "max")
+        assert page.selected_animal_a() == bella_young
+        assert page.selected_animal_b() == max_id
+        window.run_mating_pair()
+        _wait_idle(qtbot, window)
+        first = page.pair_result
+        assert first is not None
+        page.add_pair_button.click()
+        assert page.pair_list.count() == 1
+
+        page.selector_a.clear_button.click()
+        page.selector_b.clear_button.click()
+        assert page.selected_animal_a() is None
+        assert page.selected_animal_b() is None
+        assert page.pair_result is None
+        assert page.value_label.text() == "—"
+        assert page.run_button.isEnabled() is False
+        assert page.pair_list.count() == 1
+        _assert_editor_ready_to_type(qtbot, page.selector_b)
+        assert page.selector_a.search.isEnabled() is True
+        assert page.selector_b.search.isEnabled() is True
+
+        _query_and_choose(qtbot, page.selector_a, "spot")
+        _query_and_choose(qtbot, page.selector_b, "max")
+        assert page.selected_animal_a() == spot_id
+        assert page.selected_animal_b() == max_id
+        assert page.run_button.isEnabled() is True
+        window.run_mating_pair()
+        _wait_idle(qtbot, window)
+        second = page.pair_result
+        assert second is not None
+        assert second.animal_a == spot_id
+        assert second.animal_b == max_id
+
+        page.selector_a.clear_button.click()
+        page.selector_b.clear_button.click()
+        assert page.pair_result is None
+        assert page.value_label.text() == "—"
+        _query_and_choose(qtbot, page.selector_a, "Bella", 0)
+        _query_and_choose(qtbot, page.selector_b, "max")
+        assert page.selected_animal_a() == bella_old
+        window.run_mating_pair()
+        _wait_idle(qtbot, window)
+        third = page.pair_result
+        assert third is not None
+        assert third.animal_a == bella_old
+        assert third.animal_b == max_id
+        assert page.pair_list.count() == 1
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_mating_single_field_clear_keeps_the_other_animal(qtbot: object, tmp_path: Path) -> None:
+    window = _load_named(qtbot, tmp_path)
+    try:
+        bella_old = _current_id(window, 101)
+        bella_young = _current_id(window, 103)
+        max_id = _current_id(window, 102)
+        spot_id = _current_id(window, 104)
+        page = window.mating_page
+        _show_analysis_page(qtbot, window, page, PAGE_MATING)
+        _query_and_choose(qtbot, page.selector_a, "Bella", 1)
+        _query_and_choose(qtbot, page.selector_b, "max")
+        window.run_mating_pair()
+        _wait_idle(qtbot, window)
+        assert page.pair_result is not None
+
+        page.selector_a.clear_button.click()
+        assert page.selected_animal_a() is None
+        assert page.selected_animal_b() == max_id
+        assert page.pair_result is None
+        assert page.value_label.text() == "—"
+        assert page.run_button.isEnabled() is False
+        _assert_editor_ready_to_type(qtbot, page.selector_a)
+        qtbot.keyClicks(page.selector_a.search, "spot")
+        assert page.selector_a.search.text() == "spot"
+        page.selector_a.apply_search_now()
+        assert page.selector_a.choose_result_row(0) is True
+        assert page.selected_animal_a() == spot_id
+        assert page.selected_animal_b() == max_id
+        assert page.run_button.isEnabled() is True
+
+        window.run_mating_pair()
+        _wait_idle(qtbot, window)
+        assert page.pair_result is not None
+        page.selector_b.clear_button.click()
+        assert page.selected_animal_a() == spot_id
+        assert page.selected_animal_b() is None
+        assert page.pair_result is None
+        assert page.value_label.text() == "—"
+        assert page.run_button.isEnabled() is False
+        _assert_editor_ready_to_type(qtbot, page.selector_b)
+        qtbot.keyClicks(page.selector_b.search, "bella")
+        page.selector_b.apply_search_now()
+        assert page.selector_b.choose_result_row(0) is True
+        assert page.selected_animal_b() == bella_old
+        assert page.selected_animal_a() == spot_id
+        assert page.run_button.isEnabled() is True
+        assert bella_young != bella_old
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_relationship_can_compute_a_new_pair_after_clear(qtbot: object, tmp_path: Path) -> None:
+    window = _load_named(qtbot, tmp_path)
+    try:
+        bella_old = _current_id(window, 101)
+        bella_young = _current_id(window, 103)
+        max_id = _current_id(window, 102)
+        spot_id = _current_id(window, 104)
+        page = window.relationship_page
+        _show_analysis_page(qtbot, window, page, PAGE_RELATIONSHIP)
+        _query_and_choose(qtbot, page.selector_a, "Bella", 0)
+        _query_and_choose(qtbot, page.selector_b, "max")
+        assert page.selected_animal_a() == bella_old
+        window.run_relationship_analysis()
+        _wait_idle(qtbot, window)
+        first = page.result
+        assert first is not None
+        assert first.animal_a == bella_old
+        assert first.animal_b == max_id
+
+        page.selector_a.clear_button.click()
+        page.selector_b.clear_button.click()
+        assert page.result is None
+        assert page.value_label.text() == "—"
+        assert page.run_button.isEnabled() is False
+        _assert_editor_ready_to_type(qtbot, page.selector_b)
+
+        _query_and_choose(qtbot, page.selector_a, "spot")
+        _query_and_choose(qtbot, page.selector_b, "Bella", 1)
+        assert page.selected_animal_a() == spot_id
+        assert page.selected_animal_b() == bella_young
+        window.run_relationship_analysis()
+        _wait_idle(qtbot, window)
+        second = page.result
+        assert second is not None
+        assert second.animal_a == spot_id
+        assert second.animal_b == bella_young
+        assert second is not first
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
 def test_animal_selector_editor_expands_with_minimum_width() -> None:
     selector = AnimalSelector()
+    assert selector.search.isClearButtonEnabled() is False
     assert selector.search.sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Expanding
     assert selector.sizePolicy().horizontalPolicy() == QSizePolicy.Policy.Expanding
     assert selector.search.minimumWidth() == EDITOR_MINIMUM_WIDTH
