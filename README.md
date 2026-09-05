@@ -1,29 +1,32 @@
-# PyPedal 4.2.1
+# PyPedal
 
-PyPedal is a Python package for **pedigree analysis**. It loads a recorded
-animal pedigree, checks common data problems, and computes inbreeding,
-additive relationships, founder and ancestor contributions, and related
-summaries.
+PyPedal is a Python 3 pedigree-analysis toolkit and desktop application,
+modernized from PyPedal 2.0.4 originally developed by John B. Cole.
 
-**Original author:** John B. Cole
-**Current maintainer:** Geert Degezelle
-**License:** GNU LGPL 2.1 or later (`LGPL-2.1-or-later`) — see [`LICENSE`](LICENSE)
-**Python:** Python 3.12 or newer (3.12, 3.13, and 3.14)
+It provides tools for pedigree management, population-genetics analysis,
+relationship and mating calculations, and interactive analysis of large
+pedigrees.
 
-This repository is a standalone Python 3 port of Cole’s PyPedal 2.0.4.
-This is **PyPedal 4.2.1**. It **has not been published** to PyPI.
+## What PyPedal can do
 
-## What you can compute
+### Pedigree analysis
 
-- Inbreeding coefficients (*F*) and additive (numerator) relationships
-- Read-only test mating (`mating_coi` / `mating_coi_group`)
-- Effective founders, effective ancestors, and founder genomes
-- Gene dropping
-- Optional Graphviz / matplotlib drawings (`graphics` extra)
-- Optional headless PDF reports (`reports` extra)
-- Optional PySide6 desktop app (`gui` extra)
+- Calculate individual inbreeding coefficients
+- Summarize inbreeding by year
+- Calculate pairwise additive relationships
+- Evaluate prospective offspring inbreeding for mating pairs
+- Estimate the effective number of founders
+- Calculate population-level metrics such as theoretical effective population size
 
-Bounds of those capabilities are in the [user manual](docs/manual/index.md).
+### Desktop application
+
+- Open and browse large pedigree files
+- Search animals by name, original pedigree ID, or current PyPedal ID
+- Distinguish animals with duplicate names using pedigree metadata
+- Run Relationship and Mating analyses interactively
+- Export analysis results with source pedigree IDs, names, and explicit current IDs
+- Work with pedigrees containing approximately 100,000 animals without
+  constructing a dense relationship matrix for pairwise analyses
 
 ## Installation
 
@@ -32,66 +35,195 @@ Install from a local checkout. There is no PyPI package yet.
 ```bash
 conda create -n pypedal3_env python=3.12
 conda activate pypedal3_env
-python -m pip install -e ".[gui,graphics,reports,test]"
+python -m pip install -e ".[gui]"
 ```
 
-A standard venv works as well. See [Installation](docs/manual/installation.md).
+A standard virtual environment works as well.
+
+For development, documentation, testing, and optional dependencies, see [Installation](docs/manual/installation.md).
 
 ## Minimal example
 
-Example files are in `PyPedal/examples/` in a **checkout or sdist**, not
-in the wheel. This snippet constructs Mrode’s textbook pedigree inline:
+Example files are included in a checkout or source distribution, but not in
+the wheel.
 
-```python
-import tempfile
+This example constructs Mrode's textbook pedigree inline:
+
+```
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from PyPedal.pyp_newclasses import load_pedigree
 from PyPedal import pyp_nrm
+from PyPedal.pyp_newclasses import load_pedigree
 
-work = Path(tempfile.mkdtemp())
-pedfile = work / "mrode.ped"
-pedfile.write_text("1 0 0\n2 0 0\n3 1 2\n4 1 0\n5 4 3\n6 5 2\n")
+with TemporaryDirectory() as work:
+    pedfile = Path(work) / "mrode.ped"
 
-ped = load_pedigree(
-    options={
-        "pedfile": str(pedfile),
-        "pedformat": "asd",
-        "messages": "quiet",
-        "pedigree_summary": 0,
-    }
-)
+    pedfile.write_text(
+        "1 0 0\n"
+        "2 0 0\n"
+        "3 1 2\n"
+        "4 1 0\n"
+        "5 4 3\n"
+        "6 5 2\n"
+    )
 
-result = pyp_nrm.inbreeding(ped, method="tabular", output=False)
-print(result["fx"][5])  # 0.125
+    ped = load_pedigree(
+        options={
+            "pedfile": str(pedfile),
+            "pedformat": "asd",
+            "messages": "quiet",
+            "pedigree_summary": 0,
+        }
+    )
+
+    result = pyp_nrm.inbreeding(
+        ped,
+        method="tabular",
+        output=False,
+    )
+
+    print(result["fx"][5])  # 0.125
 ```
 
-For large files use `method="meu_luo"`. There is no automatic switch at
-10,000 animals. The repository ships two curated Griffon samples
-(checkout/sdist only): scientific `griffonbruxellois_2026_pyp.ped`
-(comma-separated `asdxb`) and named `griffonbruxellois_2026_named_pyp.ped`
-(`asdxbn`, same genealogy plus display names; 2026 export with recorded
-births through 2025).
+**Large pedigrees:** use `method="meu_luo"`.
 
-Desktop app: `python -m PyPedal` or `pypedal` (requires `PyPedal[gui]`).
+PyPedal does not automatically switch methods at a particular pedigree size.
+
+## Example datasets
+The source distribution includes two curated Griffon Bruxellois pedigree
+datasets with 98,001 animals.
+
+- `griffonbruxellois_2026_pyp.ped`
+  - scientific dataset
+  - comma-separated
+  - pedigree format `asdxb`
+- `griffonbruxellois_2026_named_pyp.ped`
+  - same genealogy as the scientific dataset
+  - includes display names
+  - pedigree format `asdxbn`
+
+The named dataset is intended for desktop and animal-selection workflows. 
+Names are labels and are not guaranteed to be unique identities.
+
+Both datasets are included in a checkout or source distribution, but not in
+the wheel.
+
+## Desktop application
+
+Install the GUI dependencies with:
+
+```bash
+python -m pip install -e ".[gui]"
+```
+
+Start the desktop application with:
+
+```bash
+python -m PyPedal
+```
+
+or:
+
+```bash
+pypedal
+```
+
+The desktop application provides interactive access to pedigree browsing,
+inbreeding analysis, effective founder analysis, relationship calculations,
+mating analysis, and population-level summaries.
+
+## Analysis exports
+
+Animal-level analysis exports preserve pedigree provenance explicitly.
+
+Depending on the analysis, exported rows may contain:
+
+- `original_id` — the identifier from the source pedigree
+- `name` — the stored display name, when available
+- `current_id` — the current internal PyPedal ID after renumbering
+- raw scientific coefficients
+- supplementary percentage values where useful
+
+Names are not used as unique identities.
+
+Scientific CSV exports are locale-independent:
+
+- comma-delimited
+- decimal point
+- UTF-8
+- standard CSV quoting
+
+PyPedal does not switch to locale-dependent decimal commas.
+
+Spreadsheet applications configured for decimal-comma locales may require
+ explicit CSV import settings.
+
+## Large pedigrees
+
+PyPedal is designed to work with large pedigrees without requiring a dense
+ relationship matrix for every analysis.
+
+Pairwise Relationship and Mating calculations use scalable selected-pair
+ methods and do not construct a pedigree-wide dense numerator relationship
+ matrix.
+
+For the canonical 98,001-animal Griffon Bruxellois pedigree, the desktop
+ application can browse and search the pedigree directly while keeping the
+ scientific calculations in the Python reference implementation.
+
+Some full-pedigree calculations, such as Meuwissen-Luo inbreeding, remain
+ computationally more expensive and may take significantly longer than
+ pairwise analyses.
+
+## Verification
+
+Verify the installation with:
 
 ```bash
 python verify_setup.py
+```
+
+Run the default test suite with:
+
+```bash
 python -m pytest tests/ -m "not integration" -q
 ```
+
+Run integration tests with:
+
+```bash
+python -m pytest tests/ -m integration -q
+```
+
 
 ## Documentation
 
 - [User manual](docs/manual/index.md)
+- [Installation](docs/manual/installation.md)
 - [Changelog](CHANGELOG.md)
-- [Migration from 2.0.4, 4.0.x, and 4.1.x](MIGRATION.md)
+- [Migration guide](MIGRATION.md)
 - [Contributing](CONTRIBUTING.md)
 - [Third-party notices](THIRD-PARTY.md)
+
+Build the user manual with:
 
 ```bash
 python -m pip install -e ".[docs]"
 mkdocs build --strict -d /tmp/pypedal-user-manual
 ```
 
-Copyright 2001–2025 John B. Cole. Maintained by Geert Degezelle.
-Licensed under the GNU LGPL 2.1 or later.
+## Project history
+
+PyPedal was originally developed by John B. Cole.
+
+The current codebase modernizes PyPedal 2.0.4 for Python 3 and continues its
+ development as a pedigree-analysis toolkit and desktop application.
+
+Copyright 2001–2025 John B. Cole.
+
+Current maintainer: Geert Degezelle.
+
+## License
+
+Licensed under the GNU Lesser General Public License, version 2.1 or later.
