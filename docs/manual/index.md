@@ -5,11 +5,11 @@ animal pedigree, checks common data problems, and computes measures that
 animal breeders and population geneticists use every day: inbreeding,
 additive relationships, founder and ancestor contributions, and related
 summaries. Optional extras add pedigree drawings, headless PDF reports, and
-a small desktop application.
+the PySide6 desktop application.
 
 The original program was written by **John B. Cole**. PyPedal 4 is a
 Python 3 reimplementation of PyPedal 2.0.4, maintained by Geert Degezelle.
-This manual describes **PyPedal 4.2**. This is **PyPedal 4.2.1**. It has
+This manual describes **PyPedal 4.2**. This is **PyPedal 4.2.2**. It has
 not been published to PyPI.
 
 PyPedal is a research tool. It works from pedigree structure, not from
@@ -24,7 +24,7 @@ loading a pedigree and calculating inbreeding. Later chapters cover data
 preparation, common analyses, reports, and large files. Reference pages at
 the end list options, format codes, and scientific citations.
 
-## What you can do with PyPedal 4.2
+## What you can do with PyPedal
 
 - Load a pedigree from a text file (integer IDs or unique string identities)
 - Check missing parents, duplicate IDs, and inconsistent chronology

@@ -326,9 +326,25 @@ listed only current IDs.
 - `name` — stored display name; not unique; empty if missing
 - `current_id` — internal PyPedal ID after reorder/renumber
 
-Inbreeding and mating also include raw `f` and numeric `f_percent`
-(no `%` character). Relationship CSV includes raw `relationship` and
-does not add a percent column.
+Inbreeding CSV is:
+
+```
+original_id,name,current_id,f,f_percent
+```
+
+`f` is the raw scientific coefficient. `f_percent` is a supplementary
+numeric percentage (no `%` character). Do not treat percent as a
+replacement for raw *F*.
+
+Relationship CSV uses the same A/B identity columns plus raw
+`relationship`. Mating pair and mating group CSV use those identity
+columns plus `f` and `f_percent`:
+
+```
+animal_a_original_id,animal_a_name,animal_a_current_id,
+animal_b_original_id,animal_b_name,animal_b_current_id,
+…
+```
 
 The 4.2.1 header `animal_id` is not kept as an alias. Scripts that
 parsed `animal_id,f` need to read `original_id` (and `current_id` if
@@ -337,10 +353,10 @@ they were matching analysis APIs).
 IEEE residues with `|value| < 1e-12` are written as `0.0` in exports
 only. In-memory coefficients are not clamped.
 
-CSV remains comma-delimited UTF-8 with a **decimal point**, regardless
-of OS locale. Apple Numbers or Excel in a Belgian/Dutch locale may
-treat `0.125` as integer `125` unless the file is imported with
-decimal-point CSV settings. PyPedal does not emit decimal commas.
+CSV remains comma-delimited UTF-8 with a **decimal point** (`.`),
+regardless of OS locale. Apple Numbers or Excel in a Belgian/Dutch
+locale may treat `0.125` as integer `125` unless the file is imported
+with decimal-point CSV settings. PyPedal does not emit decimal commas.
 
 Aggregate exports (inbreeding by year, effective founders, theoretical
 Ne) keep their previous row semantics. Pedigree Save is unchanged.

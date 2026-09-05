@@ -4,16 +4,29 @@ All notable changes to PyPedal are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 where practical. Version identifiers follow [Semantic Versioning](https://semver.org/)
-and PEP 440 (`4.2.1`).
+and PEP 440 (`4.2.2`).
 
 ## [Unreleased]
 
+## [4.2.2] — 2026-09-05
+
+Patch release. It has not been published to PyPI. Engineering macOS
+`.app` packaging exists; the development artifacts are not signed or
+notarized.
+
 ### Fixed
 
-- Analysis CSV/text exports now identify animals by source `original_id`
-  and stored `name`, with `current_id` labelled as the internal PyPedal
-  ID. The 4.2.1 Inbreeding schema `animal_id,f` exposed the renumbered
-  runtime ID as if it were the pedigree identity.
+- Named-animal lookup correctness tests no longer treat wall-clock
+  prefix-search time as a CI gate. Timings are still printed for
+  characterization.
+- Tests delete owned temporary directories and close PyPedal log
+  handlers after each case, including on Windows. Successful runs no
+  longer retain Griffon copies, wheels, venvs, or debug logs from the
+  suite.
+- Animal-level analysis CSV/text exports now identify animals by source
+  `original_id` and stored `name`, with `current_id` labelled as the
+  internal PyPedal ID. The 4.2.1 Inbreeding schema `animal_id,f` exposed
+  the renumbered runtime ID as if it were the pedigree identity.
 - IEEE residues with absolute value below `1e-12` are serialized as
   `0.0` at the export boundary only. Stored `fx` / `animal.fa` values
   are unchanged.
@@ -21,13 +34,19 @@ and PEP 440 (`4.2.1`).
 ### Changed
 
 - Inbreeding CSV is `original_id,name,current_id,f,f_percent`.
-- Relationship and mating pair exports are CSV (no longer current-ID
-  text files). Mating group CSV uses the same A/B identity columns.
+- Relationship and mating pair exports are CSV. Mating group CSV uses
+  the same A/B identity columns (`original_id`, `name`, `current_id`
+  per side). Names remain labels, not unique identities.
 - `f` remains the raw scientific coefficient. `f_percent` is a
   supplementary numeric percentage with no percent sign.
 - Scientific CSV stays comma-delimited UTF-8 with a decimal point,
   independent of OS locale. Spreadsheet apps in decimal-comma locales
   need an explicit CSV import with decimal point.
+- README title is `# PyPedal` (version-independent). The README
+  describes PyPedal as a Python 3 pedigree-analysis toolkit and
+  desktop application modernized from PyPedal 2.0.4 originally
+  developed by John B. Cole, with separate pedigree-analysis and
+  desktop-application sections.
 
 ## [4.2.1] — 2026-09-04
 
