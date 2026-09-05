@@ -8,6 +8,27 @@ and PEP 440 (`4.2.1`).
 
 ## [Unreleased]
 
+### Fixed
+
+- Analysis CSV/text exports now identify animals by source `original_id`
+  and stored `name`, with `current_id` labelled as the internal PyPedal
+  ID. The 4.2.1 Inbreeding schema `animal_id,f` exposed the renumbered
+  runtime ID as if it were the pedigree identity.
+- IEEE residues with absolute value below `1e-12` are serialized as
+  `0.0` at the export boundary only. Stored `fx` / `animal.fa` values
+  are unchanged.
+
+### Changed
+
+- Inbreeding CSV is `original_id,name,current_id,f,f_percent`.
+- Relationship and mating pair exports are CSV (no longer current-ID
+  text files). Mating group CSV uses the same A/B identity columns.
+- `f` remains the raw scientific coefficient. `f_percent` is a
+  supplementary numeric percentage with no percent sign.
+- Scientific CSV stays comma-delimited UTF-8 with a decimal point,
+  independent of OS locale. Spreadsheet apps in decimal-comma locales
+  need an explicit CSV import with decimal point.
+
 ## [4.2.1] — 2026-09-04
 
 Patch release. It has not been published to PyPI. Engineering macOS

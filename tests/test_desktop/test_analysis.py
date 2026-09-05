@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 
 import pytest
@@ -108,6 +109,33 @@ def test_inbreeding_run_refreshes_f_column_and_enables_export(
         displayed = window.animals_page.model.data(window.animals_page.model.index(row, FA_INDEX))
         assert displayed == format_display_value(FA_COLUMN, 0.125)
         assert window.inbreeding_page.count_label.text() == "6"
+    finally:
+        close_owned_pypedal_log_handlers()
+
+
+def test_inbreeding_export_uses_original_id_schema(
+    qtbot: object, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    window = _load_mrode(qtbot, tmp_path)
+    dest = tmp_path / "inbreeding.csv"
+    monkeypatch.setattr(window, "_choose_export_path", lambda *_args, **_kwargs: dest)
+    try:
+        window.run_inbreeding_analysis()
+        _wait_idle(qtbot, window)
+        window.export_inbreeding()
+        with dest.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+        assert list(rows[0].keys()) == [
+            "original_id",
+            "name",
+            "current_id",
+            "f",
+            "f_percent",
+        ]
+        by_original = {int(row["original_id"]): row for row in rows}
+        assert by_original[5]["f"] == "0.125"
+        assert by_original[5]["f_percent"] == "12.5"
+        assert "animal_id" not in dest.read_text(encoding="utf-8")
     finally:
         close_owned_pypedal_log_handlers()
 

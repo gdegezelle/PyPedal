@@ -33,7 +33,9 @@ from PyPedal.application import (
     YearInbreedingOutcome,
     export_inbreeding_csv,
     export_mating_group_csv,
+    export_mating_pair_csv,
     export_metadata_pdf,
+    export_relationship_csv,
     export_three_gen_pdf,
     export_year_inbreeding_csv,
     parse_animal_id,
@@ -716,13 +718,14 @@ class MainWindow(QMainWindow):
 
     def export_inbreeding(self) -> None:
         result = self.inbreeding_page.result
-        if result is None:
+        pedigree = self.session.pedigree
+        if result is None or pedigree is None:
             return
         path = self._choose_export_path("Export inbreeding", "inbreeding.csv")
         if path is None:
             return
         try:
-            export_inbreeding_csv(path, result, overwrite=True)
+            export_inbreeding_csv(path, result, pedigree, overwrite=True)
         except Exception as exc:
             show_application_error(self, exc, "")
 
@@ -757,45 +760,39 @@ class MainWindow(QMainWindow):
 
     def export_relationship(self) -> None:
         result = self.relationship_page.result
-        if result is None:
+        pedigree = self.session.pedigree
+        if result is None or pedigree is None:
             return
-        path = self._choose_export_path("Export relationship", "relationship.txt")
+        path = self._choose_export_path("Export relationship", "relationship.csv")
         if path is None:
             return
-        text = (
-            f"Animal A: {result.animal_a}\n"
-            f"Animal B: {result.animal_b}\n"
-            f"Relationship: {result.coefficient}\n"
-        )
         try:
-            write_text(path, text, overwrite=True)
+            export_relationship_csv(path, result, pedigree, overwrite=True)
         except Exception as exc:
             show_application_error(self, exc, "")
 
     def export_mating(self) -> None:
         group = self.mating_page.group_result
         pair = self.mating_page.pair_result
+        pedigree = self.session.pedigree
+        if pedigree is None:
+            return
         if group is not None:
             path = self._choose_export_path("Export mating group", "mating_group.csv")
             if path is None:
                 return
             try:
-                export_mating_group_csv(path, group, overwrite=True)
+                export_mating_group_csv(path, group, pedigree, overwrite=True)
             except Exception as exc:
                 show_application_error(self, exc, "")
             return
         if pair is None:
             return
-        path = self._choose_export_path("Export mating", "mating.txt")
+        path = self._choose_export_path("Export mating", "mating.csv")
         if path is None:
             return
-        text = (
-            f"Animal A: {pair.animal_a}\n"
-            f"Animal B: {pair.animal_b}\n"
-            f"Offspring F: {pair.coefficient}\n"
-        )
         try:
-            write_text(path, text, overwrite=True)
+            export_mating_pair_csv(path, pair, pedigree, overwrite=True)
         except Exception as exc:
             show_application_error(self, exc, "")
 

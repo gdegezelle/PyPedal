@@ -26,9 +26,14 @@ from PyPedal.application.errors import (
     exit_status_for,
 )
 from PyPedal.application.export import (
+    EXPORT_ZERO_ABS,
     export_inbreeding_csv,
     export_mating_group_csv,
+    export_mating_pair_csv,
+    export_relationship_csv,
     export_year_inbreeding_csv,
+    serialize_coefficient,
+    serialize_percent,
     write_csv,
     write_text,
 )
@@ -85,6 +90,7 @@ __all__ = [
     "BROWSE_COLUMNS",
     "DEFAULT_RESULT_LIMIT",
     "EXIT_STATUS",
+    "EXPORT_ZERO_ABS",
     "UNKNOWN_YEAR_TOKENS",
     "AnimalLookupHit",
     "AnimalLookupIndex",
@@ -106,7 +112,9 @@ __all__ = [
     "exit_status_for",
     "export_inbreeding_csv",
     "export_mating_group_csv",
+    "export_mating_pair_csv",
     "export_metadata_pdf",
+    "export_relationship_csv",
     "export_three_gen_pdf",
     "export_year_inbreeding_csv",
     "format_animal_label",
@@ -125,6 +133,8 @@ __all__ = [
     "run_relationship",
     "run_theoretical_ne",
     "save_pedigree",
+    "serialize_coefficient",
+    "serialize_percent",
     "write_csv",
     "write_text",
 ]

@@ -8,6 +8,8 @@ Callers already on 4.1.x should skip to
 [PyPedal 4.1.x to PyPedal 4.2.0](#pypedal-41x-to-pypedal-420).
 Callers already on 4.2.0 should skip to
 [PyPedal 4.2.0 to PyPedal 4.2.1](#pypedal-420-to-pypedal-421).
+Callers already on 4.2.1 should skip to
+[PyPedal 4.2.1 to PyPedal 4.2.2](#pypedal-421-to-pypedal-422).
 
 PyPedal 4 is a Python 3 reimplementation of Cole’s 2.0.4 library. Some
 results match 2.0.4 exactly. Some differ because the 4.0 behaviour is the
@@ -299,7 +301,49 @@ No migration step is required for library callers.
 Desktop load of large pedigrees is faster. Relationship and Mating
 selectors still search by name, original ID, or current ID; Clear then
 reselect is the supported workflow. GUI founder and inbreeding displays
-use breeder-facing rounding and percentages; exports remain raw.
+use breeder-facing rounding and percentages; 4.2.1 CSV exports remained
+raw coefficients keyed by current animal ID.
+
+## PyPedal 4.2.1 to PyPedal 4.2.2
+
+Scientific formulas, stored `fx` / `animal.fa`, and analysis APIs that
+take current `animalID` are unchanged. Desktop **analysis export**
+schemas are not.
+
+4.2.1 Inbreeding CSV was:
+
+```
+animal_id,f
+```
+
+`animal_id` was the internal renumbered `animalID`, not the source
+`originalID`. Relationship and mating pair exports were text files that
+listed only current IDs.
+
+4.2.2 animal-level analysis CSV uses explicit columns:
+
+- `original_id` — source/file identity (primary external key)
+- `name` — stored display name; not unique; empty if missing
+- `current_id` — internal PyPedal ID after reorder/renumber
+
+Inbreeding and mating also include raw `f` and numeric `f_percent`
+(no `%` character). Relationship CSV includes raw `relationship` and
+does not add a percent column.
+
+The 4.2.1 header `animal_id` is not kept as an alias. Scripts that
+parsed `animal_id,f` need to read `original_id` (and `current_id` if
+they were matching analysis APIs).
+
+IEEE residues with `|value| < 1e-12` are written as `0.0` in exports
+only. In-memory coefficients are not clamped.
+
+CSV remains comma-delimited UTF-8 with a **decimal point**, regardless
+of OS locale. Apple Numbers or Excel in a Belgian/Dutch locale may
+treat `0.125` as integer `125` unless the file is imported with
+decimal-point CSV settings. PyPedal does not emit decimal commas.
+
+Aggregate exports (inbreeding by year, effective founders, theoretical
+Ne) keep their previous row semantics. Pedigree Save is unchanged.
 
 ## Where to read next
 

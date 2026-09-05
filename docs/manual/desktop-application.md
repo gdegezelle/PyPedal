@@ -78,6 +78,32 @@ choose. Analysis pages that have a result can **export** that result as
 UTF-8 CSV or text to a path you choose. Run never writes those files
 automatically.
 
+Animal-level analysis CSV (Inbreeding, Relationship, Mating) identifies
+each animal by:
+
+- **original ID** — the identity from the pedigree file
+- **name** — the stored display/call name (not unique; may be empty)
+- **current ID** — PyPedal’s internal sequential ID after renumbering
+
+Do not treat name as an identity. Duplicate call names (two animals
+named Colette) remain distinct rows because original ID and current ID
+differ.
+
+Inbreeding and mating CSV also include raw *F* and a numeric
+`f_percent` column (for example `10.1`, not `10.10%`). The GUI may
+still show `10.10%`. Relationship CSV exports the raw coefficient only.
+
+Tiny floating-point residues below `1e-12` are written as `0.0` in the
+export file. The stored scientific result is not changed.
+
+CSV is comma-delimited UTF-8 with a decimal **point**, independent of
+the computer’s locale. In Belgium or the Netherlands, open the file
+with an explicit CSV import that uses `.` as the decimal separator.
+PyPedal does not write decimal commas.
+
+Year, founders, and population exports stay aggregate: they do not add
+animal identity columns.
+
 **File → Export** can write a metadata PDF and a three-generation
 pedigree PDF when the `reports` extra (ReportLab) is installed. You
 choose the destination. Missing ReportLab is reported as a dependency
