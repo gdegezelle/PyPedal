@@ -52,15 +52,14 @@ import numpy as np
 
 from PyPedal import pyp_errors, pyp_metrics
 
-from _pedhelpers import load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, load_corpus, load_corpus_from_path
 
 import os
-import tempfile
 
 
 def _write_pedigree(text, pedformat="asd"):
     """A purpose-built pedigree, loaded with its output confined to a tmpdir."""
-    tmp = tempfile.mkdtemp(prefix="pypedal_f30_")
+    tmp = owned_temp_dir(prefix="pypedal_f30_")
     path = os.path.join(tmp, "fixture.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write(text)

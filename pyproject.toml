@@ -126,11 +126,18 @@ python_files = ["test_*.py"]
 # deselects everything and exits 0, which is why the CI job runs the two
 # selections as separate commands whose collected counts are visible.
 addopts = "--strict-markers"
+# Pytest 7.3+ / 8 / 9: do not keep successful tmp_path trees from previous
+# sessions (wheel builds, venvs, Griffon copies). Retain a few failed-session
+# directories for diagnosis. This does not clean helper-owned mkdtemp paths
+# outside pytest's tree; those are removed by tests/conftest.py.
+tmp_path_retention_policy = "failed"
+tmp_path_retention_count = 3
 markers = [
     "integration: runs example scripts or large pedigrees as subprocesses; slow, deselected by default and run explicitly in CI",
     "docs: user-manual existence and example-contract tests; optional selector, not a separate release gate",
     "packaging: version, license, wheel, and verify_setup identity tests; optional selector, not a separate release gate",
     "desktop: PySide6 widget and model tests; skipped when the desktop extra is absent",
+    "performance: optional wall-clock characterization; not part of the default or integration CI gates",
 ]
 
 [tool.ruff]

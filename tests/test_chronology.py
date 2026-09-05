@@ -2,7 +2,6 @@
 import datetime
 import os
 import pickle
-import tempfile
 import unittest
 import warnings
 
@@ -12,6 +11,7 @@ from PyPedal.pyp_errors import PyPedalUsageError, PyPedalValidationError
 from PyPedal.pyp_newclasses import NewAnimal
 
 from _pedhelpers import (
+    owned_temp_dir,
     chdir_tmp,
     load_canonical_griffon,
     load_corpus,
@@ -23,7 +23,7 @@ from _pedhelpers import (
 
 
 def rows_to_ped(rows, pedformat="asdy", **overrides):
-    tmp = tempfile.mkdtemp(prefix="chrono_")
+    tmp = owned_temp_dir(prefix="chrono_")
     path = os.path.join(tmp, "chrono.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

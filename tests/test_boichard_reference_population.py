@@ -53,11 +53,16 @@ unchanged if this ever needs re-litigating.
 """
 import inspect
 import os
-import tempfile
 import unittest
 
-from _pedhelpers import (corpus, load_corpus, load_corpus_from_path,
-                         load_example, load_griffon_1871_1890)
+from _pedhelpers import (
+    owned_temp_dir,
+    corpus,
+    load_corpus,
+    load_corpus_from_path,
+    load_example,
+    load_griffon_1871_1890,
+)
 from PyPedal import pyp_errors, pyp_metrics, pyp_utils
 
 # ---------------------------------------------------------------------------
@@ -168,7 +173,7 @@ def strip_generation_column(name, pedformat):
             fields = stripped.split()
             del fields[index]
             rows.append(" ".join(fields))
-    tmp = tempfile.mkdtemp(prefix="pypedal_nog_")
+    tmp = owned_temp_dir(prefix="pypedal_nog_")
     path = os.path.join(tmp, "nog_" + name)
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")
@@ -579,7 +584,7 @@ class TestGenerationLabelsAreIrrelevantOnceRIsFixed(unittest.TestCase):
     }
 
     def _load(self, labels):
-        tmp = tempfile.mkdtemp(prefix="pypedal_labels_")
+        tmp = owned_temp_dir(prefix="pypedal_labels_")
         path = os.path.join(tmp, "labels.ped")
         with open(path, "w", encoding="utf-8") as handle:
             for row, label in zip(self.TOPOLOGY, labels):
@@ -783,7 +788,7 @@ class TestThePerRoutineGuardMatrixIsPreserved(unittest.TestCase):
                      "4 3 0 1", "5 3 4 2", "6 5 4 2"]
 
     def _non_antichain(self):
-        tmp = tempfile.mkdtemp(prefix="pypedal_r3_")
+        tmp = owned_temp_dir(prefix="pypedal_r3_")
         path = os.path.join(tmp, "non_antichain.ped")
         with open(path, "w", encoding="utf-8") as handle:
             handle.write("\n".join(self.NON_ANTICHAIN) + "\n")
@@ -820,7 +825,7 @@ class TestThePerRoutineGuardMatrixIsPreserved(unittest.TestCase):
         are only correct when parents precede offspring. Loading with
         ``renumber`` disabled and offspring written first reaches the guard.
         """
-        tmp = tempfile.mkdtemp(prefix="pypedal_topo_")
+        tmp = owned_temp_dir(prefix="pypedal_topo_")
         path = os.path.join(tmp, "unordered.ped")
         with open(path, "w", encoding="utf-8") as handle:
             handle.write("3 1 2 2\n1 0 0 1\n2 0 0 1\n")
@@ -852,7 +857,7 @@ class TestTheLegacyGuardMatrixIsUntouched(unittest.TestCase):
 
     def test_the_legacy_founders_routine_has_no_antichain_guard_today(self):
         """The asymmetry pinned above already exists; recorded as a baseline."""
-        tmp = tempfile.mkdtemp(prefix="pypedal_r3_base_")
+        tmp = owned_temp_dir(prefix="pypedal_r3_base_")
         path = os.path.join(tmp, "non_antichain.ped")
         with open(path, "w", encoding="utf-8") as handle:
             handle.write("\n".join(

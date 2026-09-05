@@ -7,19 +7,18 @@ fast_a_matrix. These tests ask only whether *this* tree's callers match
 *this* tree's callees. They do not import pypedal3 signatures.
 """
 import os
-import tempfile
 
 from PyPedal import pyp_nrm, pyp_utils
 from PyPedal.pyp_newclasses import NewPedigree
 
-from _pedhelpers import chdir_tmp, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus, load_corpus_from_path
 
 # Mrode (2005) Table 2.1: animal 5 is the offspring of a half-sib mating.
 MRODE_F5 = 0.125
 
 
 def _gappy_rows_path():
-    tmp = tempfile.mkdtemp(prefix="pypedal_sig_")
+    tmp = owned_temp_dir(prefix="pypedal_sig_")
     path = os.path.join(tmp, "gappy.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("10 0 0\n20 10 0\n30 20 10\n")

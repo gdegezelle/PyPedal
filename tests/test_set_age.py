@@ -69,11 +69,10 @@ may deliberately supersede it.
 import contextlib
 import io
 import os
-import tempfile
 import unittest
 import warnings
 
-from _pedhelpers import chdir_tmp, corpus, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, corpus, load_corpus, load_corpus_from_path
 
 from PyPedal import pyp_demog, pyp_newclasses, pyp_utils
 
@@ -122,7 +121,7 @@ def rows_to_ped(rows, pedformat="asdb", **overrides):
     Written through ``load_corpus_from_path`` rather than by hand so the
     repository-delta guard in ``conftest.py`` stays satisfied.
     """
-    tmp = tempfile.mkdtemp(prefix="age33_")
+    tmp = owned_temp_dir(prefix="age33_")
     path = os.path.join(tmp, "age33.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

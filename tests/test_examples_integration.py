@@ -26,7 +26,6 @@ import os
 import shutil
 import subprocess
 import sys
-import tempfile
 
 import pytest
 
@@ -127,7 +126,7 @@ SCRIPTS = _example_scripts()
 
 
 @pytest.fixture()
-def examples_copy():
+def examples_copy(tmp_path):
     """
     A throwaway copy of PyPedal/examples, ONE PER SCRIPT.
 
@@ -139,13 +138,11 @@ def examples_copy():
     not measuring anything.
 
     Copying costs a few hundred kilobytes per script. That is the price of a
-    reproducible number.
+    reproducible number. The copy lives under pytest ``tmp_path``.
     """
-    tmp = tempfile.mkdtemp(prefix="pypedal_examples_")
-    workdir = os.path.join(tmp, "examples")
+    workdir = tmp_path / "examples"
     shutil.copytree(EXAMPLES, workdir, ignore=_ignore_bulk)
-    yield workdir
-    shutil.rmtree(tmp, ignore_errors=True)
+    yield str(workdir)
 
 
 # PyPedal/examples is ~305 MB, but 269 MB of that is one gitignored pickle
@@ -202,20 +199,16 @@ def test_example_runs(script, examples_copy):
 
 
 @pytest.mark.integration
-def test_the_examples_directory_is_not_touched():
+def test_the_examples_directory_is_not_touched(tmp_path):
     """
     The failure mode the original maketest.sh had: running the examples in
     place wrote their output into the source tree, which is where the 21
     tracked .dat files came from.
     """
     before = sorted(os.listdir(EXAMPLES))
-    tmp = tempfile.mkdtemp(prefix="pypedal_examples_probe_")
-    workdir = os.path.join(tmp, "examples")
-    try:
-        shutil.copytree(EXAMPLES, workdir, ignore=_ignore_bulk)
-        _run("new_lacy.py", workdir)
-    finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+    workdir = tmp_path / "examples"
+    shutil.copytree(EXAMPLES, workdir, ignore=_ignore_bulk)
+    _run("new_lacy.py", str(workdir))
     assert before == sorted(os.listdir(EXAMPLES))
 
 

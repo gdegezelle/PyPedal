@@ -1,9 +1,9 @@
 import os
 import shutil
-import tempfile
 import unittest
 from PyPedal.pyp_newclasses import NewPedigree
 from PyPedal.pyp_utils import renumber
+from _pedhelpers import owned_temp_dir
 
 
 class TestRenumberWithRealPedFile(unittest.TestCase):
@@ -19,7 +19,7 @@ class TestRenumberWithRealPedFile(unittest.TestCase):
         # `git status` never said a word about it. Run from a temporary
         # directory, and write the explicit-output-dir case there too, so this
         # suite leaves no trace in the source tree.
-        self._tmp = tempfile.mkdtemp(prefix="pypedal_test_renumber_")
+        self._tmp = owned_temp_dir(prefix="pypedal_test_renumber_")
         self._cwd = os.getcwd()
         os.chdir(self._tmp)
         self.output_dir = self._tmp

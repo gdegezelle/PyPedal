@@ -1,12 +1,11 @@
 """4.1-B contracts: refuse plausible-wrong scientific sentinels and invalid args."""
 
 import os
-import tempfile
 import warnings
 
 import pytest
 
-from _pedhelpers import chdir_tmp, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus, load_corpus_from_path
 
 from PyPedal import pyp_io, pyp_metrics, pyp_network, pyp_nrm
 from PyPedal.pyp_errors import PyPedalError, PyPedalUsageError
@@ -22,7 +21,7 @@ MEMMAP_NAMES = (
 
 
 def _rows_ped(rows):
-    tmp = tempfile.mkdtemp(prefix="pypedal_contracts_")
+    tmp = owned_temp_dir(prefix="pypedal_contracts_")
     path = os.path.join(tmp, "tiny.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

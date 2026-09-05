@@ -55,10 +55,9 @@ this project has already been bitten by
 used there instead.
 """
 import os
-import tempfile
 import unittest
 
-from _pedhelpers import load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, load_corpus, load_corpus_from_path
 from PyPedal import pyp_errors, pyp_metrics
 
 # `griffon_cohort` is a TEST-ONLY helper -- see  section 12 for the
@@ -158,7 +157,7 @@ PUBLISHED = {
 
 def load_synthetic(**overrides):
     """Load the founder-in-R fixture from a temporary copy."""
-    tmp = tempfile.mkdtemp(prefix="pypedal_test_")
+    tmp = owned_temp_dir(prefix="pypedal_test_")
     path = os.path.join(tmp, "f35_founder_in_reference.ped")
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(FOUNDER_IN_REFERENCE)

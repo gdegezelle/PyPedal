@@ -185,13 +185,12 @@ class TestAttachedNrmFastPath(unittest.TestCase):
 
 
 @pytest.mark.integration
-def test_griffon_observed_pair_completes_under_timeout():
+def test_griffon_observed_pair_completes_under_timeout(tmp_path):
     """Canonical Griffon pair originalID 98685 x 98667 -> current 98001 x 97984."""
     import shutil
-    import tempfile
 
     repo = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    tmp = tempfile.mkdtemp(prefix="pypedal_griffon_rel_")
+    tmp = str(tmp_path)
     ped_src = os.path.join(repo, "PyPedal", "examples", "griffonbruxellois_2026_pyp.ped")
     ped_copy = os.path.join(tmp, "griffon.ped")
     shutil.copy2(ped_src, ped_copy)

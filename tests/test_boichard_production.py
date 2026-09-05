@@ -14,10 +14,9 @@ them alone would be weak evidence:
 indistinguishable from one that is broken, so both are exercised.
 """
 import os
-import tempfile
 import unittest
 
-from _pedhelpers import corpus, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, corpus, load_corpus, load_corpus_from_path
 from oracles import boichard_f_a, boichard_read
 
 from PyPedal import pyp_errors, pyp_metrics
@@ -124,7 +123,7 @@ class TestRefusals(unittest.TestCase):
 
     @staticmethod
     def _write(text, pedformat="asdg"):
-        tmp = tempfile.mkdtemp(prefix="pypedal_boichard_")
+        tmp = owned_temp_dir(prefix="pypedal_boichard_")
         path = os.path.join(tmp, "fixture.ped")
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(text)

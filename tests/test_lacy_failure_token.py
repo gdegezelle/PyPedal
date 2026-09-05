@@ -28,13 +28,12 @@ The Lacy calculation is not changed. ``relationship()`` and
 ``a_coefficients`` are out of scope.
 """
 import os
-import tempfile
 import unittest
 
 from PyPedal import pyp_metrics
 from PyPedal.pyp_errors import PyPedalError, PyPedalUsageError, PyPedalValidationError
 
-from _pedhelpers import chdir_tmp, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus, load_corpus_from_path
 
 BASELINE = "d14dbe8"
 LACY_PUBLISHED = 2.909090909090909
@@ -52,7 +51,7 @@ def snapshot(ped):
 
 
 def founders_only():
-    tmp = tempfile.mkdtemp(prefix="lacy_fail_")
+    tmp = owned_temp_dir(prefix="lacy_fail_")
     path = os.path.join(tmp, "founders.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("1 0 0\n2 0 0\n")

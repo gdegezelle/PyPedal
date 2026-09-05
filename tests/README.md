@@ -7,7 +7,18 @@ physically separate from production code.
 Run the default suite with `pytest tests/ -m "not integration"`. CI also
 runs `pytest tests/ -m integration`. Optional selectors `-m docs` and
 `-m packaging` exist only where enough tests share a command-line use;
-they are not extra release gates.
+they are not extra release gates. `-m performance` is reserved for
+optional wall-clock characterization and is not a release gate. The
+named-Griffon lookup integration test prints timings when run with `-s`.
+
+## Temporary files
+
+Tests must own and remove their artifacts. `load_corpus`, `load_example`,
+and `owned_temp_dir` register paths on a process-local list. An autouse
+fixture closes PyPedal-owned logfile handlers and deletes those paths
+after each test, including after failures. Pytest keeps only failed
+`tmp_path` trees (`tmp_path_retention_policy = "failed"`). Do not add a
+global `rm -rf /tmp/pypedal-*` cleanup.
 
 ## Independent scientific oracles
 

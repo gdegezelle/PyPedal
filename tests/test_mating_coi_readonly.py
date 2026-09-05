@@ -17,13 +17,12 @@ and ``addanimal`` rollback.
 """
 import copy
 import os
-import tempfile
 import unittest
 
 from PyPedal import pyp_metrics, pyp_nrm
 from PyPedal.pyp_errors import PyPedalUsageError
 
-from _pedhelpers import chdir_tmp, load_corpus, load_example, load_corpus_from_path, load_griffon_1871_1890
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus, load_example, load_corpus_from_path, load_griffon_1871_1890
 
 BASELINE = "bb2ee3a"
 
@@ -36,7 +35,7 @@ STUD_ROWS = [
 
 
 def studbook(**overrides):
-    tmp = tempfile.mkdtemp(prefix="rc1s1_")
+    tmp = owned_temp_dir(prefix="rc1s1_")
     path = os.path.join(tmp, "stud.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(STUD_ROWS) + "\n")

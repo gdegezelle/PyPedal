@@ -8,11 +8,11 @@ import json
 import logging
 import os
 import shutil
-import tempfile
 
 import pytest
 
 from _pedhelpers import (
+    owned_temp_dir,
     CORPUS,
     chdir_tmp,
     load_canonical_griffon,
@@ -129,7 +129,7 @@ def snapshot_digest(obj):
 
 
 def preprocess_only(src, pedformat, sepchar=" "):
-    tmp = tempfile.mkdtemp(prefix="pypedal_parse_")
+    tmp = owned_temp_dir(prefix="pypedal_parse_")
     local = os.path.join(tmp, os.path.basename(src))
     shutil.copy(src, local)
     cwd = os.getcwd()
@@ -151,7 +151,7 @@ def preprocess_only(src, pedformat, sepchar=" "):
 
 
 def load_rows(rows, pedformat, sepchar=" ", **overrides):
-    tmp = tempfile.mkdtemp(prefix="pypedal_parse_")
+    tmp = owned_temp_dir(prefix="pypedal_parse_")
     path = os.path.join(tmp, "rows.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

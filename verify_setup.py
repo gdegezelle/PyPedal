@@ -107,34 +107,46 @@ def test_basic_functionality():
     print("=" * 60)
     
     try:
-        from PyPedal.pyp_newclasses import NewPedigree
-        from PyPedal import pyp_utils
+        import logging
         import shutil
         import tempfile
 
+        from PyPedal.pyp_newclasses import (
+            NewPedigree,
+            PYPEDAL_LOGGER_NAME,
+            _PYPEDAL_OWNED_HANDLER,
+        )
+
         print("  - Creating a pedigree object...")
         src = REPO / "PyPedal" / "examples" / "boichard2.ped"
-        work = Path(tempfile.mkdtemp())
-        pedfile = work / "boichard2.ped"
-        shutil.copy(src, pedfile)
-        options = {
-            'pedfile': str(pedfile),
-            'pedformat': 'asdx',
-            'messages': 'quiet'
-        }
-        
-        print(f"    Attempting to load: {options['pedfile']}")
-        ped = NewPedigree(options)
-        ped.load()
-        
-        print(f"    [OK] Loaded {len(ped.pedigree)} animals")
-        
-        # Test that we can access basic attributes
-        if len(ped.pedigree) > 0:
-            first_animal = ped.pedigree[0]
-            print(f"    [OK] First animal ID: {first_animal.animalID}")
-            print(f"    [OK] First animal name: {first_animal.name}")
-        
+        with tempfile.TemporaryDirectory(prefix="pypedal_verify_") as tmp:
+            work = Path(tmp)
+            pedfile = work / "boichard2.ped"
+            shutil.copy(src, pedfile)
+            options = {
+                'pedfile': str(pedfile),
+                'pedformat': 'asdx',
+                'messages': 'quiet'
+            }
+
+            print(f"    Attempting to load: {options['pedfile']}")
+            ped = NewPedigree(options)
+            ped.load()
+
+            print(f"    [OK] Loaded {len(ped.pedigree)} animals")
+
+            # Test that we can access basic attributes
+            if len(ped.pedigree) > 0:
+                first_animal = ped.pedigree[0]
+                print(f"    [OK] First animal ID: {first_animal.animalID}")
+                print(f"    [OK] First animal name: {first_animal.name}")
+
+            package = logging.getLogger(PYPEDAL_LOGGER_NAME)
+            for handler in list(package.handlers):
+                if getattr(handler, _PYPEDAL_OWNED_HANDLER, False):
+                    package.removeHandler(handler)
+                    handler.close()
+
         print("\n[OK] Basic functionality works!\n")
         return True
         

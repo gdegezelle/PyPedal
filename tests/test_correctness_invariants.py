@@ -24,7 +24,7 @@ import unittest
 
 from PyPedal import pyp_errors, pyp_nrm, pyp_metrics, pyp_utils, pyp_validate
 
-from _pedhelpers import corpus, load_corpus, load_corpus_from_path, nrm_value
+from _pedhelpers import owned_temp_dir, corpus, load_corpus, load_corpus_from_path, nrm_value
 from oracles import ballou_f_a, lacy_f_e, lacy_n_half_founders, oracle_inbreeding
 
 COI_METHODS = ("tabular", "vanraden", "meu_luo", "mod_meu_luo")
@@ -152,9 +152,8 @@ class TestFinding3DuplicateAncestorGuard(unittest.TestCase):
             5, 6        full sibs, both out of 3 x 4
             7           out of 5 x 6
         """
-        import tempfile
         rows = ["1 0 0", "2 0 0", "3 1 2", "4 1 2", "5 3 4", "6 3 4", "7 5 6"]
-        tmp = tempfile.mkdtemp(prefix="pypedal_sib_")
+        tmp = owned_temp_dir(prefix="pypedal_sib_")
         path = os.path.join(tmp, "fullsib.ped")
         with open(path, "w", encoding="utf-8") as handle:
             handle.write("\n".join(rows) + "\n")
@@ -663,8 +662,7 @@ class TestAnalysisDoesNotMutateTheCallersPedigree(unittest.TestCase):
 
     @staticmethod
     def _write(text, prefix):
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix=prefix)
+        tmp = owned_temp_dir(prefix=prefix)
         path = os.path.join(tmp, "fixture.ped")
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(text)
@@ -962,8 +960,7 @@ class TestIndefiniteBoundsAreReal(unittest.TestCase):
 
     @staticmethod
     def _fixture(text):
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="pypedal_bl2_")
+        tmp = owned_temp_dir(prefix="pypedal_bl2_")
         path = os.path.join(tmp, "fixture.ped")
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(text)
@@ -1289,9 +1286,8 @@ class TestReorderKeywordBinding(unittest.TestCase):
         non-default round limit. Founders must be identified against the
         configured sentinel, so parents still precede offspring afterwards.
         """
-        import tempfile
         rows = ["1 -999 -999", "2 -999 -999", "3 1 2", "4 1 2", "5 3 4"]
-        tmp = tempfile.mkdtemp(prefix="pypedal_sentinel_")
+        tmp = owned_temp_dir(prefix="pypedal_sentinel_")
         path = os.path.join(tmp, "sentinel.ped")
         with open(path, "w", encoding="utf-8") as handle:
             handle.write("\n".join(reversed(rows)) + "\n")   # offspring first
@@ -1332,10 +1328,9 @@ class TestFailuresAreLoud(unittest.TestCase):
 
     def test_malformed_pedigree_raises_instead_of_loading_empty(self):
         """A pedigree that cannot be parsed must not present as an empty one."""
-        import tempfile
         from PyPedal.pyp_errors import PyPedalError
 
-        tmp = tempfile.mkdtemp(prefix="pypedal_bad_")
+        tmp = owned_temp_dir(prefix="pypedal_bad_")
         path = os.path.join(tmp, "malformed.ped")
         with open(path, "w", encoding="utf-8") as handle:
             # 'asd' promises integer IDs; these are not integers, and the
@@ -1351,11 +1346,10 @@ class TestFailuresAreLoud(unittest.TestCase):
         truncated ancestor list. Uses a chain longer than the limit rather than
         lowering the limit globally, which would destabilise other tests.
         """
-        import tempfile
 
         depth = sys.getrecursionlimit() + 200
         rows = ["1 0 0"] + ["%d %d 0" % (i, i - 1) for i in range(2, depth + 1)]
-        tmp = tempfile.mkdtemp(prefix="pypedal_deep_")
+        tmp = owned_temp_dir(prefix="pypedal_deep_")
         path = os.path.join(tmp, "deep.ped")
         with open(path, "w", encoding="utf-8") as handle:
             handle.write("\n".join(rows) + "\n")

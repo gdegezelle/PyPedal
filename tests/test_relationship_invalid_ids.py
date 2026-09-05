@@ -25,13 +25,12 @@ The coefficient formula is not changed. Lacy, ``a_coefficients``,
 ``delete_animals``, and mating COI are out of scope.
 """
 import os
-import tempfile
 import unittest
 
 from PyPedal import pyp_metrics
 from PyPedal.pyp_errors import PyPedalUsageError
 
-from _pedhelpers import chdir_tmp, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus, load_corpus_from_path
 
 BASELINE = "d14dbe8"
 
@@ -45,7 +44,7 @@ STUD_ROWS = [
 
 
 def studbook(**overrides):
-    tmp = tempfile.mkdtemp(prefix="rel_api_")
+    tmp = owned_temp_dir(prefix="rel_api_")
     path = os.path.join(tmp, "stud.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(STUD_ROWS) + "\n")

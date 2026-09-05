@@ -1,6 +1,5 @@
 """RC4 an earlier revision: atomic delete_animals, typed refusal, NRM invalidation."""
 import os
-import tempfile
 import time
 import unittest
 from unittest import mock
@@ -9,7 +8,7 @@ from PyPedal.pyp_errors import PyPedalPedigreeStructureError, PyPedalUsageError
 from PyPedal.pyp_newclasses import NewAMatrix
 from PyPedal.pyp_nrm import _matrix_value
 
-from _pedhelpers import load_corpus_from_path
+from _pedhelpers import owned_temp_dir, load_corpus_from_path
 from test_delete_animals import (
     ALL,
     FOUNDER,
@@ -126,7 +125,7 @@ class TestPerformanceSanity(unittest.TestCase):
         n = 1200
         k = 40
         rows = ["%s 0 0" % i for i in range(1, n + 1)]
-        tmp = tempfile.mkdtemp(prefix="del_perf_")
+        tmp = owned_temp_dir(prefix="del_perf_")
         path = os.path.join(tmp, "wide.ped")
         with open(path, "w", encoding="utf-8") as handle:
             handle.write("\n".join(rows) + "\n")

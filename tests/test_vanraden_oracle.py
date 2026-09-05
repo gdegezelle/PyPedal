@@ -14,12 +14,12 @@ exists; only the guards and the missing APIs are added in later commits.
 """
 import os
 import sys
-import tempfile
 import unittest
 
 import numpy as np
 
 from PyPedal import pyp_newclasses, pyp_snp
+from _pedhelpers import owned_temp_dir
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "oracles"))
@@ -40,7 +40,7 @@ from oracle_vanraden import (                 # noqa: E402
 
 
 def _load_with_genotypes(pedigree_rows, genotype_rows):
-    tmp = tempfile.mkdtemp(prefix="pypedal_vr_")
+    tmp = owned_temp_dir(prefix="pypedal_vr_")
     pedfile = os.path.join(tmp, "ped.ped")
     snpfile = os.path.join(tmp, "geno.txt")
     with open(pedfile, "w", encoding="utf-8") as fh:

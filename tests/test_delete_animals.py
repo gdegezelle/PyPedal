@@ -46,13 +46,12 @@ offspring lists when ``set_offspring`` is off.
 """
 import inspect
 import os
-import tempfile
 import unittest
 
 from PyPedal.pyp_errors import PyPedalPedigreeStructureError, PyPedalUsageError
 from PyPedal.pyp_newclasses import NewPedigree
 
-from _pedhelpers import load_corpus_from_path
+from _pedhelpers import owned_temp_dir, load_corpus_from_path
 
 BASELINE = "f7963ff"
 
@@ -107,7 +106,7 @@ CUSTOM_ROWS = [
 
 def rows_to_ped(rows=None, pedformat="asd", **overrides):
     rows = ROWS if rows is None else rows
-    tmp = tempfile.mkdtemp(prefix="m6_")
+    tmp = owned_temp_dir(prefix="m6_")
     path = os.path.join(tmp, "m6.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

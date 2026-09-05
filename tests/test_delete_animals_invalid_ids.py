@@ -28,12 +28,11 @@ No general transaction rollback. No cascade. No ``DUPLICATE_REDIRECT``.
  identity and  parent refusal are not reopened.
 """
 import os
-import tempfile
 import unittest
 
 from PyPedal.pyp_errors import PyPedalPedigreeStructureError, PyPedalUsageError
 
-from _pedhelpers import load_corpus_from_path
+from _pedhelpers import owned_temp_dir, load_corpus_from_path
 
 BASELINE = "d14dbe8"
 
@@ -80,7 +79,7 @@ CUSTOM_ROWS = [
 
 def rows_to_ped(rows=None, **overrides):
     rows = ROWS if rows is None else rows
-    tmp = tempfile.mkdtemp(prefix="del_api_")
+    tmp = owned_temp_dir(prefix="del_api_")
     path = os.path.join(tmp, "del.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

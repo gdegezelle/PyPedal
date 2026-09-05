@@ -17,10 +17,9 @@ Together they pin the effective founder number, the founder genome equivalent,
 and the allele-retention closed form at 28 published values.
 """
 import os
-import tempfile
 import unittest
 
-from _pedhelpers import corpus
+from _pedhelpers import owned_temp_dir, corpus
 from oracles import LACY_MODES, lacy_f_e, lacy_n_half_founders
 
 import sys
@@ -205,7 +204,7 @@ class TestHalfFounderModesDisagreeAsDocumented(unittest.TestCase):
     PED = "1 0 0\n2 0 0\n3 1 2\n4 3 0\n5 3 4\n6 3 4\n"
 
     def _pedfile(self):
-        tmp = tempfile.mkdtemp(prefix="pypedal_lacy_")
+        tmp = owned_temp_dir(prefix="pypedal_lacy_")
         path = os.path.join(tmp, "half.ped")
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(self.PED)

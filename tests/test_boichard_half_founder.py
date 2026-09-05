@@ -63,10 +63,9 @@ assuming it.
 """
 import os
 import sys
-import tempfile
 import unittest
 
-from _pedhelpers import corpus, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, corpus, load_corpus, load_corpus_from_path
 from oracles import (
     boichard_bounds,
     boichard_f_a,
@@ -176,7 +175,7 @@ HALF_FOUNDER_FIXTURES = ("A", "B", "C", "D")
 
 def write_pedigree(text):
     """Materialise a fixture in a throwaway directory, never in the repo."""
-    tmp = tempfile.mkdtemp(prefix="pypedal_bl1r2_")
+    tmp = owned_temp_dir(prefix="pypedal_bl1r2_")
     path = os.path.join(tmp, "fixture.ped")
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(text)

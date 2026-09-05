@@ -32,11 +32,10 @@ semantics. ``oldsave`` always appends a birth-year column; Python 2 writes
 columns are 1 and 2 (0-based) regardless.
 """
 import os
-import tempfile
 import unittest
 
 from PyPedal import pyp_errors
-from _pedhelpers import chdir_tmp, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus_from_path
 
 
 # Original IDs are deliberately not 1..n so Finding-37 renumbering cannot be
@@ -66,7 +65,7 @@ CUSTOM_ROWS = [
 
 
 def rows_to_ped(rows, pedformat="asd", **overrides):
-    tmp = tempfile.mkdtemp(prefix="oldsave38_")
+    tmp = owned_temp_dir(prefix="oldsave38_")
     path = os.path.join(tmp, "high1.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

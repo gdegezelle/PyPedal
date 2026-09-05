@@ -7,14 +7,13 @@ rather than returning -999.9.
 """
 import copy
 import os
-import tempfile
 import unittest
 
 from PyPedal import pyp_metrics, pyp_nrm
 from PyPedal.pyp_errors import PyPedalUsageError
 from PyPedal.pyp_newclasses import NewAMatrix
 
-from _pedhelpers import chdir_tmp, load_corpus, load_corpus_from_path, load_example, load_griffon_1871_1890
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus, load_corpus_from_path, load_example, load_griffon_1871_1890
 
 STUD_ROWS = [
     "100 0 0",
@@ -24,7 +23,7 @@ STUD_ROWS = [
 
 
 def studbook(**overrides):
-    tmp = tempfile.mkdtemp(prefix="mating_stud_")
+    tmp = owned_temp_dir(prefix="mating_stud_")
     path = os.path.join(tmp, "stud.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(STUD_ROWS) + "\n")
@@ -32,7 +31,7 @@ def studbook(**overrides):
 
 
 def write_pedigree(text, pedformat="asd", **overrides):
-    tmp = tempfile.mkdtemp(prefix="mating_fix_")
+    tmp = owned_temp_dir(prefix="mating_fix_")
     path = os.path.join(tmp, "fixture.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write(text)

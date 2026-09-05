@@ -1,11 +1,10 @@
 """Desktop-app pedigree open options, including CSV separator padding."""
 
 import os
-import tempfile
 import unittest
 from pathlib import Path
 
-from _pedhelpers import close_owned_pypedal_log_handlers
+from _pedhelpers import close_owned_pypedal_log_handlers, owned_temp_dir
 
 from PyPedal.application import PedigreeOpenOptions, normalize_sepchar
 from PyPedal.pyp_errors import PyPedalPedigreeFormatError
@@ -52,11 +51,11 @@ class TestAsdxbnCsvLoad(unittest.TestCase):
     )
 
     def _load(self, sepchar):
-        fd, path = tempfile.mkstemp(suffix=".ped")
-        os.close(fd)
+        tmp = owned_temp_dir(prefix="pypedal_open_")
+        path = os.path.join(tmp, "dogs.ped")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(self.ROWS)
         try:
-            with open(path, "w", encoding="utf-8") as handle:
-                handle.write(self.ROWS)
             return load_pedigree(
                 options={
                     "pedfile": path,
@@ -69,10 +68,6 @@ class TestAsdxbnCsvLoad(unittest.TestCase):
             )
         finally:
             close_owned_pypedal_log_handlers()
-            os.remove(path)
-            log = path[:-4] + ".log"
-            if os.path.exists(log):
-                os.remove(log)
 
     def test_bare_comma_loads_names_with_spaces(self):
         ped = self._load(",")
@@ -88,11 +83,11 @@ class TestAsdxbnCsvLoad(unittest.TestCase):
         self.assertIn("separator ', '", message)
 
     def test_gui_options_load_the_padded_comma(self):
-        fd, path = tempfile.mkstemp(suffix=".ped")
-        os.close(fd)
+        tmp = owned_temp_dir(prefix="pypedal_open_")
+        path = os.path.join(tmp, "dogs.ped")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(self.ROWS)
         try:
-            with open(path, "w", encoding="utf-8") as handle:
-                handle.write(self.ROWS)
             opts = PedigreeOpenOptions(
                 pedformat="asdxbn", separator=", ", renumber=True
             ).to_library_options(Path(path))
@@ -101,21 +96,17 @@ class TestAsdxbnCsvLoad(unittest.TestCase):
             self.assertEqual("A Day Before Sunrise de Mar&Mar", named[0].name)
         finally:
             close_owned_pypedal_log_handlers()
-            os.remove(path)
-            log = path[:-4] + ".log"
-            if os.path.exists(log):
-                os.remove(log)
 
 
 class TestSimpleSeparatorLoads(unittest.TestCase):
     """Space, tab, and bare-comma loads without a display server."""
 
     def _load(self, text, sepchar):
-        fd, path = tempfile.mkstemp(suffix=".ped")
-        os.close(fd)
+        tmp = owned_temp_dir(prefix="pypedal_open_")
+        path = os.path.join(tmp, "simple.ped")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(text)
         try:
-            with open(path, "w", encoding="utf-8") as handle:
-                handle.write(text)
             return load_pedigree(
                 options={
                     "pedfile": path,
@@ -128,10 +119,6 @@ class TestSimpleSeparatorLoads(unittest.TestCase):
             )
         finally:
             close_owned_pypedal_log_handlers()
-            os.remove(path)
-            log = path[:-4] + ".log"
-            if os.path.exists(log):
-                os.remove(log)
 
     def test_space_separated_loads(self):
         ped = self._load("1 0 0\n2 0 0\n3 1 2\n", " ")
@@ -148,11 +135,11 @@ class TestSimpleSeparatorLoads(unittest.TestCase):
         self.assertEqual(3, len(ped.pedigree))
 
     def test_gui_empty_separator_loads_space_file(self):
-        fd, path = tempfile.mkstemp(suffix=".ped")
-        os.close(fd)
+        tmp = owned_temp_dir(prefix="pypedal_open_")
+        path = os.path.join(tmp, "space.ped")
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write("1 0 0\n2 0 0\n3 1 2\n")
         try:
-            with open(path, "w", encoding="utf-8") as handle:
-                handle.write("1 0 0\n2 0 0\n3 1 2\n")
             opts = PedigreeOpenOptions(
                 pedformat="asd", separator="", renumber=True
             ).to_library_options(Path(path))
@@ -161,7 +148,3 @@ class TestSimpleSeparatorLoads(unittest.TestCase):
             self.assertEqual(3, len(ped.pedigree))
         finally:
             close_owned_pypedal_log_handlers()
-            os.remove(path)
-            log = path[:-4] + ".log"
-            if os.path.exists(log):
-                os.remove(log)

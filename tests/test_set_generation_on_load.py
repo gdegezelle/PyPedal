@@ -43,14 +43,13 @@ population are out of scope.
 import contextlib
 import logging
 import os
-import tempfile
 import unittest
 from unittest import mock
 
 from PyPedal import pyp_io, pyp_newclasses, pyp_utils
 from PyPedal.pyp_newclasses import load_pedigree
 
-from _pedhelpers import chdir_tmp, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus, load_corpus_from_path
 
 BASELINE = "1f90f39"
 
@@ -97,7 +96,7 @@ GENERATION_FIELDS = ("igen", "gencoeff")
 
 
 def rows_to_ped(rows, pedformat="asd", **overrides):
-    tmp = tempfile.mkdtemp(prefix="m1_")
+    tmp = owned_temp_dir(prefix="m1_")
     path = os.path.join(tmp, "m1.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

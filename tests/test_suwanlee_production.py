@@ -21,14 +21,13 @@ invented here. None of them is tuned after seeing a result.
 import math
 import os
 import sys
-import tempfile
 import unittest
 
 import pytest
 
 from PyPedal import pyp_metrics
 
-from _pedhelpers import corpus, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, corpus, load_corpus, load_corpus_from_path
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "oracles"))
@@ -53,7 +52,7 @@ FULL_SIB = "1 0 0\n2 0 0\n3 1 2\n4 1 2\n5 3 4\n6 0 0\n7 5 6\n"
 
 
 def full_sib_pedigree():
-    tmp = tempfile.mkdtemp(prefix="pypedal_suwanlee_")
+    tmp = owned_temp_dir(prefix="pypedal_suwanlee_")
     path = os.path.join(tmp, "full_sib.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write(FULL_SIB)

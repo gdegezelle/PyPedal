@@ -49,14 +49,13 @@ Characterisation of the omission is inverted, not deleted.
 """
 import inspect
 import os
-import tempfile
 import unittest
 from unittest import mock
 
 from PyPedal import pyp_errors, pyp_io, pyp_utils
 from PyPedal.pyp_newclasses import load_pedigree
 
-from _pedhelpers import chdir_tmp, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus_from_path
 
 CUSTOM = -999
 DEFAULT = 0
@@ -102,7 +101,7 @@ EXPECTED_STABLE_EDGES = {
 
 
 def rows_to_ped(rows, pedformat="asd", **overrides):
-    tmp = tempfile.mkdtemp(prefix="m3_")
+    tmp = owned_temp_dir(prefix="m3_")
     path = os.path.join(tmp, "m3.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

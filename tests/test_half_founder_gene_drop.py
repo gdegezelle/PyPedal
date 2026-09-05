@@ -51,12 +51,11 @@ Asserting on raw ``animalID`` literals would silently test a different animal.
 import math
 import os
 import sys
-import tempfile
 import unittest
 
 from PyPedal import pyp_metrics
 
-from _pedhelpers import corpus, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, corpus, load_corpus, load_corpus_from_path
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "oracles"))
@@ -121,7 +120,7 @@ FIXTURE_MIXED = ("1 0 0\n2 0 0\n3 1 2\n4 1 0\n5 0 2\n"
 
 def write_pedigree(text, name="fixture.ped"):
     """Materialise a fixture. Output is confined to a tmpdir by the loader."""
-    tmp = tempfile.mkdtemp(prefix="pypedal_hf_")
+    tmp = owned_temp_dir(prefix="pypedal_hf_")
     path = os.path.join(tmp, name)
     with open(path, "w", encoding="utf-8") as handle:
         handle.write(text)

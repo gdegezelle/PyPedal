@@ -173,7 +173,8 @@ def _build_setuptools_artifact(directory, kind):
     """
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-    shutil.rmtree(Path(REPO) / "build", ignore_errors=True)
+    build_dir = Path(REPO) / "build"
+    shutil.rmtree(build_dir, ignore_errors=True)
     cwd = os.getcwd()
     os.chdir(REPO)
     try:
@@ -184,6 +185,7 @@ def _build_setuptools_artifact(directory, kind):
         )
     finally:
         os.chdir(cwd)
+        shutil.rmtree(build_dir, ignore_errors=True)
     return directory / name
 
 

@@ -1,6 +1,5 @@
 import os
 import shutil
-import tempfile
 import unittest
 
 import pytest
@@ -10,6 +9,7 @@ from PyPedal.pyp_newclasses import NewPedigree
 from PyPedal.pyp_newclasses import NewAnimal
 
 from _pedhelpers import (
+    owned_temp_dir,
     GRIFFON_TEST_SMALL_IDS,
     chdir_tmp,
     load_canonical_griffon,
@@ -129,7 +129,7 @@ class TestFastReorder(unittest.TestCase):
         """
         Test fast_reorder with a small, simple pedigree.
         """
-        tmp = tempfile.mkdtemp(prefix="pypedal_test_")
+        tmp = owned_temp_dir(prefix="pypedal_test_")
         pedfile_path = os.path.join(tmp, "griffon_test_small.ped")
         write_canonical_griffon_subset(pedfile_path, GRIFFON_TEST_SMALL_IDS)
         options = {

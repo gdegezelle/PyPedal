@@ -68,12 +68,11 @@ use plain loops.
 """
 import heapq
 import os
-import tempfile
 import unittest
 
 from PyPedal import pyp_errors, pyp_nrm, pyp_utils
 
-from _pedhelpers import chdir_tmp, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, load_corpus, load_corpus_from_path
 
 # ---------------------------------------------------------------------------
 # Fixtures and oracles
@@ -86,7 +85,7 @@ def rows_to_ped(rows, pedformat="asd", sepchar=" ", **overrides):
     Written through ``load_corpus_from_path`` rather than by hand so the
     repository-delta guard in ``conftest.py`` stays satisfied.
     """
-    tmp = tempfile.mkdtemp(prefix="pypedal_ro_")
+    tmp = owned_temp_dir(prefix="pypedal_ro_")
     path = os.path.join(tmp, "ro.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

@@ -31,7 +31,7 @@ import random
 import unittest
 
 import pytest
-from _pedhelpers import chdir_tmp, corpus, load_corpus, load_corpus_from_path
+from _pedhelpers import owned_temp_dir, chdir_tmp, corpus, load_corpus, load_corpus_from_path
 from oracles import boichard_read, exact_ng, ng_distribution
 
 from PyPedal import pyp_metrics
@@ -226,8 +226,7 @@ class TestD1ReferencePopulationSelection(unittest.TestCase):
     """
 
     def _fixture(self):
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="fg31_d1_")
+        tmp = owned_temp_dir(prefix="fg31_d1_")
         return _write(tmp, "deep.ped", _deep_gen_text())
 
     def test_the_fixture_really_does_sort_wrongly_as_strings(self):
@@ -254,8 +253,7 @@ class TestD1ReferencePopulationSelection(unittest.TestCase):
         quantities rather than falling back to string order. Same contract as
         the three Boichard routines.
         """
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="fg31_d1b_")
+        tmp = owned_temp_dir(prefix="fg31_d1b_")
         path = _write(tmp, "alpha.ped",
                       "1 0 0 early\n2 0 0 early\n3 1 2 late\n4 1 2 late\n")
         with self.assertRaises(PyPedalError):
@@ -279,8 +277,7 @@ class TestD2FoundersInsideTheReferencePopulation(unittest.TestCase):
     TEXT = "1 0 0 1\n2 0 0 1\n3 1 2 2\n4 1 2 2\n5 0 0 2\n"
 
     def test_founder_gene_copies_are_counted(self):
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="fg31_d2_")
+        tmp = owned_temp_dir(prefix="fg31_d2_")
         path = _write(tmp, "founder_in_r.ped", self.TEXT)
         target = exact_ng([(1, 0, 0), (2, 0, 0), (3, 1, 2), (4, 1, 2), (5, 0, 0)],
                           [3, 4, 5])["n_g"]
@@ -325,8 +322,7 @@ class TestD3HalfFounders(unittest.TestCase):
     }
 
     def test_half_founder_agrees_with_the_source_backed_oracle(self):
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="fg31_d3_")
+        tmp = owned_temp_dir(prefix="fg31_d3_")
         # No subTest: a strict xfail must fail as ONE outcome, and a subTest
         # that passes while a sibling fails muddies which contract is unmet.
         measured = {}
@@ -362,8 +358,7 @@ class TestD3HalfFounders(unittest.TestCase):
         denominator as though it were a founder gene. Nothing may produce a
         falsy gene label now.
         """
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="fg31_d3b_")
+        tmp = owned_temp_dir(prefix="fg31_d3b_")
         path = _write(tmp, "hf_last.ped", "1 0 0\n2 0 0\n3 1 2\n4 3 0\n")
         ped = load_corpus_from_path(path, "asd")
         most_recent = pyp_metrics._most_recent_generation(
@@ -388,8 +383,7 @@ class TestD11FounderGeneDenominator(unittest.TestCase):
     """
 
     def _plan(self, text, pedformat="asd"):
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="fg31_d11_")
+        tmp = owned_temp_dir(prefix="fg31_d11_")
         ped = load_corpus_from_path(_write(tmp, "d11.ped", text), pedformat)
         most_recent = pyp_metrics._most_recent_generation(
             [a.gen for a in ped.pedigree], "t")
@@ -429,8 +423,7 @@ class TestD12StructuralSafety(unittest.TestCase):
     """
 
     def _load_unchecked(self, text, **overrides):
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="fg31_d12_")
+        tmp = owned_temp_dir(prefix="fg31_d12_")
         options = dict(renumber=False, reorder=False, pedigree_is_renumbered=True)
         options.update(overrides)
         return load_corpus_from_path(_write(tmp, "d12.ped", text), "asd", **options)
@@ -534,8 +527,7 @@ class TestD5AllFounderReferencePopulationIsValid(unittest.TestCase):
     """
 
     def _all_founder(self, f):
-        import tempfile
-        tmp = tempfile.mkdtemp(prefix="fg31_d5_")
+        tmp = owned_temp_dir(prefix="fg31_d5_")
         text = "".join("%d 0 0\n" % i for i in range(1, f + 1))
         return _write(tmp, "allfounder%d.ped" % f, text)
 

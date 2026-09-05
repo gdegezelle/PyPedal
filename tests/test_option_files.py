@@ -20,13 +20,12 @@ ones, because the formats in the repository are the specification here.
 """
 import os
 import shutil
-import tempfile
 import unittest
 
 from PyPedal import pyp_io
 from PyPedal.pyp_newclasses import loadPedigree
 
-from _pedhelpers import EXAMPLES, corpus
+from _pedhelpers import owned_temp_dir, EXAMPLES, corpus
 
 
 class TestValueCoercion(unittest.TestCase):
@@ -130,7 +129,7 @@ class TestRealOptionFiles(unittest.TestCase):
 class TestOptionFileEndToEnd(unittest.TestCase):
 
     def _write(self, body):
-        tmp = tempfile.mkdtemp(prefix="pypedal_ini_")
+        tmp = owned_temp_dir(prefix="pypedal_ini_")
         shutil.copy(corpus("new_lacy.ped"), os.path.join(tmp, "new_lacy.ped"))
         path = os.path.join(tmp, "options.ini")
         with open(path, "w", encoding="utf-8") as handle:

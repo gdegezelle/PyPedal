@@ -25,11 +25,11 @@ import ast
 import os
 import subprocess
 import sys
-import tempfile
 import unittest
 
 from PyPedal import pyp_errors, pyp_newclasses
 from PyPedal.application import EXIT_STATUS, exit_status_for
+from _pedhelpers import owned_temp_dir
 
 PACKAGE = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "PyPedal"))
@@ -42,7 +42,7 @@ ENTRY_POINTS = {
 
 
 def _pedigree(rows, suffix=".ped"):
-    tmp = tempfile.mkdtemp(prefix="pypedal_errors_")
+    tmp = owned_temp_dir(prefix="pypedal_errors_")
     path = os.path.join(tmp, "bad" + suffix)
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")
@@ -181,7 +181,7 @@ class TestFailuresRaiseTypedExceptions(unittest.TestCase):
         ``NewPedigree(kw=None, kwfile=...)`` reads the option file, so passing
         no kw is what routes through ``_load_config_file``.
         """
-        tmp = tempfile.mkdtemp(prefix="pypedal_errors_")
+        tmp = owned_temp_dir(prefix="pypedal_errors_")
         bad_ini = os.path.join(tmp, "broken.ini")
         with open(bad_ini, "w", encoding="utf-8") as handle:
             handle.write("this is not an ini file at all\n[[[\n")

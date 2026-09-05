@@ -4,7 +4,6 @@ Historical manuals and RC1/RC2 notes are out of scope.
 """
 import os
 import shutil
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -17,6 +16,7 @@ from PyPedal.pyp_errors import (
 from PyPedal.pyp_newclasses import load_pedigree
 
 from test_manual_pages import REQUIRED_PAGES, USER, _mkdocs_nav_files, _user_markdown
+from _pedhelpers import owned_temp_dir
 
 pytestmark = pytest.mark.docs
 
@@ -41,7 +41,7 @@ def _plain(name):
 
 def _load_mrode():
     examples = Path(__import__("PyPedal").__file__).resolve().parent / "examples"
-    work = Path(tempfile.mkdtemp())
+    work = Path(owned_temp_dir())
     dest = work / "mrode.ped"
     shutil.copy(examples / "mrode.ped", dest)
     ped = load_pedigree(
@@ -279,7 +279,7 @@ def test_ph4_smoke_reorder_renumber():
 
 
 def test_ph4_smoke_genomic_grm():
-    work = Path(tempfile.mkdtemp())
+    work = Path(owned_temp_dir())
     (work / "ped.ped").write_text("1 0 0\n2 0 0\n3 1 2\n4 1 2\n")
     (work / "geno.txt").write_text(
         "1 chip1 4 0120\n2 chip1 4 1201\n3 chip1 4 2012\n4 chip1 4 0000\n"

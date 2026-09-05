@@ -35,12 +35,11 @@ genuinely dangling input, C1, and general C3 are not reopened.
 """
 import copy
 import os
-import tempfile
 import unittest
 
 from PyPedal.pyp_errors import PyPedalPedigreeStructureError
 
-from _pedhelpers import load_corpus_from_path
+from _pedhelpers import owned_temp_dir, load_corpus_from_path
 
 BASELINE = "a8b62e4"
 
@@ -70,7 +69,7 @@ CUSTOM_ROWS = [
 
 def rows_to_ped(rows=None, **overrides):
     rows = ROWS if rows is None else rows
-    tmp = tempfile.mkdtemp(prefix="f39_")
+    tmp = owned_temp_dir(prefix="f39_")
     path = os.path.join(tmp, "f39.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

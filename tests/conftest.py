@@ -33,10 +33,16 @@ it is caught as a creation. Every writer known at the time of writing has been
 fixed to use a temporary directory, so there is nothing left for this blind spot
 to hide.
 """
+
 import hashlib
 import os
 
 import pytest
+from _pedhelpers import (
+    cleanup_owned_temp_paths,
+    close_owned_pypedal_log_handlers,
+    owned_temp_snapshot,
+)
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -74,9 +80,7 @@ def _manifest(root):
     """Map repo-relative path -> sha256 of contents, for every file under root."""
     out = {}
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [
-            d for d in dirnames if d not in PRUNE_DIRS and not d.endswith(".egg-info")
-        ]
+        dirnames[:] = [d for d in dirnames if d not in PRUNE_DIRS and not d.endswith(".egg-info")]
         for name in filenames:
             path = os.path.join(dirpath, name)
             rel = os.path.relpath(path, root)
@@ -113,6 +117,32 @@ def _describe(created, modified, deleted):
             lines.extend(f"    {item}" for item in sorted(items))
             lines.append("")
     return "\n".join(lines)
+
+
+@pytest.fixture(autouse=True)
+def _pypedal_owned_temp_cleanup(tmp_path):
+    """Close logfile handlers, then delete helper-owned temps.
+
+    Depends on ``tmp_path`` so teardown runs *before* pytest removes the
+    test's tmp directory. That avoids deleting a still-open log on Windows.
+    Only paths registered through ``_pedhelpers`` are removed.
+    """
+    start = owned_temp_snapshot()
+    try:
+        yield
+    finally:
+        close_owned_pypedal_log_handlers()
+        cleanup_owned_temp_paths(start=start)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _pypedal_session_owned_temp_cleanup():
+    """Remove helper-owned temps created outside function scope (setUpClass)."""
+    try:
+        yield
+    finally:
+        close_owned_pypedal_log_handlers()
+        cleanup_owned_temp_paths(start=0)
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -1,7 +1,6 @@
 """RC4 an earlier revision: list_likely_same_animals and merge_animals."""
 import copy
 import os
-import tempfile
 import unittest
 from unittest import mock
 
@@ -9,7 +8,7 @@ from PyPedal.pyp_errors import PyPedalPedigreeStructureError, PyPedalUsageError
 from PyPedal.pyp_newclasses import NewAMatrix
 from PyPedal.pyp_utils import list_duplicates, list_likely_same_animals
 
-from _pedhelpers import load_corpus_from_path
+from _pedhelpers import owned_temp_dir, load_corpus_from_path
 
 
 POJKA, SUMO = 1, 2
@@ -28,7 +27,7 @@ FREDDY_ROWS = [
 
 
 def rows_to_ped(rows, pedformat="asdnub", **overrides):
-    tmp = tempfile.mkdtemp(prefix="merge_")
+    tmp = owned_temp_dir(prefix="merge_")
     path = os.path.join(tmp, "merge.ped")
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(rows) + "\n")

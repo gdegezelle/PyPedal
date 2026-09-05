@@ -40,6 +40,9 @@ python -m pytest tests/ -m "not integration" -q
 # Integration: example scripts and large pedigrees
 python -m pytest tests/ -m integration -q
 
+# Optional wall-clock characterization (not a CI gate)
+python -m pytest tests/test_application/test_named_griffon_lookup.py -m integration -s
+
 # One module
 python -m pytest tests/test_core.py -q
 ```
@@ -52,8 +55,14 @@ cd PyPedal/examples && python new_methods.py
 
 The suite must leave the repository byte-identical. Confine generated
 output to a temporary directory (`tests/_pedhelpers.py`: `load_corpus`,
-`load_example`, `chdir_tmp`). Do not add generated `.dat` / `.log` /
-`.ped` side effects to the tree or to `.gitignore` as a workaround.
+`load_example`, `chdir_tmp`, `owned_temp_dir`). Do not add generated
+`.dat` / `.log` / `.ped` side effects to the tree or to `.gitignore`
+as a workaround.
+
+Successful pytest `tmp_path` trees are discarded
+(`tmp_path_retention_policy = "failed"` in `pyproject.toml`). Helper-owned
+directories outside pytest's tree are closed and removed after each test;
+do not glob-delete `/tmp/pypedal-*`.
 
 ## Documentation
 

@@ -3,7 +3,6 @@
 Historical manuals and RC1/RC2 notes are out of scope.
 """
 import shutil
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -13,6 +12,7 @@ from PyPedal.pyp_errors import PyPedalUsageError
 from PyPedal.pyp_newclasses import load_pedigree
 
 from test_manual_pages import REQUIRED_PAGES, USER, _user_markdown
+from _pedhelpers import owned_temp_dir
 
 pytestmark = pytest.mark.docs
 
@@ -28,7 +28,7 @@ PHASE3_PAGES = (
 
 def _load_example(name, pedformat):
     examples = Path(__import__("PyPedal").__file__).resolve().parent / "examples"
-    work = Path(tempfile.mkdtemp())
+    work = Path(owned_temp_dir())
     dest = work / name
     shutil.copy(examples / name, dest)
     ped = load_pedigree(

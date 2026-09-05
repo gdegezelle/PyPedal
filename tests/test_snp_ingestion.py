@@ -7,14 +7,14 @@ Method 1 fixes the centring convention, the scaling denominator and the
 reference allele frequencies; callers must know those conventions.
 """
 import os
-import tempfile
 import unittest
 
 from PyPedal import pyp_errors, pyp_newclasses, pyp_snp
+from _pedhelpers import owned_temp_dir
 
 
 def write(lines, name):
-    tmp = tempfile.mkdtemp(prefix="pypedal_snp_")
+    tmp = owned_temp_dir(prefix="pypedal_snp_")
     path = os.path.join(tmp, name)
     with open(path, "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
