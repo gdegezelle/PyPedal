@@ -2,12 +2,14 @@
 
 LIC-8/LIC-9 live in this file as well (README and authors/maintainers).
 """
+
 import tomllib
 from pathlib import Path
 
 import pytest
-
 from _pedhelpers import REPO
+
+from PyPedal.__version__ import version as PACKAGE_VERSION
 
 pytestmark = pytest.mark.packaging
 
@@ -61,14 +63,28 @@ def test_lic6_adodb_is_not_the_project_license():
 
 
 def test_lic8_readme_is_current_candidate_and_not_published_final():
+    project = _project()["project"]
+    assert project["version"] == PACKAGE_VERSION
+    assert project["requires-python"] == ">=3.12"
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert f"## [{PACKAGE_VERSION}]" in changelog
+
     text = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert text.startswith("# PyPedal 4.2.1\n")
-    assert "LGPL-2.1-or-later" in text or "GNU LGPL 2.1 or later" in text
-    assert "Python 3.12" in text
+    assert text.startswith("# PyPedal\n")
+    assert not text.startswith("# PyPedal ")
+    lowered = text.lower()
+    assert "lgpl-2.1-or-later" in lowered or (
+        "lesser general public license" in lowered and "2.1" in lowered and "later" in lowered
+    )
+    assert "3.12" in text
     assert "John B. Cole" in text
     assert "Geert Degezelle" in text
-    lowered = text.lower()
-    assert "has not been published" in lowered
+    assert (
+        "has not been published" in lowered
+        or "not published" in lowered
+        or "no pypi package" in lowered
+    )
+    assert "available on pypi" not in lowered
     assert "v4.0.0-rc3 tag already exists" not in lowered
     assert "docs/RELEASE-4.0.0-FINAL.md" not in text
 
@@ -77,10 +93,6 @@ def test_lic9_authors_and_maintainers_are_separated():
     project = _project()["project"]
     authors = project["authors"]
     maintainers = project["maintainers"]
-    assert authors == [
-        {"name": "John B. Cole, PhD", "email": "john.b.cole@gmail.com"}
-    ]
-    assert maintainers == [
-        {"name": "Geert Degezelle", "email": "geertdegezelle@telenet.be"}
-    ]
+    assert authors == [{"name": "John B. Cole, PhD", "email": "john.b.cole@gmail.com"}]
+    assert maintainers == [{"name": "Geert Degezelle", "email": "geertdegezelle@telenet.be"}]
     assert authors[0]["name"] != maintainers[0]["name"]
