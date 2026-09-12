@@ -2357,6 +2357,35 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
     return c_summary
 
 
+def _require_current_animal_id(pedobj, anim, routine, label=None):
+    """Require a current/renumbered animalID that exists in this pedigree."""
+    missing = pedobj.kw['missing_parent']
+    who = ('%s ' % label) if label else ''
+    try:
+        aid = int(anim)
+    except (TypeError, ValueError) as exc:
+        raise PyPedalUsageError(
+            '%s: %sanimal ID %r is not an animal in this pedigree. '
+            '%s() requires existing current/renumbered animalID values.'
+            % (routine, who, anim, routine)
+        ) from exc
+    if aid == missing or str(anim) == str(missing) or str(aid) == str(missing):
+        raise PyPedalUsageError(
+            '%s: %sanimal ID %r is the missing-parent sentinel, not an '
+            'animal in this pedigree. %s() requires existing current/'
+            'renumbered animalID values.'
+            % (routine, who, anim, routine)
+        )
+    current_ids = {int(animal.animalID) for animal in pedobj.pedigree}
+    if aid not in current_ids:
+        raise PyPedalUsageError(
+            '%s: %sanimal ID %r is not an animal in this pedigree. '
+            '%s() requires existing current/renumbered animalID values.'
+            % (routine, who, anim, routine)
+        )
+    return aid
+
+
 def common_ancestors(anim_a: int, anim_b: int, pedobj) -> List[int]:
     """
     Returns a list of the ancestors that two animals share in common.
@@ -2374,9 +2403,18 @@ def common_ancestors(anim_a: int, anim_b: int, pedobj) -> List[int]:
     -------
     List[int]
         A list of animals related to both anim_a and anim_b.
+
+    Raises
+    ------
+    PyPedalUsageError
+        If either ID is the missing-parent sentinel or is not a current
+        animalID in this pedigree.
     """
     if pedobj.kw.get('debug_messages'):
         logger.info(f'Entered common_ancestors() for animals {anim_a} and {anim_b}')
+
+    _require_current_animal_id(pedobj, anim_a, 'common_ancestors', 'first')
+    _require_current_animal_id(pedobj, anim_b, 'common_ancestors', 'second')
 
     try:
         # Get the lists of related animals for both input animals
@@ -2394,6 +2432,8 @@ def common_ancestors(anim_a: int, anim_b: int, pedobj) -> List[int]:
 
         return shared
 
+    except PyPedalUsageError:
+        raise
     except Exception as e:
         logger.error(f"Error in common_ancestors: {e}")
         return []
@@ -2414,9 +2454,17 @@ def related_animals(anim: int, pedobj) -> List[int]:
     -------
     List[int]
         A list of ancestors of the given animal.
+
+    Raises
+    ------
+    PyPedalUsageError
+        If the ID is the missing-parent sentinel or is not a current
+        animalID in this pedigree.
     """
     if pedobj.kw.get('debug_messages'):
         logger.info(f"Entered related_animals() for animal {anim}")
+
+    _require_current_animal_id(pedobj, anim, 'related_animals')
 
     _ped = []
     try:

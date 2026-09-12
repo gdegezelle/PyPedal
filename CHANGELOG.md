@@ -13,6 +13,8 @@ and PEP 440 (`4.2.2`).
 - Missing-parent tokens no longer contribute ancestry when tracing
   pedigree completeness. A half-founder's unknown parent is unknown
   information, not the last animal in the pedigree list.
+- `related_animals` and `common_ancestors` refuse the missing-parent
+  sentinel and IDs that are not current animals in the pedigree.
 
 ## [4.2.2] — 2026-09-05
 
