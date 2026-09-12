@@ -8,6 +8,12 @@ and PEP 440 (`4.2.2`).
 
 ## [Unreleased]
 
+### Fixed
+
+- Missing-parent tokens no longer contribute ancestry when tracing
+  pedigree completeness. A half-founder's unknown parent is unknown
+  information, not the last animal in the pedigree list.
+
 ## [4.2.2] — 2026-09-05
 
 Patch release. It has not been published to PyPI. Engineering macOS

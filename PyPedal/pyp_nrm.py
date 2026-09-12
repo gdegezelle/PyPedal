@@ -867,9 +867,14 @@ def recurse_pedigree_n(pedobj, anid, _ped, depth=3):
     """
     try:
         anid = int(anid)
-        if anid != pedobj.kw['missing_parent']:
-            if pedobj.pedigree[anid - 1] not in _ped:
-                _ped.append(pedobj.pedigree[anid - 1])
+        missing = pedobj.kw['missing_parent']
+        # A missing parent is unknown ancestry, not pedigree[-1]. The append
+        # was already guarded; the parent lookup below was not, so sentinel 0
+        # read the last real animal and contaminated half-founder completeness.
+        if anid == missing or str(anid) == str(missing):
+            return _ped
+        if pedobj.pedigree[anid - 1] not in _ped:
+            _ped.append(pedobj.pedigree[anid - 1])
 
         if depth > 0:
             sire_id = pedobj.pedigree[anid - 1].sireID
