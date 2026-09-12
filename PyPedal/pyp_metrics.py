@@ -2249,20 +2249,39 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
     for a user-determined number of generations. Also computes mean completeness for all animals 
     and non-founders as summary statistics.
 
+    This is the historical PyPedal completeness metric: unique ancestor
+    identities within each parental-side traversal, divided by pedigree
+    slots.
+
     Parameters
     ----------
     pedobj : object
         A PyPedal pedigree object.
     gens : int, optional
         The number of generations to trace for completeness. Default is 4.
+        Must be an integer >= 1.
 
     Returns
     -------
     Dict[str, float]
-        Dictionary of summary statistics.
+        Dictionary of summary statistics. When the pedigree contains no
+        non-founders, ``nonfounder_min``, ``nonfounder_max``,
+        ``nonfounder_range``, and ``nonfounder_average`` are 0.0 (the same
+        empty-population convention already used for ``nonfounder_average``).
+
+    Raises
+    ------
+    PyPedalUsageError
+        If ``gens`` is not an integer of at least 1.
     """
     if pedobj.kw.get('debug_messages'):
         logger.info('Entered pedigree_completeness()')
+
+    if isinstance(gens, bool) or not isinstance(gens, numbers.Integral) or gens < 1:
+        raise PyPedalUsageError(
+            'pedigree_completeness: gens=%r is not supported. gens must be '
+            'an integer of at least 1.' % (gens,)
+        )
 
     l = len(pedobj.pedigree)
     c_summary = {}
@@ -2323,6 +2342,11 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
 
     c_summary['nonfounder_sum'] = nf_c_sum
     c_summary['nonfounder_n'] = nf_c_cnt
+    if nf_c_cnt == 0:
+        # Empty-population convention: the same 0.0 already used for
+        # nonfounder_average, not the min=1/max=0 initializers.
+        nf_c_min = 0.0
+        nf_c_max = 0.0
     c_summary['nonfounder_min'] = nf_c_min
     c_summary['nonfounder_max'] = nf_c_max
     c_summary['nonfounder_range'] = nf_c_max - nf_c_min

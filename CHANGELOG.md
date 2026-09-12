@@ -15,6 +15,8 @@ and PEP 440 (`4.2.2`).
   information, not the last animal in the pedigree list.
 - `related_animals` and `common_ancestors` refuse the missing-parent
   sentinel and IDs that are not current animals in the pedigree.
+- `pedigree_completeness` refuses ``gens < 1`` and reports 0.0 for
+  non-founder summary statistics on a founders-only pedigree.
 
 ## [4.2.2] — 2026-09-05
 
