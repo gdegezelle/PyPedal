@@ -22,21 +22,21 @@ def test_exact_max_displays_without_residue():
 def test_summary_rounds_display_and_keeps_raw_metadata():
     metadata = {
         "all": {
-            "f_count": 98001,
+            "f_count": 97999,
             "f_min": GRIFFON_RESIDUE,
             "f_max": GRIFFON_MAX,
-            "f_avg": 0.09313044278029989,
+            "f_avg": 0.09312840934343593,
         },
         "nonzero": {
-            "f_count": 84442,
+            "f_count": 84440,
             "f_min": 1e-16,
             "f_max": GRIFFON_MAX,
         },
     }
     text = summary_inbreeding(metadata)
     assert metadata["all"]["f_min"] == GRIFFON_RESIDUE
-    assert "\tf_count\t98001" in text
-    assert "\tf_count\t84442" in text
+    assert "\tf_count\t97999" in text
+    assert "\tf_count\t84440" in text
     assert "\tf_min\t0.000000" in text
     assert "-0.000000" not in text
     assert "\tf_max\t0.546875" in text

@@ -92,7 +92,7 @@ PyPedal does not automatically switch methods at a particular pedigree size.
 
 ## Example datasets
 The source distribution includes two curated Griffon Bruxellois pedigree
-datasets with 98,001 animals.
+datasets with 97,999 animals.
 
 - `griffonbruxellois_2026_pyp.ped`
   - scientific dataset
@@ -168,7 +168,7 @@ Pairwise Relationship and Mating calculations use scalable selected-pair
  methods and do not construct a pedigree-wide dense numerator relationship
  matrix.
 
-For the canonical 98,001-animal Griffon Bruxellois pedigree, the desktop
+For the canonical 97,999-animal Griffon Bruxellois pedigree, the desktop
  application can browse and search the pedigree directly while keeping the
  scientific calculations in the Python reference implementation.
 

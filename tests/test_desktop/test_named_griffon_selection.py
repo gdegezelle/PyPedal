@@ -31,8 +31,8 @@ A_EXPECTED = 0.20191301769610437
 F_EXPECTED = 0.10095650884805218
 NAME_A = "Hierners Heartbreaker"
 NAME_B = "Morning Bell Virgine"
-CURRENT_A = 98001
-CURRENT_B = 97984
+OID_A = 98685
+OID_B = 98667
 
 
 def _settings(tmp_path: Path) -> DesktopSettings:
@@ -103,7 +103,9 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         )
         pedigree = window.session.pedigree
         assert pedigree is not None
-        assert len(pedigree.pedigree) == 98_001
+        assert len(pedigree.pedigree) == 97_999
+        current_a = int(pedigree.idmap[OID_A])
+        current_b = int(pedigree.idmap[OID_B])
 
         rel = window.relationship_page
         window.show()
@@ -117,9 +119,9 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         rel.selector_a.apply_search_now()
         qtbot.waitUntil(rel.selector_a.popup_is_visible, timeout=5000)
         qtbot.keyClick(rel.selector_a.search, Qt.Key.Key_Return)
-        assert rel.selected_animal_a() == CURRENT_A
+        assert rel.selected_animal_a() == current_a
         assert rel.selector_a.search.text() == NAME_A
-        assert rel.selector_a.summary.text() == "98685 — ♂ — 2024 — ID 98001"
+        assert rel.selector_a.summary.text() == f"98685 — ♂ — 2024 — ID {current_a}"
         assert NAME_A not in rel.selector_a.summary.text()
         qtbot.waitUntil(lambda: not rel.selector_a.popup_is_visible(), timeout=2000)
         qtbot.keyClick(rel.selector_a.search, Qt.Key.Key_Tab)
@@ -127,9 +129,9 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         rel.selector_b.apply_search_now()
         qtbot.waitUntil(rel.selector_b.popup_is_visible, timeout=5000)
         qtbot.keyClick(rel.selector_b.search, Qt.Key.Key_Return)
-        assert rel.selected_animal_b() == CURRENT_B
+        assert rel.selected_animal_b() == current_b
         assert rel.selector_b.search.text() == NAME_B
-        assert rel.selector_b.summary.text() == "98667 — ♀ — 2022 — ID 97984"
+        assert rel.selector_b.summary.text() == f"98667 — ♀ — 2022 — ID {current_b}"
         assert NAME_B not in rel.selector_b.summary.text()
         assert rel.run_button.isEnabled() is True
         window.run_relationship_analysis()
@@ -164,8 +166,8 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         )
         _commit_query(qtbot, mating.selector_a, "Hierners Heart", 98685)
         _commit_query(qtbot, mating.selector_b, "Morning Bell Virg", 98667)
-        assert mating.selected_animal_a() == CURRENT_A
-        assert mating.selected_animal_b() == CURRENT_B
+        assert mating.selected_animal_a() == current_a
+        assert mating.selected_animal_b() == current_b
         assert mating.run_button.isEnabled() is True
         window.run_mating_pair()
         qtbot.waitUntil(

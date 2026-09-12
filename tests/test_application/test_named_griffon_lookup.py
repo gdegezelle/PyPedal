@@ -1,4 +1,4 @@
-"""Named Griffon lookup scale: 98,001 animals, no Qt widgets."""
+"""Named Griffon lookup scale: 97,999 animals, no Qt widgets."""
 
 from __future__ import annotations
 
@@ -26,13 +26,11 @@ from PyPedal.application.lookup import (
     AnimalLookupIndex,
 )
 
-EXPECTED_N = 98_001
+EXPECTED_N = 97_999
 A_EXPECTED = 0.20191301769610437
 F_EXPECTED = 0.10095650884805218
 OID_A = 98685
 OID_B = 98667
-CURRENT_A = 98001
-CURRENT_B = 97984
 NAME_A = "Hierners Heartbreaker"
 NAME_B = "Morning Bell Virgine"
 
@@ -59,6 +57,8 @@ def test_named_griffon_lookup_scale_and_benchmark_pair(
             PedigreeOpenOptions(pedformat="asdxbn", separator=",", renumber=True),
         )
         assert len(pedigree.pedigree) == EXPECTED_N
+        current_a = int(pedigree.idmap[OID_A])
+        current_b = int(pedigree.idmap[OID_B])
         index = session.animal_lookup
         assert index is not None
         assert isinstance(index, AnimalLookupIndex)
@@ -83,7 +83,7 @@ def test_named_griffon_lookup_scale_and_benchmark_pair(
         by_original = index.search(str(OID_A))
         original_s = time.perf_counter() - t0
         t0 = time.perf_counter()
-        by_current = index.search(str(CURRENT_A))
+        by_current = index.search(str(current_a))
         current_s = time.perf_counter() - t0
 
         assert builds == []
@@ -93,14 +93,14 @@ def test_named_griffon_lookup_scale_and_benchmark_pair(
         assert all(isinstance(hit, AnimalLookupHit) for hit in prefix.hits)
         assert not hasattr(prefix.hits[0], "animalID")
         assert by_name_a.total >= 1
-        assert by_name_a.hits[0].animal_id == CURRENT_A
+        assert by_name_a.hits[0].animal_id == current_a
         assert by_name_a.hits[0].name == NAME_A
-        assert by_original.hits[0].animal_id == CURRENT_A
-        assert by_current.hits[0].animal_id == CURRENT_A
+        assert by_original.hits[0].animal_id == current_a
+        assert by_current.hits[0].animal_id == current_a
         assert by_current.hits[0].original_id == OID_A
 
         by_name_b = index.search(NAME_B)
-        assert by_name_b.hits[0].animal_id == CURRENT_B
+        assert by_name_b.hits[0].animal_id == current_b
         assert by_name_b.hits[0].original_id == OID_B
 
         colettes = index.search("Colette")
@@ -114,10 +114,10 @@ def test_named_griffon_lookup_scale_and_benchmark_pair(
         assert rough_bytes < 80 * 1024 * 1024
 
         t0 = time.perf_counter()
-        related = run_relationship(session, CURRENT_A, CURRENT_B)
+        related = run_relationship(session, current_a, current_b)
         rel_s = time.perf_counter() - t0
         t0 = time.perf_counter()
-        mated = run_mating_coi(session, CURRENT_A, CURRENT_B)
+        mated = run_mating_coi(session, current_a, current_b)
         mate_s = time.perf_counter() - t0
         assert abs(related.coefficient - A_EXPECTED) < 1e-12
         assert abs(mated.coefficient - F_EXPECTED) < 1e-12

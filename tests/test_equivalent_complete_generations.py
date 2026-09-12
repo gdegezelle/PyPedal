@@ -3,8 +3,10 @@
 Expected values are hand-checked slot sums ``Σ known_slots(g) / 2^g``.
 They are not taken from the production recurrence.
 """
+import hashlib
 import os
 import statistics
+import struct
 import unittest
 import warnings
 from collections import deque
@@ -181,12 +183,23 @@ class TestECGApi(unittest.TestCase):
         self.assertIn("does not appear earlier", str(caught.exception))
 
 
-CANONICAL_ECG_N = 98001
-CANONICAL_ECG_MEAN = 15.509706252395311
+CANONICAL_ECG_N = 97999
+CANONICAL_ECG_MEAN = 15.509560187070198
 CANONICAL_ECG_MEDIAN = 17.084017232128986
 CANONICAL_ECG_MIN = 0.0
 CANONICAL_ECG_MAX = 26.542230867556363
 CANONICAL_ECG_ZERO_COUNT = 6689
+CANONICAL_ECG_VECTOR_SHA256 = (
+    "bc676743709d684d9821c902989b42101366a80f6455c01d22ae4581ac3fdcfd"
+)
+
+
+def _ecg_vector_sha256(values):
+    digest = hashlib.sha256()
+    digest.update(struct.pack(">Q", len(values)))
+    for value in values:
+        digest.update(struct.pack(">d", value))
+    return digest.hexdigest()
 
 
 def _neumaier_mean(values):
@@ -223,6 +236,8 @@ def test_canonical_griffon_ecg_summary():
     assert max(values) == CANONICAL_ECG_MAX
     assert _neumaier_mean(values) == CANONICAL_ECG_MEAN
     assert statistics.median(values) == CANONICAL_ECG_MEDIAN
+    positional = [mapping[i] for i in range(1, CANONICAL_ECG_N + 1)]
+    assert _ecg_vector_sha256(positional) == CANONICAL_ECG_VECTOR_SHA256
 
 
 if __name__ == "__main__":

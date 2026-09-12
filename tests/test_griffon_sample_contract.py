@@ -149,7 +149,7 @@ def test_sdist_contains_both_griffon_pedigree_datasets(tmp_path):
 
 # Exact LF bytes are part of the scientific data contract. Git checks this
 # file out with eol=lf (.gitattributes) so Windows autocrlf cannot change it.
-CANONICAL_SHA256 = "f288e1ab00eb710e8cfdb2df6175e8513c4d15df57ea16220d8397bc91389443"
+CANONICAL_SHA256 = "ffce94d9fa5a26e154b71055ee3f096860c0b7d459cf239a37124f949c968fff"
 
 
 def test_canonical_griffon_is_comma_asdxb_without_padded_delimiters():
@@ -168,7 +168,7 @@ def test_canonical_griffon_is_comma_asdxb_without_padded_delimiters():
             fields = text.split(",")
             assert len(fields) == 5, text
     assert digest.hexdigest() == CANONICAL_SHA256
-    assert records == 98001
+    assert records == 97999
 
 
 def _parse_named_asdxbn(path):
@@ -187,20 +187,20 @@ def _parse_named_asdxbn(path):
 def test_named_griffon_matches_scientific_genealogy_and_adds_names():
     scientific = _parse_asdxb(canonical_griffon_path())
     named, names = _parse_named_asdxbn(named_griffon_path())
-    assert len(scientific) == 98001
-    assert len(named) == 98001
+    assert len(scientific) == 97999
+    assert len(named) == 97999
     assert set(scientific) == set(named)
     for animal_id, fields in scientific.items():
         assert named[animal_id] == fields
     nonempty = [name for name in names if name.strip()]
-    assert len(nonempty) == 98001
+    assert len(nonempty) == 97999
     unique = set(nonempty)
-    assert len(unique) == 97999
+    assert len(unique) == 97998
     counts: dict[str, int] = {}
     for name in nonempty:
         counts[name] = counts.get(name, 0) + 1
     duplicated = sum(1 for count in counts.values() if count > 1)
-    assert duplicated == 2
+    assert duplicated == 1
     assert max(counts.values()) == 2
     assert named["98685"] == scientific["98685"]
     assert named["98667"] == scientific["98667"]
@@ -219,7 +219,7 @@ def test_named_griffon_matches_scientific_genealogy_and_adds_names():
 def test_canonical_griffon_dataset_regression_metrics():
     """Dataset regressions on the 2026 export. Not scientific constants."""
     ped = load_canonical_griffon()
-    assert len(ped.pedigree) == 98001
+    assert len(ped.pedigree) == 97999
     assert pyp_utils.set_generation(ped)
     igens = [animal.igen for animal in ped.pedigree]
     assert min(igens) == 1
@@ -227,14 +227,21 @@ def test_canonical_griffon_dataset_regression_metrics():
     ng = pyp_metrics.effective_founder_genomes(
         ped, rounds=3, seed=31, chrometype="autosome", output=False, quiet=True
     )
-    assert ng == 11.018378975785259
+    assert ng == 10.589642466704028
     lacy = pyp_metrics.effective_founders_lacy(ped)
-    assert lacy["fa_effective_founders"] == 193.31434658869796
+    assert lacy["fa_effective_founders"] == 193.3161473441226
     result = pyp_nrm.inbreeding(ped, method="meu_luo", output=False)
     fx = result["fx"]
     values = list(fx.values())
-    assert len(values) == 98001
-    assert sum(1 for value in values if value > 0.0) == 84442
+    assert len(values) == 97999
+    assert sum(1 for value in values if value > 0.0) == 84440
     assert max(values) == 0.546875
     mean = sum(values) / len(values)
-    assert abs(mean - 0.09313044278029989) < 1e-12
+    assert abs(mean - 0.09312840934343593) < 1e-12
+    by_oid = {int(animal.originalID): fx[animal.animalID] for animal in ped.pedigree}
+    assert 37482 not in by_oid and 54587 not in by_oid
+    assert by_oid[37481] == 0.30602682805413317
+    assert by_oid[54586] == 0.07950883673667408
+    assert by_oid[37476] == 0.14495633323812407
+    assert by_oid[98685] == 0.08590068327814104
+    assert by_oid[98667] == 0.08673966823694279

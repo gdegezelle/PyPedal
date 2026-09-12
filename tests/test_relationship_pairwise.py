@@ -186,7 +186,7 @@ class TestAttachedNrmFastPath(unittest.TestCase):
 
 @pytest.mark.integration
 def test_griffon_observed_pair_completes_under_timeout(tmp_path):
-    """Canonical Griffon pair originalID 98685 x 98667 -> current 98001 x 97984."""
+    """Canonical Griffon pair originalID 98685 x 98667 via idmap."""
     import shutil
 
     repo = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -210,7 +210,7 @@ ped = load_pedigree({
     "form_nrm": False,
 })
 t0 = time.perf_counter()
-val = pyp_metrics.relationship(98001, 97984, ped)
+val = pyp_metrics.relationship(ped.idmap[98685], ped.idmap[98667], ped)
 print(json.dumps({"ok": True, "value": float(val), "seconds": time.perf_counter() - t0}))
 """
     script = os.path.join(tmp, "worker.py")

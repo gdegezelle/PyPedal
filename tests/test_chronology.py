@@ -535,8 +535,8 @@ class TestHistoricalImpossibleChronologyIsRefused(unittest.TestCase):
 
     def test_griffonbruxellois_2026_pyp_asdxb_loads(self):
         ped = load_canonical_griffon()
-        self.assertEqual(len(ped.pedigree), 98001)
-        self.assertEqual(ped.metadata.num_records, 98001)
+        self.assertEqual(len(ped.pedigree), 97999)
+        self.assertEqual(ped.metadata.num_records, 97999)
         self.assertEqual(ped.metadata.num_implicit_parents, 0)
         original_ids = [str(animal.originalID) for animal in ped.pedigree]
         self.assertEqual(len(original_ids), len(set(original_ids)))

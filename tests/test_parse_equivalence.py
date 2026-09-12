@@ -59,13 +59,13 @@ LOAD_DIGESTS = {
 }
 
 GRIFFON_ANIMAL_DIGEST = (
-    "528cdf79f12d137e8c9a193701743ed3a62c813483ee9e13870cac7212dc3315"
+    "97878814c892986cc2751c92f36be9aa1b4fc82c98e7ad0cdd7e93be3bcfb47b"
 )
 GRIFFON_IDMAP_DIGEST = (
-    "9f9c369e2771fde1fa99ae1bdb06ded2ed66d4cfc68086ce3c7bf6b6c6131234"
+    "7411dacc5f39eb4a1c785374db6103ea29a03acd5bdce607d1f23f09ce463ee0"
 )
 GRIFFON_BACKMAP_DIGEST = (
-    "9039d8ea926e1c26cf02680a44e0ac79d6b9e3a137a61d9c636daf2bdcad993d"
+    "04be705d27c2fc0022cda5823e3a149f3130cd597ca779baac88942efe17575a"
 )
 
 MRODE_PREPROCESS_ANIMALS = (
@@ -385,8 +385,8 @@ def test_canonical_griffon_load_counts_and_digest():
     animals_sorted = sorted(
         animals, key=lambda row: (str(row["originalID"]), str(row["animalID"]))
     )
-    assert len(ped.pedigree) == 98001
-    assert len({animal.originalID for animal in ped.pedigree}) == 98001
+    assert len(ped.pedigree) == 97999
+    assert len({animal.originalID for animal in ped.pedigree}) == 97999
     assert dangling == []
     assert ped.metadata.num_implicit_parents == 0
     assert ped.metadata.num_unique_founders == 6689

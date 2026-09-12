@@ -17,6 +17,8 @@ and PEP 440 (`4.2.2`).
   sentinel and IDs that are not current animals in the pedigree.
 - `pedigree_completeness` refuses ``gens < 1`` and reports 0.0 for
   non-founder summary statistics on a founders-only pedigree.
+- Corrected two duplicated animal identities and their parent references
+  in the canonical Griffon reference pedigree.
 
 ### Deprecated
 

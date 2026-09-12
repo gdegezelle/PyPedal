@@ -423,12 +423,12 @@ def _form_labels(form: QFormLayout) -> list[str]:
 
 
 def test_founders_page_displays_two_decimals_not_raw() -> None:
-    raw = 193.31434658869796
+    raw = 193.3161473441226
     result = EffectiveFoundersResult(
         {
-            "fa_animal_count": 98001,
+            "fa_animal_count": 97999,
             "fa_founder_count": 7604,
-            "fa_descendant_count": 91312,
+            "fa_descendant_count": 91310,
             "fa_effective_founders": raw,
         }
     )
@@ -436,14 +436,14 @@ def test_founders_page_displays_two_decimals_not_raw() -> None:
     page.show_outcome(FoundersOutcome(result=result, implicit_renumber=False))
     assert page.result is result
     assert page.result.fa_effective_founders == raw
-    assert page.value_label.text() == "193.31"
-    assert page.animals_label.text() == "98,001"
+    assert page.value_label.text() == "193.32"
+    assert page.animals_label.text() == "97,999"
     assert page.founder_count_label.text() == "7,604"
-    assert page.descendant_label.text() == "91,312"
+    assert page.descendant_label.text() == "91,310"
 
 
 def test_inbreeding_summary_uses_percentages_and_breeder_labels() -> None:
-    mean = 0.09313044278029989
+    mean = 0.09312840934343593
     minimum = 0.0
     maximum = 0.546875
     result = InbreedingResult(
@@ -451,12 +451,12 @@ def test_inbreeding_summary_uses_percentages_and_breeder_labels() -> None:
             "fx": {1: 0.125, 2: 0.0},
             "metadata": {
                 "all": {
-                    "f_count": 98001,
+                    "f_count": 97999,
                     "f_avg": mean,
                     "f_min": minimum,
                     "f_max": maximum,
                 },
-                "nonzero": {"f_count": 84442},
+                "nonzero": {"f_count": 84440},
             },
         }
     )
@@ -471,11 +471,11 @@ def test_inbreeding_summary_uses_percentages_and_breeder_labels() -> None:
         "Maximum inbreeding",
         "Animals with F > 0",
     ]
-    assert page.count_label.text() == "98,001"
+    assert page.count_label.text() == "97,999"
     assert page.mean_label.text() == "9.31%"
     assert page.min_label.text() == "0.00%"
     assert page.max_label.text() == "54.69%"
-    assert page.positive_label.text() == "84,442"
+    assert page.positive_label.text() == "84,440"
 
 
 def test_inbreeding_table_displays_percent_and_sorts_numerically() -> None:
