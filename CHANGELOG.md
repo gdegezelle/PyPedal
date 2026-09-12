@@ -18,6 +18,12 @@ and PEP 440 (`4.2.2`).
 - `pedigree_completeness` refuses ``gens < 1`` and reports 0.0 for
   non-founder summary statistics on a founders-only pedigree.
 
+### Deprecated
+
+- `pedigree_completeness` remains the historical completeness metric
+  (unique ancestor identities per parental side, divided by pedigree
+  slots). Prefer `equivalent_complete_generations`.
+
 ## [4.2.2] — 2026-09-05
 
 Patch release. It has not been published to PyPI. Engineering macOS

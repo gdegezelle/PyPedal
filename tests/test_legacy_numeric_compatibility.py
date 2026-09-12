@@ -27,6 +27,7 @@ import ast
 import inspect
 import textwrap
 import unittest
+import warnings
 
 from PyPedal import pyp_newclasses, pyp_nrm, pyp_metrics
 
@@ -217,7 +218,9 @@ class TestPedigreeCompleteness(unittest.TestCase):
         for name in ("mrode.ped", "hartlandclark.ped", "generations.ped"):
             with self.subTest(pedigree=name):
                 ped = load_corpus(name)
-                result = pyp_metrics.pedigree_completeness(ped, 3)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", DeprecationWarning)
+                    result = pyp_metrics.pedigree_completeness(ped, 3)
                 self.assertIsInstance(result, dict)
                 self.assertEqual(len(ped.pedigree), result["n"])
                 for key in self.PROPORTION_KEYS:

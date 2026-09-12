@@ -70,7 +70,9 @@ writes only when both `output=True` and `kw['file_io']` is true
 (`file_io` defaults to true).
 
 `theoretical_ne_from_metadata` returns the calculated Ne float. The
-historical `.dat` file is written only when `output=True`.
+historical `.dat` file is written only when `output=True`. Sire and dam
+counts are distinct parental-role IDs pooled over the pedigree supplied
+to the function.
 
 Invalid arguments to those analysis functions raise `PyPedalUsageError`.
 INI files and `NewPedigree` presentation defaults may still warn and

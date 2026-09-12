@@ -2195,6 +2195,9 @@ def theoretical_ne_from_metadata(pedobj, output: bool = True) -> float:
     of sires and dams in a pedigree metadata object. Writes results to an output file
     when ``output`` is True.
 
+    Sire and dam counts are distinct parental-role IDs. The function pools
+    those roles over the pedigree supplied to it.
+
     Parameters
     ----------
     pedobj : object
@@ -2273,6 +2276,11 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
     ------
     PyPedalUsageError
         If ``gens`` is not an integer of at least 1.
+
+    Notes
+    -----
+    This function is a legacy metric. Prefer
+    :func:`equivalent_complete_generations`.
     """
     if pedobj.kw.get('debug_messages'):
         logger.info('Entered pedigree_completeness()')
@@ -2282,6 +2290,14 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
             'pedigree_completeness: gens=%r is not supported. gens must be '
             'an integer of at least 1.' % (gens,)
         )
+
+    warnings.warn(
+        'pedigree_completeness is a legacy pedigree-completeness metric. '
+        'Prefer equivalent_complete_generations, which reports Equivalent '
+        'Complete Generations (Maignel, Boichard and Verrier 1996).',
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     l = len(pedobj.pedigree)
     c_summary = {}

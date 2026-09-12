@@ -79,7 +79,8 @@ mutated:
 - half-founder status (exactly one parent unknown; not a stored field)
 - implicit parents materialized because they were cited but had no row
 - inferred generation `igen` after `set_generation`
-- pedigree completeness (`pedcomp`) after that calculation
+- pedigree completeness (`pedcomp`) after the legacy
+  `pedigree_completeness` calculation (deprecated)
 - estimated chronology ranges after `estimate_birth_dates`
 - renumbered / padded identifiers (`animalID`, `paddedID`, `renumberedID`)
 - identity maps (`idmap`, `backmap`, `namemap`)

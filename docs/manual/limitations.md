@@ -113,6 +113,15 @@ compute Pattie (1965) coefficients. `kw['gen_coeff']=True` raises
 Supported Python serialisation for a session, not a stable archive format.
 See [Saving, pickle, and SQLite](saving-and-exporting.md).
 
+### Legacy pedigree completeness
+
+`pyp_metrics.pedigree_completeness` remains available. It is a **legacy**
+metric: unique ancestor identities within each parental-side traversal,
+divided by pedigree slots, to a caller-chosen depth. That is not
+Equivalent Complete Generations. Prefer
+`pyp_metrics.equivalent_complete_generations`. Ordinary pedigree loads
+do not compute completeness (`pedcomp` defaults to `False`).
+
 ### Deprecated NRM helpers
 
 `pyp_nrm.a_matrix` is marked deprecated. Prefer `fast_a_matrix` or
