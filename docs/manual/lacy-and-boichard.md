@@ -33,7 +33,10 @@ file.
 
 Name the animals under study. Do not assume PyPedal will pick “the most
 recent generation” from `igen`. See
-[Effective ancestors](effective-ancestors.md).
+[Effective ancestors](effective-ancestors.md). The ancestor routines
+refuse a non-antichain reference by default; `allow_related_reference=True`
+skips only that refusal. Reference members are still excluded from
+ancestor candidacy.
 
 ## Files these functions write
 

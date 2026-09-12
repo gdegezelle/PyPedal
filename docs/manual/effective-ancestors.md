@@ -40,6 +40,16 @@ analyse it with an explicit `reference=` list.
 Both write a `.dat` summary when `output=True` (the default). Pass
 `output=False` to compute *f<sub>a</sub>* without that analysis file.
 
+By default PyPedal refuses an explicit or generation-selected reference
+population if one member is an ancestor of another. That conservative
+antichain check can be skipped with `allow_related_reference=True`.
+PyPedal still excludes members of the reference population from ancestor
+candidacy. If one reference member is actually an ancestor of another,
+the override lets the calculation proceed, but that ancestor's own
+candidate contribution is not counted as if it stood outside the
+reference population. The source paper does not instruct this convention;
+it is silent on the point.
+
 Both accept an optional keyword-only `progress` callback,
 `progress(done, total)`, after each selected ancestor. `total` is
 `None` because the number of positive-contribution ancestors is not

@@ -28,6 +28,10 @@ and PEP 440 (`4.2.2`).
 
 - `equivalent_complete_generations` reports Equivalent Complete
   Generations (Maignel, Boichard and Verrier 1996, p.50).
+- Boichard ancestor analyses accept ``allow_related_reference=True`` to
+  skip the default refusal of a related reference population. The default
+  remains a refusal. Reference members are still excluded from ancestor
+  candidacy.
 
 ## [4.2.2] — 2026-09-05
 

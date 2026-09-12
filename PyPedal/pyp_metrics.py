@@ -970,7 +970,8 @@ def boichard_probabilities_of_gene_origin(pedobj, reference):
 
 
 def a_effective_founders_boichard(pedobj, a: Optional[np.ndarray] = None, gen: Optional[int] = None,
-                                  *, reference: Optional[Iterable[int]] = None, output: bool = True) -> float:
+                                  *, reference: Optional[Iterable[int]] = None, output: bool = True,
+                                  allow_related_reference: bool = False) -> float:
     """
     Effective number of founders, ``f_e = 1 / sum(q_k^2)`` over founders.
 
@@ -1024,6 +1025,10 @@ def a_effective_founders_boichard(pedobj, a: Optional[np.ndarray] = None, gen: O
         If True (the default), write ``{filetag}_fe_boichard_.dat``. If False,
         perform the calculation and return the same ``f_e`` without writing
         that analysis file.
+    allow_related_reference : bool, optional, keyword-only
+        Accepted for API consistency with the ancestor routines. Appendix A
+        does not select ancestors and this routine has never had an antichain
+        guard, so the flag does not change the calculation.
 
     Returns
     -------
@@ -1378,8 +1383,9 @@ def _boichard_require_antichain(pedobj, reference, routine):
                     'reference-population members from ancestor selection, a '
                     'convention the source does not address, and that '
                     'convention silently discards a real contribution here. '
-                    'Choose a reference population in which no member is an '
-                    'ancestor of another.'
+                    'Pass allow_related_reference=True to proceed with the '
+                    'documented caveat, or choose a reference population in '
+                    'which no member is an ancestor of another.'
                     % (routine, animal.animalID, parent))
 
 
@@ -1693,7 +1699,8 @@ def _collect_boichard_order(pedobj, population, progress: ProgressCallback | Non
 
 def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: Optional[int] = None,
                                    *, reference: Optional[Iterable[int]] = None, output: bool = True,
-                                   progress: ProgressCallback | None = None) -> float:
+                                   progress: ProgressCallback | None = None,
+                                   allow_related_reference: bool = False) -> float:
     """
     Effective number of ancestors, f_a = 1 / sum(p_k^2).
 
@@ -1732,9 +1739,13 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
         integers, order irrelevant, every malformed case refused with a
         :class:`~PyPedal.pyp_errors.PyPedalUsageError`.
 
-        This routine's validation domain is unchanged, so an explicitly
-        supplied R must still be an antichain. How R is supplied is independent
-        of which R is structurally admissible.
+        This routine's validation domain is unchanged by default, so an
+        explicitly supplied R must still be an antichain. Pass
+        ``allow_related_reference=True`` to skip only that refusal. PyPedal
+        still excludes members of the reference population from ancestor
+        candidacy, so a reference member that is an ancestor of another
+        member is not counted as if it stood outside the reference
+        population. The source is silent on that convention.
     output : bool, optional, keyword-only
         If True (the default), write ``{filetag}_fa_boichard_definite_.dat``.
         If False, perform the calculation and return the same ``f_a`` without
@@ -1744,6 +1755,10 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
         ``None`` because the number of positive-contribution ancestors is not
         known cheaply in advance. Default ``None``. Callback exceptions
         propagate unchanged.
+    allow_related_reference : bool, optional, keyword-only
+        If False (the default), refuse a reference population in which one
+        member is an ancestor of another. If True, skip only that refusal.
+        Contribution mathematics are unchanged.
 
     Returns
     -------
@@ -1766,7 +1781,8 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
             pedobj, gen, routine)
     else:
         population = explicit
-    _boichard_require_antichain(pedobj, population, routine)
+    if not allow_related_reference:
+        _boichard_require_antichain(pedobj, population, routine)
 
     _ids, _s, _d, phantoms, n_founders = _boichard_completed_arrays(pedobj)
     order = _collect_boichard_order(pedobj, population, progress)
@@ -1815,7 +1831,8 @@ def a_effective_ancestors_definite(pedobj, a: Optional[np.ndarray] = None, gen: 
 
 def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen: Optional[int] = None, n: int = 25,
                                      *, reference: Optional[Iterable[int]] = None, output: bool = True,
-                                     progress: ProgressCallback | None = None) -> Tuple[float, float]:
+                                     progress: ProgressCallback | None = None,
+                                     allow_related_reference: bool = False) -> Tuple[float, float]:
     """
     Lower and upper bounds on the effective number of ancestors, ``(f_l, f_u)``.
 
@@ -1890,7 +1907,8 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
         :func:`a_effective_founders_boichard`, and -- because this routine
         shares the Appendix-B engine and must refuse precisely where
         :func:`a_effective_ancestors_definite` refuses -- an explicitly
-        supplied R is still subject to the antichain requirement.
+        supplied R is still subject to the antichain requirement unless
+        ``allow_related_reference=True``.
     output : bool, optional, keyword-only
         If True (the default), write ``{filetag}_fa_boichard_indefinite_.dat``.
         If False, perform the calculation and return the same ``(f_l, f_u)``
@@ -1899,6 +1917,8 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
         Same contract as :func:`a_effective_ancestors_definite`. The full
         selection sequence is still produced; ``n`` only truncates the bound
         arithmetic.
+    allow_related_reference : bool, optional, keyword-only
+        Same contract as :func:`a_effective_ancestors_definite`.
 
     Returns
     -------
@@ -1926,7 +1946,8 @@ def a_effective_ancestors_indefinite(pedobj, a: Optional[np.ndarray] = None, gen
             pedobj, gen, routine)
     else:
         population = explicit
-    _boichard_require_antichain(pedobj, population, routine)
+    if not allow_related_reference:
+        _boichard_require_antichain(pedobj, population, routine)
 
     _ids, _s, _d, phantoms, n_founders = _boichard_completed_arrays(pedobj)
     order = _collect_boichard_order(pedobj, population, progress)
