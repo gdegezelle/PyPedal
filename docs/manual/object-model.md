@@ -34,6 +34,8 @@ Analyses assume that pipeline succeeded.
 | `gen` | Input generation label |
 | `igen` | Inferred depth, after `set_generation` |
 | `fa` | Inbreeding coefficient field |
+| `pedcomp` | Legacy completeness, after `pedigree_completeness` |
+| `ecg` | Equivalent Complete Generations, after `equivalent_complete_generations` |
 | `age` | Legacy year-offset, not biological age |
 
 ## Maps on the pedigree

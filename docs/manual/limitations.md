@@ -120,7 +120,8 @@ metric: unique ancestor identities within each parental-side traversal,
 divided by pedigree slots, to a caller-chosen depth. That is not
 Equivalent Complete Generations. Prefer
 `pyp_metrics.equivalent_complete_generations`. Ordinary pedigree loads
-do not compute completeness (`pedcomp` defaults to `False`).
+do not compute completeness (`pedcomp` defaults to `False`). See
+[Pedigree completeness](pedigree-completeness.md).
 
 ### Deprecated NRM helpers
 

@@ -610,6 +610,22 @@ def _write_theoretical_ne_output(pedobj, ns, nd, ne):
         aout.write(line)
 
 
+def _write_ecg_output(pedobj, ecg):
+    """Write ``{filetag}_ecg_.dat``."""
+    outputfile = f"{pedobj.kw['filetag']}_ecg_.dat"
+    with open(outputfile, 'w') as aout:
+        line = "=" * 60 + '\n'
+        aout.write(line)
+        aout.write("# Equivalent complete generations (ECG)\n")
+        aout.write("# Maignel, Boichard and Verrier (1996),\n")
+        aout.write("# Interbull Bulletin 14:49-54, p.50.\n")
+        aout.write("# animalID ECG\n")
+        for animal in pedobj.pedigree:
+            aid = int(animal.animalID)
+            aout.write(f"{aid}\t{ecg[aid]}\n")
+        aout.write(line)
+
+
 def a_effective_founders_lacy(
     pedobj,
     a=None,
@@ -2395,6 +2411,71 @@ def pedigree_completeness(pedobj, gens: int = 4) -> Dict[str, float]:
         logger.info('Exited pedigree_completeness()')
 
     return c_summary
+
+
+def equivalent_complete_generations(pedobj, output: bool = True) -> Dict[int, float]:
+    """
+    Equivalent Complete Generations for every animal in the pedigree.
+
+    Maignel, Boichard and Verrier (1996), *Interbull Bulletin* 14:49-54,
+    p.50: the number of complete generation equivalents is the sum of the
+    proportion of known ancestors over all generations traced.
+
+    Equivalently, for each known ancestral pedigree slot at depth *g*
+    from the proband (parents *g* = 1, grandparents *g* = 2, ...), add
+    ``1 / 2**g``. The proband contributes 0. An unknown parent contributes
+    0. Repeated ancestors count once per occupied pedigree slot, not once
+    per identity. There is no depth parameter and no phantom founder.
+
+    The O(n) recurrence, applied sire then dam, for each known parent *p*::
+
+        ECG(i) += 0.5 * (1.0 + ECG(p))
+
+    Parents must precede offspring. The pedigree is not reordered.
+
+    Parameters
+    ----------
+    pedobj : object
+        A PyPedal pedigree object.
+    output : bool, optional
+        If True (the default), write ``{filetag}_ecg_.dat``. If False,
+        perform the calculation without writing that analysis file.
+
+    Returns
+    -------
+    Dict[int, float]
+        Mapping of current ``animalID`` to ECG. Each animal also stores
+        the value on ``animal.ecg``.
+
+    Raises
+    ------
+    PyPedalError
+        If a parent does not appear earlier in the pedigree.
+    """
+    routine = 'equivalent_complete_generations'
+    if pedobj.kw.get('debug_messages'):
+        logger.info('Entered equivalent_complete_generations()')
+
+    _boichard_require_topological(pedobj, routine)
+
+    ecg = {}
+    for animal in pedobj.pedigree:
+        value = 0.0
+        if not pedobj._is_missing_parent(animal.sireID):
+            value += 0.5 * (1.0 + ecg[int(animal.sireID)])
+        if not pedobj._is_missing_parent(animal.damID):
+            value += 0.5 * (1.0 + ecg[int(animal.damID)])
+        aid = int(animal.animalID)
+        ecg[aid] = value
+        animal.ecg = value
+
+    if output:
+        _write_ecg_output(pedobj, ecg)
+
+    if pedobj.kw.get('debug_messages'):
+        logger.info('Exited equivalent_complete_generations()')
+
+    return ecg
 
 
 def _require_current_animal_id(pedobj, anim, routine, label=None):

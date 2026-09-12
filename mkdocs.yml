@@ -38,6 +38,7 @@ nav:
       - Founder genome equivalents: founder-genome-equivalents.md
       - Lacy and Boichard: lacy-and-boichard.md
       - Generation intervals: generation-intervals.md
+      - Pedigree completeness: pedigree-completeness.md
       - Gene dropping: gene-dropping.md
   - Output and applications:
       - PDF reports: pdf-reports.md

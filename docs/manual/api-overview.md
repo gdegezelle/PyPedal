@@ -39,6 +39,7 @@ internal helper.
 | `set_generation` | `pyp_utils` | Assign `igen` |
 | `set_age` | `pyp_utils` | Demographic year-offset |
 | `generation_intervals` | `pyp_metrics` | Parent age at oldest son/daughter |
+| `equivalent_complete_generations` | `pyp_metrics` | Equivalent Complete Generations (Maignel 1996) |
 | `pedigree_completeness` | `pyp_metrics` | Legacy completeness (deprecated; prefer `equivalent_complete_generations`) |
 | `reorder` / `renumber` | `pyp_utils` | Order and 1-based IDs (also run from `load`) |
 

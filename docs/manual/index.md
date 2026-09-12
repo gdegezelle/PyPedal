@@ -33,6 +33,7 @@ the end list options, format codes, and scientific citations.
 - Evaluate the inbreeding of a prospective offspring (`mating_coi`)
   without adding that animal to the pedigree
 - Estimate effective founders, effective ancestors, and founder genomes
+- Measure Equivalent Complete Generations (how much ancestry is known)
 - Simulate gene dropping
 - Write PDF reports and Graphviz drawings (optional extras)
 - Open a pedigree in the PySide6 desktop app (optional extra)

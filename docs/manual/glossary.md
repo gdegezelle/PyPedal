@@ -21,6 +21,12 @@
 **effective founder number (*f<sub>e</sub>*)**
 : Number of equally contributing founders needed to match observed contribution imbalance (Lacy, 1989; related Boichard estimator exists).
 
+**equivalent complete generations (ECG)**
+: Sum of the proportion of known ancestors over all generations traced
+  (Maignel, Boichard and Verrier 1996, p.50). Complete recorded
+  generations contribute 1 each; unknown ancestry contributes 0;
+  repeated ancestors count by pedigree slot.
+
 **fa**
 : Animal inbreeding field. After load this may be a file column (`f`); after `inbreeding()` it is the computed coefficient. One field, not a loaded/computed pair. See [Object model](object-model.md).
 

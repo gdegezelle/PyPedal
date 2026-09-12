@@ -27,6 +27,10 @@ founder equivalents and founder genome equivalents. *Zoo Biology*
 MacCluer, J. W., J. L. VandeBerg, B. Read, and O. A. Ryder. 1986.
 Pedigree analysis by computer simulation. *Zoo Biology* 5:147–160.
 
+Maignel, L., Boichard, D., and Verrier, E. 1996. Genetic variability of
+French dairy breeds estimated from pedigree information. *Interbull
+Bulletin* 14:49–54. Equivalent Complete Generations, p.50.
+
 Meuwissen, T. H. E., and Z. Luo. 1992. Computing inbreeding coefficients
 in large populations. *Genetics Selection Evolution* 24:305–313.
 

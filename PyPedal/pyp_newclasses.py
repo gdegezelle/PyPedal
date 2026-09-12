@@ -462,6 +462,7 @@ class NewPedigree:
             "missing_gencoeff": -999.0,
             "missing_igen": -999.0,
             "missing_pedcomp": -999.0,
+            "missing_ecg": -999.0,
             # The generic missing-DERIVED-result marker, distinct from the
             # input sentinels above. 2.0.4 established it as the float -999.
             # (pyp_newclasses.py:285-286); baa9211 carried it through the first
@@ -3058,6 +3059,7 @@ class NewAnimal:
 
         # Final attributes
         self.pedcomp = mykw.get('missing_pedcomp', 'unknown')
+        self.ecg = mykw.get('missing_ecg', -999.0)
         # pyp_utils.set_ancestor_flag() only ever writes 1, and only onto animals
         # that are a parent, so without this initialiser every non-parent had no
         # 'ancestor' attribute at all. PyPedal 2.0.4 sets it here,

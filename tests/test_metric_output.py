@@ -118,6 +118,15 @@ class TestOutputFalseSuppressesFiles(unittest.TestCase):
             self.assertFalse(
                 os.path.exists(ped.kw["filetag"] + "_ne_from_metadata_.dat"))
 
+    def test_equivalent_complete_generations(self):
+        with chdir_tmp():
+            ped = load_corpus("mrode.ped")
+            before = _dat_names(ped)
+            mapping = pyp_metrics.equivalent_complete_generations(ped, output=False)
+            self.assertEqual(0.0, mapping[1])
+            self.assertEqual(before, _dat_names(ped))
+            self.assertFalse(os.path.exists(ped.kw["filetag"] + "_ecg_.dat"))
+
     def test_a_decompose(self):
         with chdir_tmp():
             ped = load_corpus("mrode.ped")

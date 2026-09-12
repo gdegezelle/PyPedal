@@ -24,6 +24,11 @@ and PEP 440 (`4.2.2`).
   (unique ancestor identities per parental side, divided by pedigree
   slots). Prefer `equivalent_complete_generations`.
 
+### Added
+
+- `equivalent_complete_generations` reports Equivalent Complete
+  Generations (Maignel, Boichard and Verrier 1996, p.50).
+
 ## [4.2.2] — 2026-09-05
 
 Patch release. It has not been published to PyPI. Engineering macOS

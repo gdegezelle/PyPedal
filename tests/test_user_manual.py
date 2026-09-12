@@ -39,6 +39,7 @@ REQUIRED_PAGES = (
     "founder-genome-equivalents.md",
     "lacy-and-boichard.md",
     "generation-intervals.md",
+    "pedigree-completeness.md",
     "gene-dropping.md",
     "pdf-reports.md",
     "graphics.md",

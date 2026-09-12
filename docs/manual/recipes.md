@@ -317,3 +317,33 @@ print(ped.metadata.num_unique_founders)
 ```
 
 See [Large pedigrees](large-pedigrees.md).
+
+---
+
+## 11. Equivalent complete generations
+
+**Input.** A three-column integer pedigree. **Code.**
+`equivalent_complete_generations`. **Output.** ECG for each current ID.
+**Interpretation.** Two known founder parents give 1.0. **Mistake.**
+Treating this as the legacy `pedigree_completeness` proportion.
+
+```python
+import tempfile
+from pathlib import Path
+
+from PyPedal.pyp_newclasses import load_pedigree
+from PyPedal import pyp_metrics
+
+work = Path(tempfile.mkdtemp())
+pedfile = work / "simple.ped"
+pedfile.write_text("1 0 0\n2 0 0\n3 1 2\n")
+ped = load_pedigree(options={
+    "pedfile": str(pedfile), "pedformat": "asd",
+    "messages": "quiet", "pedigree_summary": 0,
+})
+ecg = pyp_metrics.equivalent_complete_generations(ped, output=False)
+print(ecg[3], ped.pedigree[2].ecg)
+```
+
+Prints `1.0 1.0`. See [Pedigree completeness](pedigree-completeness.md).
+
