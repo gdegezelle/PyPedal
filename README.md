@@ -7,6 +7,9 @@ It provides tools for pedigree management, population-genetics analysis,
 relationship and mating calculations, and interactive analysis of large
 pedigrees.
 
+PyPedal 4.2.3 is the final maintenance release of PyPedal. Future
+development continues in GoLinea.
+
 ## What PyPedal can do
 
 ### Pedigree analysis
@@ -217,8 +220,8 @@ mkdocs build --strict -d /tmp/pypedal-user-manual
 
 PyPedal was originally developed by John B. Cole.
 
-The current codebase modernizes PyPedal 2.0.4 for Python 3 and continues its
- development as a pedigree-analysis toolkit and desktop application.
+The current codebase modernizes PyPedal 2.0.4 for Python 3 as a
+pedigree-analysis toolkit and desktop application.
 
 Copyright 2001–2025 John B. Cole.
 

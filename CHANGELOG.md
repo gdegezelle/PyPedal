@@ -4,15 +4,18 @@ All notable changes to PyPedal are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 where practical. Version identifiers follow [Semantic Versioning](https://semver.org/)
-and PEP 440 (`4.2.2`).
+and PEP 440 (`4.2.3`).
 
 ## [Unreleased]
 
-### Changed
+## [4.2.3] — 2026-09-19
 
-- The Griffon Bruxellois reference pedigree was updated from a human-reviewed
-  source dataset, resolving duplicate identity records and correcting selected
-  source-data names while preserving pedigree integrity. Canonical N = 97,002.
+PyPedal 4.2.3 is the final maintenance release of PyPedal. Future
+development continues in GoLinea. It has not been published to PyPI.
+Engineering macOS `.app` packaging exists; the development artifacts
+are not signed or notarized.
+
+Canonical Griffon Bruxellois N = 97,002.
 
 ### Fixed
 
@@ -38,6 +41,12 @@ and PEP 440 (`4.2.2`).
   skip the default refusal of a related reference population. The default
   remains a refusal. Reference members are still excluded from ancestor
   candidacy.
+
+### Changed
+
+- The Griffon Bruxellois reference pedigree was updated from a
+  human-reviewed source dataset. Canonical N = 97,002. Canonical
+  scientific regression values were refreshed to match that pedigree.
 
 ## [4.2.2] — 2026-09-05
 

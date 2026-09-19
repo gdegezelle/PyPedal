@@ -2,7 +2,7 @@
 
 ###############################################################################
 # NAME: __version__.py
-# VERSION: 4.2.2
+# VERSION: 4.2.3
 # AUTHOR: John B. Cole, PhD (john.cole@ars.usda.gov)
 # LICENSE: LGPL
 # Modified for the PyPedal 4.0 Python 3 release by Geert Degezelle,
@@ -11,5 +11,5 @@
 ###############################################################################
 
 # Single runtime version string. PEP 440 form; keep in lockstep with
-# [project].version in pyproject.toml. Human-readable docs use 4.2.2.
-version = "4.2.2"
+# [project].version in pyproject.toml. Human-readable docs use 4.2.3.
+version = "4.2.3"

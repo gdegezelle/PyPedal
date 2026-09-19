@@ -10,6 +10,8 @@ Callers already on 4.2.0 should skip to
 [PyPedal 4.2.0 to PyPedal 4.2.1](#pypedal-420-to-pypedal-421).
 Callers already on 4.2.1 should skip to
 [PyPedal 4.2.1 to PyPedal 4.2.2](#pypedal-421-to-pypedal-422).
+Callers already on 4.2.2 should skip to
+[PyPedal 4.2.2 to PyPedal 4.2.3](#pypedal-422-to-pypedal-423).
 
 PyPedal 4 is a Python 3 reimplementation of Cole’s 2.0.4 library. Some
 results match 2.0.4 exactly. Some differ because the 4.0 behaviour is the
@@ -360,6 +362,31 @@ with decimal-point CSV settings. PyPedal does not emit decimal commas.
 
 Aggregate exports (inbreeding by year, effective founders, theoretical
 Ne) keep their previous row semantics. Pedigree Save is unchanged.
+
+## PyPedal 4.2.2 to PyPedal 4.2.3
+
+PyPedal 4.2.3 is the final maintenance release of PyPedal. Future
+development continues in GoLinea.
+
+Desktop analysis export schemas from 4.2.2 are unchanged. Scientific
+formulas for inbreeding, relationship, and mating coancestry are
+unchanged.
+
+Missing-parent tokens no longer contribute ancestry in pedigree
+traversal. `related_animals` and `common_ancestors` refuse the
+missing-parent sentinel and IDs that are not current animals in the
+pedigree. `pedigree_completeness` refuses ``gens < 1`` and reports 0.0
+for non-founder summary statistics on a founders-only pedigree.
+
+`pedigree_completeness` remains available as the historical completeness
+metric. Prefer `equivalent_complete_generations` (Maignel, Boichard and
+Verrier 1996, p.50).
+
+Boichard ancestor analyses accept ``allow_related_reference=True`` to
+skip the default refusal of a related reference population. The default
+remains a refusal.
+
+The curated Griffon Bruxellois example pedigrees are N = 97,002.
 
 ## Where to read next
 

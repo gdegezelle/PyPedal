@@ -58,7 +58,7 @@ import PyPedal
 print(PyPedal.__version__)
 ```
 
-On this line that prints `4.2.2`.
+On this line that prints `4.2.3`.
 
 From a repository checkout you can also run:
 
