@@ -3,7 +3,7 @@ from PyPedal.pyp_io import format_display_coefficient, summary_inbreeding
 from PyPedal.pyp_nrm import compute_inbreeding_stats
 
 
-GRIFFON_RESIDUE = -4.9960036108132044e-15
+GRIFFON_RESIDUE = -5.551115123125783e-15
 GRIFFON_MAX = 0.546875
 
 
@@ -22,21 +22,21 @@ def test_exact_max_displays_without_residue():
 def test_summary_rounds_display_and_keeps_raw_metadata():
     metadata = {
         "all": {
-            "f_count": 97999,
+            "f_count": 97002,
             "f_min": GRIFFON_RESIDUE,
             "f_max": GRIFFON_MAX,
-            "f_avg": 0.09312840934343593,
+            "f_avg": 0.09328960441457022,
         },
         "nonzero": {
-            "f_count": 84440,
+            "f_count": 83514,
             "f_min": 1e-16,
             "f_max": GRIFFON_MAX,
         },
     }
     text = summary_inbreeding(metadata)
     assert metadata["all"]["f_min"] == GRIFFON_RESIDUE
-    assert "\tf_count\t97999" in text
-    assert "\tf_count\t84440" in text
+    assert "\tf_count\t97002" in text
+    assert "\tf_count\t83514" in text
     assert "\tf_min\t0.000000" in text
     assert "-0.000000" not in text
     assert "\tf_max\t0.546875" in text

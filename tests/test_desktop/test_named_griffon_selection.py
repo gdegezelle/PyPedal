@@ -27,8 +27,8 @@ if QApplication.instance() is None:
 
 LOAD_TIMEOUT_MS = 180_000
 ANALYSIS_TIMEOUT_MS = 60_000
-A_EXPECTED = 0.20191301769610437
-F_EXPECTED = 0.10095650884805218
+A_EXPECTED = 0.20210923544926196
+F_EXPECTED = 0.10105461772463098
 NAME_A = "Hierners Heartbreaker"
 NAME_B = "Morning Bell Virgine"
 OID_A = 98685
@@ -103,7 +103,7 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         )
         pedigree = window.session.pedigree
         assert pedigree is not None
-        assert len(pedigree.pedigree) == 97_999
+        assert len(pedigree.pedigree) == 97_002
         current_a = int(pedigree.idmap[OID_A])
         current_b = int(pedigree.idmap[OID_B])
 
@@ -176,7 +176,7 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         )
         assert mating.pair_result is not None
         assert abs(mating.pair_result.coefficient - F_EXPECTED) < 1e-12
-        assert mating.value_label.text() == "10.10%"
+        assert mating.value_label.text() == "10.11%"
 
         _clear_both(mating)
         assert mating.pair_result is None
@@ -204,7 +204,7 @@ def test_named_griffon_relationship_and_mating_by_name(qtbot: object, tmp_path: 
         )
         assert mating.pair_result is not None
         assert abs(mating.pair_result.coefficient - F_EXPECTED) < 1e-12
-        assert mating.value_label.text() == "10.10%"
+        assert mating.value_label.text() == "10.11%"
         assert mating.selector_a.search.findChildren(QToolButton) == []
         assert mating.selector_b.search.findChildren(QToolButton) == []
         assert mating.selector_a.search.isClearButtonEnabled() is False

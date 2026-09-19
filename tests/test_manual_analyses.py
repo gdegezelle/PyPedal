@@ -86,7 +86,7 @@ def test_sci_doc7_ng_is_not_raw_founder_count():
     compact = text.replace(" ", "")
     assert "1/(2" in compact or "1 / (2" in text
     assert "historical founders" in lowered or "raw founder" in lowered
-    assert "97,999" in text or "97999" in text
+    assert "97,002" in text or "97002" in text
 
 
 def test_sci_doc8_unknown_chronology_is_none():

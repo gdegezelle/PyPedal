@@ -1,4 +1,4 @@
-"""Canonical Griffon scale: 97,999 rows without duplicating the pedigree."""
+"""Canonical Griffon scale: 97,002 rows without duplicating the pedigree."""
 
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from PyPedal.desktop.models.pedigree_table import PedigreeFilterProxy, PedigreeT
 if QApplication.instance() is None:
     QApplication(["pypedal-desktop-tests"])
 
-EXPECTED_N = 97_999
+EXPECTED_N = 97_002
 
 
 @pytest.mark.integration

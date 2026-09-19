@@ -201,8 +201,8 @@ the wheel). `PyPedal/examples/griffonbruxellois_2026_pyp.ped` is the
 canonical scientific `asdxb` file. `griffonbruxellois_2026_named_pyp.ped`
 is the same genealogy with display names (`asdxbn`) for desktop animal
 selection. Load the scientific file with `pedformat="asdxb"` and
-`sepchar=","`. Observed load: 97,999 records, 6,689 founders, 915
-half-founders, 3,997 unknown chronology dates, `igen` 1…70. Use
+`sepchar=","`. Observed load: 97,002 records, 6,659 founders, 915
+half-founders, 3,944 unknown chronology dates, `igen` 1…70. Use
 `meu_luo` for inbreeding. See the
 [large pedigrees](docs/manual/large-pedigrees.md) chapter.
 

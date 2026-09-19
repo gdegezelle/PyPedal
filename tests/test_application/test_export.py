@@ -31,7 +31,7 @@ from PyPedal.pyp_results import InbreedingResult, MatingCoIGroupResult
 NEAR_ZERO = 6.661338147750939e-16
 NEAR_ZERO_NEGATIVE = -6.661338147750939e-16
 SMALL_NONZERO = 7.450580596923828e-07
-CANONICAL_MATING_F = 0.10095650884805218
+CANONICAL_MATING_F = 0.10105461772463098
 
 NAMED_RENUMBER_PED = """\
 53,0,0,f,01012019,A'Vigdors Berta Beautiful
@@ -85,7 +85,7 @@ def test_serialize_coefficient_clamps_residue_only() -> None:
     assert serialize_coefficient(0.125) == 0.125
     assert serialize_percent(NEAR_ZERO) == 0.0
     assert serialize_percent(0.125) == 12.5
-    assert serialize_percent(CANONICAL_MATING_F) == 10.1
+    assert serialize_percent(CANONICAL_MATING_F) == 10.11
     assert EXPORT_ZERO_ABS == 1e-12
 
 
@@ -282,7 +282,7 @@ def test_export_mating_pair_and_group_csv(tmp_path: Path) -> None:
     assert row["animal_b_name"] == "Hierners Honeybear"
     assert row["animal_b_current_id"] == "97984"
     assert row["f"] == str(CANONICAL_MATING_F)
-    assert row["f_percent"] == "10.1"
+    assert row["f_percent"] == "10.11"
     assert "%" not in dest.read_text(encoding="utf-8")
     assert pair.coefficient == CANONICAL_MATING_F
 

@@ -1102,25 +1102,25 @@ class TestGriffonCharacterisation(unittest.TestCase):
     def test_the_max_depth_counterexample_still_reproduces(self):
         """
         The measurement that killed the ``igen -> gen`` repair, pinned so it
-        cannot quietly stop being true. 3 of 167 animals sit at the maximum
+        cannot quietly stop being true. 3 of 165 animals sit at the maximum
         inferred generation, and all three are inside -- but far from equal to
-        -- the 36-animal 1890 birth cohort.
+        -- the 35-animal 1890 birth cohort.
         """
         ped = load_griffon()
-        self.assertEqual(167, len(ped.pedigree))
+        self.assertEqual(165, len(ped.pedigree))
         self.assertTrue(pyp_utils.set_generation(ped),
                         "set_generation failed; the distribution below would "
                         "be measured on unset values")
         distribution = {}
         for animal in ped.pedigree:
             distribution[animal.igen] = distribution.get(animal.igen, 0) + 1
-        self.assertEqual({1: 124, 2: 20, 3: 8, 4: 12, 5: 3}, distribution)
+        self.assertEqual({1: 122, 2: 20, 3: 8, 4: 12, 5: 3}, distribution)
 
         deepest = {int(a.animalID) for a in ped.pedigree
                    if a.igen == max(distribution)}
         self.assertEqual(3, len(deepest))
         cohort = set(griffon_cohort(ped, {1890}))
-        self.assertEqual(36, len(cohort))
+        self.assertEqual(35, len(cohort))
         self.assertTrue(deepest < cohort,
                         "the max-depth set is a STRICT subset of the cohort")
 
@@ -1206,10 +1206,10 @@ class TestGriffonCharacterisation(unittest.TestCase):
 
         The whole 1890 cohort IS an antichain, so it passes R3's guard. It
         still cannot be analysed for effective ancestors, for a second and
-        independent reason: 27 of its 36 members are themselves founders, R3's
+        independent reason: 26 of its 35 members are themselves founders, R3's
         convention zeroes reference-population members before selection, and
-        the mass those 27 carry is therefore credited to no ancestor at all.
-        The marginal contributions sum to 0.306 instead of the 1 that Boichard
+        the mass those 26 carry is therefore credited to no ancestor at all.
+        The marginal contributions sum to 0.314 instead of the 1 that Boichard
         p.8 requires, and `check_contribution_vector` refuses.
 
         This is why Boichard's own Table V selection reads "recorded females
@@ -1223,7 +1223,7 @@ class TestGriffonCharacterisation(unittest.TestCase):
         """
         ped = load_griffon()
         cohort = griffon_cohort(ped, {1890})
-        self.assertEqual(36, len(cohort))
+        self.assertEqual(35, len(cohort))
 
         # Passes R3: the guard this cohort does NOT trip.
         pyp_metrics._boichard_require_antichain(ped, cohort, "test")
@@ -1259,7 +1259,7 @@ class TestGriffonCharacterisation(unittest.TestCase):
         """
         ped = load_griffon()
         window = griffon_cohort(ped, {1889, 1890})
-        self.assertEqual(57, len(window))
+        self.assertEqual(56, len(window))
         for routine in (pyp_metrics.a_effective_ancestors_definite,
                         pyp_metrics.a_effective_ancestors_indefinite):
             with self.assertRaises(pyp_errors.PyPedalError) as caught:

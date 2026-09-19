@@ -113,18 +113,18 @@ SYNTH_SEQUENCE = [(14, 0.25), (15, 0.25)]
 SYNTH_SUM_P = 0.5
 SYNTH_FOUNDERS = 9
 
-#: Measured on this tree and on `ed1fee4`; identical on both.
-GRIFFON_36_SUM_P = 0.3055555555555555
-GRIFFON_36_SEQUENCE_LENGTH = 17
-GRIFFON_36_FOUNDERS = 130
+#: Measured on the adopted canonical 1871–1890 extract.
+GRIFFON_1890_SUM_P = 0.3142857142857143
+GRIFFON_1890_SEQUENCE_LENGTH = 17
+GRIFFON_EXTRACT_FOUNDERS = 128
 
 #: The valid contrast: the nine 1890 animals from known sire and dam.
 GRIFFON_9_F_A = 12.461538461538462
 GRIFFON_9_BOUNDS = {
-    1: (9.0, 54.139896373057),
-    2: (9.0, 33.99344262295082),
-    3: (9.0, 24.66906474820144),
-    5: (12.461538461538462, 18.359020852221214),
+    1: (9.0, 53.8586387434555),
+    2: (9.0, 33.906976744186046),
+    3: (9.0, 24.635036496350367),
+    5: (12.461538461538462, 18.348066298342545),
     25: (12.461538461538462, 12.461538461538462),
     10 ** 6: (12.461538461538462, 12.461538461538462),
 }
@@ -165,7 +165,7 @@ def load_synthetic(**overrides):
 
 
 def griffon_36():
-    """The 36-animal 1890 cohort. TEST-SPECIFIED, not an endorsed cohort."""
+    """The 1890 birth cohort (35 animals). TEST-SPECIFIED, not an endorsed cohort."""
     return griffon_cohort(load_griffon(), {1890})
 
 
@@ -188,8 +188,8 @@ class TestTheInvalidSequenceIsWhatThisFindingSaysItIs(unittest.TestCase):
     def test_the_griffon_cohort_sequence_does_not_sum_to_one(self):
         order = list(pyp_metrics.boichard_marginal_contributions(
             load_griffon(), griffon_36()))
-        self.assertEqual(GRIFFON_36_SEQUENCE_LENGTH, len(order))
-        self.assertEqual(GRIFFON_36_SUM_P, sum(value for _, value in order))
+        self.assertEqual(GRIFFON_1890_SEQUENCE_LENGTH, len(order))
+        self.assertEqual(GRIFFON_1890_SUM_P, sum(value for _, value in order))
 
     def test_the_griffon_cohort_passes_the_r3_antichain_guard(self):
         """
@@ -202,7 +202,7 @@ class TestTheInvalidSequenceIsWhatThisFindingSaysItIs(unittest.TestCase):
     def test_the_mass_is_lost_to_founders_sitting_inside_the_reference(self):
         """
         The cause, measured. Boichard p.7: an animal with one unknown parent is
-        a founder too, so the count that matters is 27, not the 25 with both
+        a founder too, so the count that matters is 26, not the 24 with both
         parents unknown.
         """
         ped = load_griffon()
@@ -215,9 +215,9 @@ class TestTheInvalidSequenceIsWhatThisFindingSaysItIs(unittest.TestCase):
         either = [i for i in cohort
                   if int(by_id[i].sireID) == missing
                   or int(by_id[i].damID) == missing]
-        self.assertEqual(36, len(cohort))
-        self.assertEqual(25, len(both))
-        self.assertEqual(27, len(either), "Boichard p.7 founder definition")
+        self.assertEqual(35, len(cohort))
+        self.assertEqual(24, len(both))
+        self.assertEqual(26, len(either), "Boichard p.7 founder definition")
 
     def test_the_founder_count_is_far_above_the_bounds_it_would_check(self):
         """
@@ -227,7 +227,7 @@ class TestTheInvalidSequenceIsWhatThisFindingSaysItIs(unittest.TestCase):
         """
         _i, _s, _d, _ph, n_founders = pyp_metrics._boichard_completed_arrays(
             load_griffon())
-        self.assertEqual(GRIFFON_36_FOUNDERS, n_founders)
+        self.assertEqual(GRIFFON_EXTRACT_FOUNDERS, n_founders)
 
     def test_the_synthetic_fixture_reaches_the_defect_through_the_legacy_path(self):
         """
@@ -305,7 +305,7 @@ class TestTheBoundedRoutineRefusesTheSameInvalidSequence(unittest.TestCase):
             "the two routines must give the same diagnostic for the same "
             "invalid sequence, differing only in the routine name")
         self.assertIn("marginal contributions", bounded_message)
-        self.assertIn(repr(GRIFFON_36_SUM_P), bounded_message)
+        self.assertIn(repr(GRIFFON_1890_SUM_P), bounded_message)
         self.assertIn("not a valid probability vector", bounded_message)
 
     def test_the_diagnostic_does_not_blame_the_reference_population(self):
@@ -443,7 +443,7 @@ class TestValidReferencePopulationsAreUnaffected(unittest.TestCase):
         refusal from the repair.
         """
         self.assertEqual(
-            40.949888916316965,
+            39.96941116492481,
             pyp_metrics.a_effective_founders_boichard(
                 load_griffon(), reference=list(griffon_36())))
 
@@ -464,14 +464,14 @@ class TestValidationGatingIsUnchanged(unittest.TestCase):
 
     def test_the_exact_routine_still_computes_with_validation_disabled(self):
         self.assertEqual(
-            162.0,
+            153.12500000000003,
             pyp_metrics.a_effective_ancestors_definite(
                 self._griffon_without_validation(),
                 reference=list(griffon_36())))
 
     def test_the_bounded_routine_still_computes_with_validation_disabled(self):
         self.assertEqual(
-            (36.0, 102.14375788146279),
+            (35.0, 99.45544554455445),
             pyp_metrics.a_effective_ancestors_indefinite(
                 self._griffon_without_validation(), n=5,
                 reference=list(griffon_36())))

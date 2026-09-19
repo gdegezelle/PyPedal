@@ -530,25 +530,29 @@ class TestHistoricalImpossibleChronologyIsRefused(unittest.TestCase):
 
     def test_griffon_characterisation_cohort_asdxb_loads(self):
         ped = load_griffon_1871_1890()
-        self.assertEqual(len(ped.pedigree), 167)
+        self.assertEqual(len(ped.pedigree), 165)
         self.assertTrue(any(isinstance(animal.bd, datetime.date) for animal in ped.pedigree))
 
     def test_griffonbruxellois_2026_pyp_asdxb_loads(self):
         ped = load_canonical_griffon()
-        self.assertEqual(len(ped.pedigree), 97999)
-        self.assertEqual(ped.metadata.num_records, 97999)
+        self.assertEqual(len(ped.pedigree), 97002)
+        self.assertEqual(ped.metadata.num_records, 97002)
         self.assertEqual(ped.metadata.num_implicit_parents, 0)
         original_ids = [str(animal.originalID) for animal in ped.pedigree]
         self.assertEqual(len(original_ids), len(set(original_ids)))
         self.assertNotIn("51627", set(original_ids))
         self.assertNotIn("45936", set(original_ids))
         self.assertIn("57922", set(original_ids))
-        self.assertEqual(ped.metadata.num_unknown_birth_years, 3997)
+        self.assertEqual(ped.metadata.num_unknown_birth_years, 3944)
         years = {animal.by for animal in ped.pedigree if animal.by is not None}
         self.assertNotIn(1800, years)
         self.assertEqual(sum(1 for animal in ped.pedigree if animal.by == 1900), 152)
         self.assertEqual(min(years), 1870)
         self.assertEqual(max(years), 2025)
+        self.assertEqual(
+            [year for year in range(min(years), max(years) + 1) if year not in years],
+            [1874, 1877],
+        )
         self.assertTrue(any(isinstance(animal.bd, datetime.date) for animal in ped.pedigree))
         by_oid = {str(a.originalID): a for a in ped.pedigree}
         animal = by_oid["51614"]
@@ -559,7 +563,7 @@ class TestHistoricalImpossibleChronologyIsRefused(unittest.TestCase):
         self.assertEqual(dam.bd, datetime.date(1896, 1, 1))
         self.assertLess(sire.bd, animal.bd)
         self.assertLess(dam.bd, animal.bd)
-        self.assertEqual(ped.metadata.num_unique_founders, 6689)
+        self.assertEqual(ped.metadata.num_unique_founders, 6659)
         missing = ped.kw["missing_parent"]
         half = sum(
             1

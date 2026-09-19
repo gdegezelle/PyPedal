@@ -168,11 +168,11 @@ def test_griffon_sample_and_dense_nrm_warning():
     text = (MANUAL / "large-pedigrees.md").read_text(encoding="utf-8")
     assert "griffonbruxellois_2026_named_pyp.ped" in text
     assert "asdxbn" in text
-    assert "97,999" in text
-    assert "6,689" in text
+    assert "97,002" in text
+    assert "6,659" in text
     assert "915" in text
-    assert "3,997" in text
-    assert "10.589642466704028" in text
+    assert "3,944" in text
+    assert "12.421689363554368" in text
     assert "asdxb" in text
     assert '"sepchar": ","' in text
     assert "deterministic dataset regression" in text.lower()

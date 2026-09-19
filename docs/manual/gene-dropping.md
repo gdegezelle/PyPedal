@@ -77,8 +77,8 @@ missing-parent token `0` as if it were an animal record.
 
 ## A large-file regression number
 
-On the curated Griffon 2026 export of 97,999 animals, `rounds=3`,
+On the curated Griffon 2026 export of 97,002 animals, `rounds=3`,
 `seed=31`, `chrometype="autosome"`, `output=False` produced
-N<sub>g</sub> = **10.589642466704028**. That is a **deterministic
+N<sub>g</sub> = **12.421689363554368**. That is a **deterministic
 dataset regression**, not a scientific constant and not the number of
 historical founders. See [Large pedigrees](large-pedigrees.md).

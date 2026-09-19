@@ -183,15 +183,23 @@ class TestECGApi(unittest.TestCase):
         self.assertIn("does not appear earlier", str(caught.exception))
 
 
-CANONICAL_ECG_N = 97999
-CANONICAL_ECG_MEAN = 15.509560187070198
-CANONICAL_ECG_MEDIAN = 17.084017232128986
+CANONICAL_ECG_N = 97002
+CANONICAL_ECG_MEAN = 15.49766453668286
+CANONICAL_ECG_MEDIAN = 17.069160033259667
 CANONICAL_ECG_MIN = 0.0
 CANONICAL_ECG_MAX = 26.542230867556363
-CANONICAL_ECG_ZERO_COUNT = 6689
+CANONICAL_ECG_ZERO_COUNT = 6659
 CANONICAL_ECG_VECTOR_SHA256 = (
-    "bc676743709d684d9821c902989b42101366a80f6455c01d22ae4581ac3fdcfd"
+    "ec6d177dcdf3eeef398052a1d2337cdf11d0bf2b1fa710cf88073fea5dca51ee"
 )
+CANONICAL_ECG_SELECTED = {
+    98685: 25.12890448849202,
+    98667: 25.151318398479063,
+    37482: 23.166416324607525,
+    54587: 22.167251976010363,
+    20196: 0.0,
+    20209: 11.512431582735644,
+}
 
 
 def _ecg_vector_sha256(values):
@@ -238,6 +246,12 @@ def test_canonical_griffon_ecg_summary():
     assert statistics.median(values) == CANONICAL_ECG_MEDIAN
     positional = [mapping[i] for i in range(1, CANONICAL_ECG_N + 1)]
     assert _ecg_vector_sha256(positional) == CANONICAL_ECG_VECTOR_SHA256
+    by_oid = {
+        int(animal.originalID): mapping[int(animal.animalID)]
+        for animal in ped.pedigree
+    }
+    for original_id, expected in CANONICAL_ECG_SELECTED.items():
+        assert by_oid[original_id] == expected
 
 
 if __name__ == "__main__":

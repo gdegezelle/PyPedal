@@ -21,9 +21,9 @@ a full numerator relationship matrix.
 
 A dense float64 matrix for *n* animals needs about *n*² × 8 bytes.
 
-For the curated Griffon sample, *n* = 97,999:
+For the curated Griffon sample, *n* = 97,002:
 
-> 97,999 × 97,999 × 8 bytes ≈ **77 GB**
+> 97,002 × 97,002 × 8 bytes ≈ **75 GB**
 
 before Python and library overhead — on the order of **80 GB**. Do **not**
 form a dense NRM for this sample. Use `meu_luo` for inbreeding.
@@ -94,21 +94,21 @@ Observed load on that file (PyPedal 4 behaviour):
 
 | Quantity | Value |
 |---|---|
-| Records | 97,999 |
-| Founders (both parents unknown) | 6,689 |
+| Records | 97,002 |
+| Founders (both parents unknown) | 6,659 |
 | Half-founders (exactly one parent unknown) | 915 |
-| Unknown recorded chronology (`None`) | 3,997 |
+| Unknown recorded chronology (`None`) | 3,944 |
 | Known birth years | 1870 … 2025 |
 | Inferred generation `igen` after `set_generation` | 1 … 70 |
 
 A gene-drop regression with `rounds=3`, `seed=31`, `chrometype="autosome"`,
 `output=False` gave
 
-> N<sub>g</sub> = 10.589642466704028
+> N<sub>g</sub> = 12.421689363554368
 
 Lacy effective founders on the same load gave
 
-> *f<sub>e</sub>* = 193.3161473441226
+> *f<sub>e</sub>* = 193.46506304667966
 
 Those numbers are **deterministic dataset regressions**. They are not
 scientific constants and they are not “the number of historical
@@ -118,19 +118,9 @@ analysis sample size.
 Do not commit derived Griffon CSV or subset files. Tests that need a
 small extract write a temporary subset from this file.
 
-## Candidate duplicate identities
-
-Two confirmed duplicate identities were merged in this sample (OriginalID
-37482 into 37481, and 54587 into 54586). Parent references were remapped;
-the surviving source records were kept.
-
-The same audit identified 66 additional candidate duplicate-identity
-pairs from pedigree and name patterns. They have **not** been merged.
-Each pair needs verification against the original registry or import
-source. Name heuristics alone are not enough: the broader prefix-name
-group contains both likely duplicates and genuinely different animals.
-Examples of the latter include Amalia / Amalia S18421/97 and Aurora
-Starr / Aurora Starr sister.
+The Griffon Bruxellois reference pedigree was updated from a human-reviewed
+source dataset, resolving duplicate identity records and correcting selected
+source-data names while preserving pedigree integrity. Canonical N = 97,002.
 
 ## Observed runtime (not a guarantee)
 

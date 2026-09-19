@@ -11,6 +11,7 @@ subsets are not committed.
 """
 import hashlib
 import os
+import struct
 import tarfile
 
 import pytest
@@ -84,7 +85,7 @@ def test_1871_1890_subset_matches_canonical_records(tmp_path):
     derived = _parse_asdxb(dest)
     canonical = _parse_asdxb(canonical_griffon_path())
     assert set(derived) == {str(i) for i in GRIFFON_1871_1890_IDS}
-    assert len(derived) == 166
+    assert len(derived) == 164
     for animal_id, fields in derived.items():
         assert fields == canonical[animal_id]
         sire, dam, _sex, bdate = fields
@@ -117,13 +118,13 @@ def test_test_small_subset_matches_canonical_records(tmp_path):
 
 def test_1871_1890_load_still_materializes_one_implicit_parent():
     ped = load_griffon_1871_1890()
-    assert len(ped.pedigree) == 167
+    assert len(ped.pedigree) == 165
     assert ped.metadata.num_implicit_parents == 1
     assert pyp_utils.set_generation(ped)
     distribution = {}
     for animal in ped.pedigree:
         distribution[animal.igen] = distribution.get(animal.igen, 0) + 1
-    assert distribution == {1: 124, 2: 20, 3: 8, 4: 12, 5: 3}
+    assert distribution == {1: 122, 2: 20, 3: 8, 4: 12, 5: 3}
 
 
 def test_sdist_contains_both_griffon_pedigree_datasets(tmp_path):
@@ -149,7 +150,9 @@ def test_sdist_contains_both_griffon_pedigree_datasets(tmp_path):
 
 # Exact LF bytes are part of the scientific data contract. Git checks this
 # file out with eol=lf (.gitattributes) so Windows autocrlf cannot change it.
-CANONICAL_SHA256 = "ffce94d9fa5a26e154b71055ee3f096860c0b7d459cf239a37124f949c968fff"
+CANONICAL_SHA256 = "520f9d626384119aee6a93d279a9a0af9a3805161adbfc43243eb6f4f32bfbc8"
+NAMED_SHA256 = "6bd07d40c4dbaf5d8dab95f0de59cf106515a7f80d95fdaf2e21f2a78d5d536e"
+CANONICAL_N = 97002
 
 
 def test_canonical_griffon_is_comma_asdxb_without_padded_delimiters():
@@ -168,7 +171,7 @@ def test_canonical_griffon_is_comma_asdxb_without_padded_delimiters():
             fields = text.split(",")
             assert len(fields) == 5, text
     assert digest.hexdigest() == CANONICAL_SHA256
-    assert records == 97999
+    assert records == CANONICAL_N
 
 
 def _parse_named_asdxbn(path):
@@ -178,7 +181,7 @@ def _parse_named_asdxbn(path):
         for line in handle:
             if not line.strip():
                 continue
-            animal, sire, dam, sex, bdate, name = line.rstrip("\n").split(",")
+            animal, sire, dam, sex, bdate, name = line.rstrip("\n").split(",", 5)
             records[str(int(animal))] = (sire, dam, sex, bdate)
             names.append(name)
     return records, names
@@ -187,29 +190,31 @@ def _parse_named_asdxbn(path):
 def test_named_griffon_matches_scientific_genealogy_and_adds_names():
     scientific = _parse_asdxb(canonical_griffon_path())
     named, names = _parse_named_asdxbn(named_griffon_path())
-    assert len(scientific) == 97999
-    assert len(named) == 97999
+    assert len(scientific) == CANONICAL_N
+    assert len(named) == CANONICAL_N
     assert set(scientific) == set(named)
     for animal_id, fields in scientific.items():
         assert named[animal_id] == fields
     nonempty = [name for name in names if name.strip()]
-    assert len(nonempty) == 97999
+    assert len(nonempty) == CANONICAL_N
     unique = set(nonempty)
-    assert len(unique) == 97998
+    assert len(unique) == 97000
     counts: dict[str, int] = {}
     for name in nonempty:
         counts[name] = counts.get(name, 0) + 1
-    duplicated = sum(1 for count in counts.values() if count > 1)
-    assert duplicated == 1
+    duplicated = {name for name, count in counts.items() if count > 1}
+    assert duplicated == {"Colette", "Stella"}
     assert max(counts.values()) == 2
     assert named["98685"] == scientific["98685"]
     assert named["98667"] == scientific["98667"]
+    with open(named_griffon_path(), "rb") as handle:
+        assert hashlib.sha256(handle.read()).hexdigest() == NAMED_SHA256
     with open(named_griffon_path(), encoding="utf-8") as handle:
         by_id = {}
         for line in handle:
             if not line.strip():
                 continue
-            animal, _sire, _dam, _sex, _bdate, name = line.rstrip("\n").split(",")
+            animal, _sire, _dam, _sex, _bdate, name = line.rstrip("\n").split(",", 5)
             by_id[str(int(animal))] = name
     assert by_id["98685"] == "Hierners Heartbreaker"
     assert by_id["98667"] == "Morning Bell Virgine"
@@ -219,7 +224,7 @@ def test_named_griffon_matches_scientific_genealogy_and_adds_names():
 def test_canonical_griffon_dataset_regression_metrics():
     """Dataset regressions on the 2026 export. Not scientific constants."""
     ped = load_canonical_griffon()
-    assert len(ped.pedigree) == 97999
+    assert len(ped.pedigree) == CANONICAL_N
     assert pyp_utils.set_generation(ped)
     igens = [animal.igen for animal in ped.pedigree]
     assert min(igens) == 1
@@ -227,21 +232,36 @@ def test_canonical_griffon_dataset_regression_metrics():
     ng = pyp_metrics.effective_founder_genomes(
         ped, rounds=3, seed=31, chrometype="autosome", output=False, quiet=True
     )
-    assert ng == 10.589642466704028
+    assert ng == 12.421689363554368
     lacy = pyp_metrics.effective_founders_lacy(ped)
-    assert lacy["fa_effective_founders"] == 193.3161473441226
+    assert lacy["fa_effective_founders"] == 193.46506304667966
+    assert lacy["fa_animal_count"] == CANONICAL_N
+    assert lacy["fa_founder_count"] == 7574
+    assert lacy["fa_descendant_count"] == 90343
+    ne = pyp_metrics.theoretical_ne_from_metadata(ped, output=False)
+    assert ne == 28538.554380711772
     result = pyp_nrm.inbreeding(ped, method="meu_luo", output=False)
     fx = result["fx"]
     values = list(fx.values())
-    assert len(values) == 97999
-    assert sum(1 for value in values if value > 0.0) == 84440
+    assert len(values) == CANONICAL_N
+    assert sum(1 for value in values if value == 0.0) == 10864
+    assert sum(1 for value in values if value > 0.0) == 83514
+    assert min(values) == -5.551115123125783e-15
     assert max(values) == 0.546875
     mean = sum(values) / len(values)
-    assert abs(mean - 0.09312840934343593) < 1e-12
+    assert abs(mean - 0.09328960441457022) < 1e-12
+    positional = [fx[i] for i in range(1, CANONICAL_N + 1)]
+    digest = hashlib.sha256()
+    digest.update(struct.pack(">Q", len(positional)))
+    for value in positional:
+        digest.update(struct.pack(">d", value))
+    assert digest.hexdigest() == (
+        "68f5b89fef8b15e051417bd996201f9db3b0a4d11122f10c10ea716d18fc2a35"
+    )
     by_oid = {int(animal.originalID): fx[animal.animalID] for animal in ped.pedigree}
-    assert 37482 not in by_oid and 54587 not in by_oid
-    assert by_oid[37481] == 0.30602682805413317
-    assert by_oid[54586] == 0.07950883673667408
-    assert by_oid[37476] == 0.14495633323812407
-    assert by_oid[98685] == 0.08590068327814104
-    assert by_oid[98667] == 0.08673966823694279
+    assert 37481 not in by_oid and 54586 not in by_oid
+    assert by_oid[37482] == 0.3060716643589345
+    assert by_oid[54587] == 0.07958395780637417
+    assert by_oid[37476] == 0.1450196736803535
+    assert by_oid[98685] == 0.08597606312833217
+    assert by_oid[98667] == 0.08683932119141691

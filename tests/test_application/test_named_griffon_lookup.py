@@ -1,4 +1,4 @@
-"""Named Griffon lookup scale: 97,999 animals, no Qt widgets."""
+"""Named Griffon lookup scale: 97,002 animals, no Qt widgets."""
 
 from __future__ import annotations
 
@@ -26,9 +26,9 @@ from PyPedal.application.lookup import (
     AnimalLookupIndex,
 )
 
-EXPECTED_N = 97_999
-A_EXPECTED = 0.20191301769610437
-F_EXPECTED = 0.10095650884805218
+EXPECTED_N = 97_002
+A_EXPECTED = 0.20210923544926196
+F_EXPECTED = 0.10105461772463098
 OID_A = 98685
 OID_B = 98667
 NAME_A = "Hierners Heartbreaker"

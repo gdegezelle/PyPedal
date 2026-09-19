@@ -215,7 +215,7 @@ class TestFastReorder(unittest.TestCase):
             "sepchar": ",",
             "pedigree_summary": 0,
         })
-        self.assertEqual(len(example.pedigree), 97999,
+        self.assertEqual(len(example.pedigree), 97002,
                            "the scale test must actually be at scale")
 
         # The graph, in stable identity, before anything is reordered again.

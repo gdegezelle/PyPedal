@@ -287,7 +287,7 @@ print(pyp_reports.pdf_three_gen_ped(
 The named desktop companion is `griffonbruxellois_2026_named_pyp.ped`
 (`asdxbn`); genealogy matches this file.
 **Code.** Load with `asdxb` and `sepchar=","`, then print counts.
-**Output.** 97,999 records, 6,689 founders, 915 half-founders, 3,997
+**Output.** 97,002 records, 6,659 founders, 915 half-founders, 3,944
 unknown dates. **Interpretation.** Griffon Bruxellois 2026 export
 (recorded births through 2025); curated project sample, not a registry
 extract. **Mistake.** Running `inbreeding(method="tabular")` on this

@@ -300,15 +300,15 @@ def test_mating_pair_displays_percent_not_fraction(qtbot: object, tmp_path: Path
 
 
 def test_mating_group_table_displays_percent() -> None:
-    raw = 0.10095650884805218
-    assert format_inbreeding_percent(raw) == "10.10%"
+    raw = 0.10105461772463098
+    assert format_inbreeding_percent(raw) == "10.11%"
     assert format_inbreeding_percent(None) == "—"
     model = MatingResultTableModel()
     model.set_result(MatingCoIGroupResult({"matings": {(98001, 97984): raw}, "metadata": {}}))
     header = model.headerData(2, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
     assert header == "F (%)"
     index = model.index(0, 2)
-    assert model.data(index) == "10.10%"
+    assert model.data(index) == "10.11%"
     assert model.data(index, Qt.ItemDataRole.UserRole) == raw
 
 
@@ -423,12 +423,12 @@ def _form_labels(form: QFormLayout) -> list[str]:
 
 
 def test_founders_page_displays_two_decimals_not_raw() -> None:
-    raw = 193.3161473441226
+    raw = 193.46506304667966
     result = EffectiveFoundersResult(
         {
-            "fa_animal_count": 97999,
-            "fa_founder_count": 7604,
-            "fa_descendant_count": 91310,
+            "fa_animal_count": 97002,
+            "fa_founder_count": 7574,
+            "fa_descendant_count": 90343,
             "fa_effective_founders": raw,
         }
     )
@@ -436,14 +436,14 @@ def test_founders_page_displays_two_decimals_not_raw() -> None:
     page.show_outcome(FoundersOutcome(result=result, implicit_renumber=False))
     assert page.result is result
     assert page.result.fa_effective_founders == raw
-    assert page.value_label.text() == "193.32"
-    assert page.animals_label.text() == "97,999"
-    assert page.founder_count_label.text() == "7,604"
-    assert page.descendant_label.text() == "91,310"
+    assert page.value_label.text() == "193.47"
+    assert page.animals_label.text() == "97,002"
+    assert page.founder_count_label.text() == "7,574"
+    assert page.descendant_label.text() == "90,343"
 
 
 def test_inbreeding_summary_uses_percentages_and_breeder_labels() -> None:
-    mean = 0.09312840934343593
+    mean = 0.09328960441457022
     minimum = 0.0
     maximum = 0.546875
     result = InbreedingResult(
@@ -451,12 +451,12 @@ def test_inbreeding_summary_uses_percentages_and_breeder_labels() -> None:
             "fx": {1: 0.125, 2: 0.0},
             "metadata": {
                 "all": {
-                    "f_count": 97999,
+                    "f_count": 97002,
                     "f_avg": mean,
                     "f_min": minimum,
                     "f_max": maximum,
                 },
-                "nonzero": {"f_count": 84440},
+                "nonzero": {"f_count": 83514},
             },
         }
     )
@@ -471,11 +471,11 @@ def test_inbreeding_summary_uses_percentages_and_breeder_labels() -> None:
         "Maximum inbreeding",
         "Animals with F > 0",
     ]
-    assert page.count_label.text() == "97,999"
-    assert page.mean_label.text() == "9.31%"
+    assert page.count_label.text() == "97,002"
+    assert page.mean_label.text() == "9.33%"
     assert page.min_label.text() == "0.00%"
     assert page.max_label.text() == "54.69%"
-    assert page.positive_label.text() == "84,440"
+    assert page.positive_label.text() == "83,514"
 
 
 def test_inbreeding_table_displays_percent_and_sorts_numerically() -> None:

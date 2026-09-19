@@ -8,6 +8,12 @@ and PEP 440 (`4.2.2`).
 
 ## [Unreleased]
 
+### Changed
+
+- The Griffon Bruxellois reference pedigree was updated from a human-reviewed
+  source dataset, resolving duplicate identity records and correcting selected
+  source-data names while preserving pedigree integrity. Canonical N = 97,002.
+
 ### Fixed
 
 - Missing-parent tokens no longer contribute ancestry when tracing
@@ -17,8 +23,6 @@ and PEP 440 (`4.2.2`).
   sentinel and IDs that are not current animals in the pedigree.
 - `pedigree_completeness` refuses ``gens < 1`` and reports 0.0 for
   non-founder summary statistics on a founders-only pedigree.
-- Corrected two duplicated animal identities and their parent references
-  in the canonical Griffon reference pedigree.
 
 ### Deprecated
 
